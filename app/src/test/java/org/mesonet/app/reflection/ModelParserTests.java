@@ -186,9 +186,9 @@ public class ModelParserTests
     @Test
     public void ParseNullStringTests() throws IllegalAccessException
     {
-        assertTrue(AllFieldsEqual(ModelParser.GetInstance().Parse(ModelParserTestModel.class, null)));
-        assertTrue(AllFieldsEqual(ModelParser.GetInstance().Parse(ModelParserTestModel.class, kEmptyTestString)));
-        assertTrue(AllFieldsEqual(ModelParser.GetInstance().Parse(ModelParserTestModel.class, kCantParseString)));
+        assertTrue(AllFieldsEqualToNew(ModelParser.GetInstance().Parse(ModelParserTestModel.class, null)));
+        assertTrue(AllFieldsEqualToNew(ModelParser.GetInstance().Parse(ModelParserTestModel.class, kEmptyTestString)));
+        assertTrue(AllFieldsEqualToNew(ModelParser.GetInstance().Parse(ModelParserTestModel.class, kCantParseString)));
     }
 
 
@@ -328,7 +328,7 @@ public class ModelParserTests
 
 
 
-    private boolean AllFieldsEqual(ModelParserTestModel inTestModel) throws IllegalAccessException
+    private boolean AllFieldsEqualToNew(ModelParserTestModel inTestModel) throws IllegalAccessException
     {
         ModelParserTestModel baseModel = new ModelParserTestModel();
 

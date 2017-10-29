@@ -1,9 +1,9 @@
 package org.mesonet.app.mesonetdata;
 
 
+import org.mesonet.app.reflection.ModelParser;
 
-public class MesonetModel
-{
+public class MesonetModel {
     Integer STNM;
     Long TIME;
     Number RELH;
@@ -39,5 +39,8 @@ public class MesonetModel
 
 
 
-
+    public static MesonetModel NewInstance(String inTextToParse)
+    {
+        return ModelParser.GetInstance().Parse(MesonetModel.class, inTextToParse);
+    }
 }
