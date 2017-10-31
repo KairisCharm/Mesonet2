@@ -81,7 +81,7 @@ public class MesonetModelTests
             "MINUTE=BadValue," +
             "SECOND=BadValue";
 
-    private static final String kGoodTestString = "STNM=121," +
+    static final String kGoodTestString = "STNM=121," +
             "TIME=1509238500," +
             "RELH=56," +
             "TAIR=4.0," +

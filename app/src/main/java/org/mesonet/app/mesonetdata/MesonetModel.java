@@ -1,9 +1,12 @@
 package org.mesonet.app.mesonetdata;
 
 
+import org.mesonet.app.formulas.DefaultUnits;
+import org.mesonet.app.formulas.UnitConverter;
 import org.mesonet.app.reflection.ModelParser;
 
-public class MesonetModel {
+public class MesonetModel implements DefaultUnits
+{
     Integer STNM;
     Long TIME;
     Number RELH;
@@ -42,5 +45,37 @@ public class MesonetModel {
     public static MesonetModel NewInstance(String inTextToParse)
     {
         return ModelParser.GetInstance().Parse(MesonetModel.class, inTextToParse);
+    }
+
+
+
+    @Override
+    public UnitConverter.TempUnits GetDefaultTempUnit()
+    {
+        return UnitConverter.TempUnits.kCelsius;
+    }
+
+
+
+    @Override
+    public UnitConverter.LengthUnits GetDefaultLengthUnit()
+    {
+        return UnitConverter.LengthUnits.kMm;
+    }
+
+
+
+    @Override
+    public UnitConverter.SpeedUnits GetDefaultSpeedUnit()
+    {
+        return UnitConverter.SpeedUnits.kMps;
+    }
+
+
+
+    @Override
+    public UnitConverter.PressureUnits GetDefaultPressureUnit()
+    {
+        return UnitConverter.PressureUnits.kMmHg;
     }
 }
