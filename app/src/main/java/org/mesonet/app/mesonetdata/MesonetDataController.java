@@ -47,7 +47,19 @@ public class MesonetDataController implements MesonetData
         if(mMesonetModel == null)
             return null;
 
-        return 12345.0;
+        UnitConverter.TempUnits tempUnits = UnitConverter.TempUnits.kCelsius;
+
+        if(mPreferences != null && mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
+            tempUnits = UnitConverter.TempUnits.kFahrenheit;
+
+        Number apparentTemp = DerivedValues.GetInstance().GetApparentTemperature(mMesonetModel.TAIR, mMesonetModel.WSPD, mMesonetModel.RELH);
+
+        Number result = UnitConverter.GetInstance().GetTempInPreferredUnits(apparentTemp, mMesonetModel, tempUnits);
+
+        if(result == null)
+            return null;
+
+        return result.doubleValue();
     }
 
 
@@ -58,7 +70,19 @@ public class MesonetDataController implements MesonetData
         if(mMesonetModel == null)
             return null;
 
-        return 12345.0;
+        UnitConverter.TempUnits tempUnits = UnitConverter.TempUnits.kCelsius;
+
+        if(mPreferences != null && mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
+            tempUnits = UnitConverter.TempUnits.kFahrenheit;
+
+        Number apparentTemp = DerivedValues.GetInstance().GetDewPoint(mMesonetModel.TAIR, mMesonetModel.RELH);
+
+        Number result = UnitConverter.GetInstance().GetTempInPreferredUnits(apparentTemp, mMesonetModel, tempUnits);
+
+        if(result == null)
+            return null;
+
+        return result.doubleValue();
     }
 
 
@@ -69,7 +93,17 @@ public class MesonetDataController implements MesonetData
         if(mMesonetModel == null)
             return null;
 
-        return 12345.0;
+        UnitConverter.SpeedUnits speedUnits = UnitConverter.SpeedUnits.kMps;
+
+        if(mPreferences != null && mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
+            speedUnits = UnitConverter.SpeedUnits.kMph;
+
+        Number result = UnitConverter.GetInstance().GetSpeedInPreferredUnits(mMesonetModel.WSPD, mMesonetModel, speedUnits);
+
+        if(result == null)
+            return null;
+
+        return result.doubleValue();
     }
 
 
@@ -80,7 +114,7 @@ public class MesonetDataController implements MesonetData
         if(mMesonetModel == null)
             return null;
 
-        return null;
+        return UnitConverter.GetInstance().GetCompassDirection(mMesonetModel.WDIR);
     }
 
 
@@ -91,7 +125,17 @@ public class MesonetDataController implements MesonetData
         if(mMesonetModel == null)
             return null;
 
-        return 12345.0;
+        UnitConverter.SpeedUnits speedUnits = UnitConverter.SpeedUnits.kMps;
+
+        if(mPreferences != null && mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
+            speedUnits = UnitConverter.SpeedUnits.kMph;
+
+        Number result = UnitConverter.GetInstance().GetSpeedInPreferredUnits(mMesonetModel.WMAX, mMesonetModel, speedUnits);
+
+        if(result == null)
+            return null;
+
+        return result.doubleValue();
     }
 
 
@@ -102,7 +146,17 @@ public class MesonetDataController implements MesonetData
         if(mMesonetModel == null)
             return null;
 
-        return 12345.0;
+        UnitConverter.LengthUnits lengthUnits = UnitConverter.LengthUnits.kMm;
+
+        if(mPreferences != null && mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
+            lengthUnits = UnitConverter.LengthUnits.kIn;
+
+        Number result = UnitConverter.GetInstance().GetLengthInPreferredUnits(mMesonetModel.RAIN_24H, mMesonetModel, lengthUnits);
+
+        if(result == null)
+            return null;
+
+        return result.doubleValue();
     }
 
 
@@ -110,10 +164,10 @@ public class MesonetDataController implements MesonetData
     @Override
     public Integer GetHumidity()
     {
-        if(mMesonetModel == null)
+        if(mMesonetModel == null || mMesonetModel.RELH == null)
             return null;
 
-        return 12345;
+        return mMesonetModel.RELH.intValue();
     }
 
 
@@ -124,6 +178,16 @@ public class MesonetDataController implements MesonetData
         if(mMesonetModel == null)
             return null;
 
-        return 12345.0;
+        UnitConverter.PressureUnits pressureUnits = UnitConverter.PressureUnits.kMmHg;
+
+        if(mPreferences != null && mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
+            pressureUnits = UnitConverter.PressureUnits.kInHg;
+
+        Number result = UnitConverter.GetInstance().GetPressureInPreferredUnits(mMesonetModel.PRES, mMesonetModel, pressureUnits);
+
+        if(result == null)
+            return null;
+
+        return result.doubleValue();
     }
 }
