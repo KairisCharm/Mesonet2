@@ -231,6 +231,8 @@ public class AutoResizeTextView extends TextView
     public void AllowResize()
     {
         mAllowResize = true;
+
+        setText(getText());
     }
 
 

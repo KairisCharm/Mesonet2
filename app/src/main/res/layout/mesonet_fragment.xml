@@ -1,14 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools">
+    <data>
+        <variable
+            name="uiController"
+            type="org.mesonet.app.mesonetdata.MesonetUIController"/>
+    </data>
     <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:weightSum="2"
         android:orientation="horizontal"
-        android:baselineAligned="false">
+        android:baselineAligned="false"
+        android:background="@color/meso_background"
+        tools:context=".mesonetdata.MesonetFragment">
 
         <org.mesonet.app.customviews.ScalableLayout
             android:layout_width="0dp"
@@ -33,9 +39,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="197dp"
                 android:layout_marginStart="36dp"
-                android:text="@string/empty_temp"
                 android:textColor="@color/white_text_color"
-                android:textSize="148dp"/>
+                android:textSize="148dp"
+                android:text="@{uiController.GetAirTempString()}"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
                 android:layout_width="match_parent"
@@ -66,16 +72,15 @@
             android:orientation="vertical"
             android:baselineAligned="false">
 
-            <ImageButton
-                android:id="@+id/meteogram_btn"
-                android:layout_width="224dp"
-                android:layout_height="56dp"
-                android:layout_marginStart="36dp"
-                android:adjustViewBounds="true"
-                android:scaleType="fitStart"
-                android:contentDescription="@string/empty_text"
-                android:src="@drawable/meteogram_image"
-                android:background="@null"/>
+            <!--<ImageButton-->
+                <!--android:id="@+id/meteogram_btn"-->
+                <!--android:layout_width="224dp"-->
+                <!--android:layout_height="56dp"-->
+                <!--android:layout_marginStart="36dp"-->
+                <!--android:adjustViewBounds="true"-->
+                <!--android:scaleType="fitStart"-->
+                <!--android:src="@drawable/meteogram_image"-->
+                <!--android:background="@null"/>-->
 
             <org.mesonet.app.customviews.AutoResizeTextView
                 android:layout_width="match_parent"
@@ -92,7 +97,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="43dp"
                 android:layout_marginStart="36dp"
-                android:text="@string/empty_field"
                 android:textColor="@color/white_text_color"
                 android:textSize="32dp"/>
 
@@ -112,7 +116,6 @@
                 android:layout_height="43dp"
                 android:layout_marginStart="36dp"
                 android:layout_marginEnd="36dp"
-                android:text="@string/empty_field"
                 android:textColor="@color/white_text_color"
                 android:textSize="32dp"/>
 
@@ -131,7 +134,6 @@
                 android:layout_width="match_parent"
                 android:layout_height="43dp"
                 android:layout_marginStart="36dp"
-                android:text="@string/empty_field"
                 android:textSize="32dp"
                 android:textColor="@color/white_text_color"/>
 

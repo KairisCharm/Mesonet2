@@ -1,7 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.mesonet.app">
 
-    <application android:allowBackup="true"
+    <uses-permission android:name="android.permission.SET_DEBUG_APP"/>
+
+    <application android:allowBackup="false"
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"

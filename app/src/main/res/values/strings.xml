@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Mesonet</string>
+
+    <string name="current_feelsLike">Feels Like</string>
+    <string name="current_dewpoint">Dewpoint</string>
+    <string name="current_wind">Wind</string>
+    <string name="current_24hrRain">24-hr Rainfall</string>
 </resources>

@@ -21,14 +21,6 @@ public class ScalableLayout extends LinearLayout
 
 
 
-    public ScalableLayout(Context inContext)
-    {
-        super(inContext);
-        InitLayoutParams(inContext, 1.0f, 1.0f);
-    }
-
-
-
     public ScalableLayout(Context inContext, AttributeSet inAttributes)
     {
         super(inContext, inAttributes);
