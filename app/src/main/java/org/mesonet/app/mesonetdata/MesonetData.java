@@ -1,7 +1,8 @@
 package org.mesonet.app.mesonetdata;
 
-
 import org.mesonet.app.formulas.UnitConverter;
+
+
 
 public interface MesonetData
 {

@@ -5,4 +5,6 @@
     <string name="current_dewpoint">Dewpoint</string>
     <string name="current_wind">Wind</string>
     <string name="current_24hrRain">24-hr Rainfall</string>
+    <string name="MetricUnits">Metric Units</string>
+    <string name="ImperialUnits">Imperial Units</string>
 </resources>

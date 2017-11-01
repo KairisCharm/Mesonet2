@@ -6,6 +6,8 @@ import org.mesonet.app.formulas.MathMethods;
 import org.mesonet.app.formulas.UnitConverter;
 import org.mesonet.app.userdata.Preferences;
 
+import java.util.Observable;
+
 import static junit.framework.Assert.assertEquals;
 import static org.mesonet.app.mesonetdata.MesonetModelTests.kGoodTestString;
 
@@ -75,6 +77,11 @@ public class MesonetDataControllerTests
                                                                                  {
                                                                                      return UnitPreference.kMetric;
                                                                                  }
+
+                                                                                 @Override
+                                                                                 public Observable GetObservable() {
+                                                                                     return null;
+                                                                                 }
                                                                              });
 
         assertEquals(4.0, nullDataController.GetTemp());
@@ -99,6 +106,11 @@ public class MesonetDataControllerTests
                                                                                  public UnitPreference GetUnitPreference ()
                                                                                  {
                                                                                      return UnitPreference.kImperial;
+                                                                                 }
+
+                                                                                 @Override
+                                                                                 public Observable GetObservable() {
+                                                                                     return null;
                                                                                  }
                                                                              });
 

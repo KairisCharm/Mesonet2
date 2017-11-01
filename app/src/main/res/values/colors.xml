@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">@color/meso_background</color>
+    <color name="colorPrimary">@color/mesoBackground</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
 
-    <color name="meso_background">#3A5999</color>
-    <color name="blue_text_color">#aec2ff</color>
-    <color name="white_text_color">#fffffd</color>
+    <color name="mesoBackground">#3A5999</color>
+    <color name="blueTextColor">#aec2ff</color>
+    <color name="whiteTextColor">#fffffd</color>
+    <color name="toolbarBackgroundColor">@android:color/black</color>
 </resources>

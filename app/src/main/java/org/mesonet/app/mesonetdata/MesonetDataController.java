@@ -3,9 +3,13 @@ package org.mesonet.app.mesonetdata;
 import org.mesonet.app.formulas.UnitConverter;
 import org.mesonet.app.userdata.Preferences;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 
-public class MesonetDataController implements MesonetData
+public class MesonetDataController extends Observable implements MesonetData, Observer
 {
     private MesonetModel mMesonetModel;
     private Preferences mPreferences;
@@ -16,6 +20,7 @@ public class MesonetDataController implements MesonetData
     {
         mMesonetModel = inMesonetModel;
         mPreferences = inPreferences;
+        mPreferences.GetObservable().addObserver(this);
     }
 
 
@@ -189,5 +194,13 @@ public class MesonetDataController implements MesonetData
             return null;
 
         return result.doubleValue();
+    }
+
+
+
+    @Override
+    public void update(Observable observable, Object o) {
+        setChanged();
+        notifyObservers();
     }
 }

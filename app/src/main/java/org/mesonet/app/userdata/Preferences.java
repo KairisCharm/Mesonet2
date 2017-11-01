@@ -1,5 +1,7 @@
 package org.mesonet.app.userdata;
 
+import java.util.Observable;
+
 
 
 public interface Preferences
@@ -9,4 +11,5 @@ public interface Preferences
 
 
     UnitPreference GetUnitPreference();
+    Observable GetObservable();
 }

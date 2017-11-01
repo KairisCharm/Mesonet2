@@ -10,12 +10,15 @@ import android.view.ViewGroup;
 import org.mesonet.app.R;
 import org.mesonet.app.databinding.MesonetFragmentBinding;
 
+import java.util.Observable;
+import java.util.Observer;
 
 
 public class MesonetFragment extends Fragment
 {
     private MesonetDataController mDataController;
     private MesonetFragmentBinding mBinding;
+    private Observer mObserver;
 
 
 
@@ -34,8 +37,25 @@ public class MesonetFragment extends Fragment
     {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.mesonet_fragment, inParent, false);
 
+        mObserver = new Observer() {
+            @Override
+            public void update(Observable observable, Object o) {
+                mBinding.invalidateAll();
+            }
+        };
+
+        mDataController.addObserver(mObserver);
         mBinding.setUiController(new MesonetUIController(mDataController));
 
         return mBinding.getRoot();
+    }
+
+
+
+    @Override
+    public void onDestroyView()
+    {
+        mObserver = null;
+        super.onDestroyView();
     }
 }

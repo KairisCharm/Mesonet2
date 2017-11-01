@@ -13,7 +13,7 @@
         android:weightSum="2"
         android:orientation="horizontal"
         android:baselineAligned="false"
-        android:background="@color/meso_background"
+        android:background="@color/mesoBackground"
         tools:context=".mesonetdata.MesonetFragment">
 
         <org.mesonet.app.customviews.ScalableLayout
@@ -31,7 +31,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="26dp"
                 android:layout_marginStart="36dp"
-                android:textColor="@color/blue_text_color"
+                android:textColor="@color/blueTextColor"
                 android:textSize="40dp"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
@@ -39,7 +39,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="197dp"
                 android:layout_marginStart="36dp"
-                android:textColor="@color/white_text_color"
+                android:textColor="@color/whiteTextColor"
                 android:textSize="148dp"
                 android:text="@{uiController.GetAirTempString()}"/>
 
@@ -50,14 +50,14 @@
                 android:layout_marginBottom="-8dp"
                 android:text="@string/current_feelsLike"
                 android:textSize="37.5dp"
-                android:textColor="@color/blue_text_color"/>
+                android:textColor="@color/blueTextColor"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
                 android:id="@+id/current_feelsLike"
                 android:layout_width="match_parent"
                 android:layout_height="74.5dp"
                 android:layout_marginStart="36dp"
-                android:textColor="@color/white_text_color"
+                android:textColor="@color/whiteTextColor"
                 android:textSize="56dp"/>
 
         </org.mesonet.app.customviews.ScalableLayout>
@@ -89,7 +89,7 @@
                 android:layout_marginStart="36dp"
                 android:layout_marginTop="20dp"
                 android:text="@string/current_dewpoint"
-                android:textColor="@color/blue_text_color"
+                android:textColor="@color/blueTextColor"
                 android:textSize="32dp"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
@@ -97,7 +97,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="43dp"
                 android:layout_marginStart="36dp"
-                android:textColor="@color/white_text_color"
+                android:textColor="@color/whiteTextColor"
                 android:textSize="32dp"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
@@ -107,7 +107,7 @@
                 android:layout_marginStart="36dp"
                 android:layout_marginTop="20dp"
                 android:text="@string/current_wind"
-                android:textColor="@color/blue_text_color"
+                android:textColor="@color/blueTextColor"
                 android:textSize="32dp"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
@@ -116,7 +116,7 @@
                 android:layout_height="43dp"
                 android:layout_marginStart="36dp"
                 android:layout_marginEnd="36dp"
-                android:textColor="@color/white_text_color"
+                android:textColor="@color/whiteTextColor"
                 android:textSize="32dp"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
@@ -127,7 +127,7 @@
                 android:layout_marginBottom="-2dp"
                 android:text="@string/current_24hrRain"
                 android:textSize="32dp"
-                android:textColor="@color/blue_text_color" />
+                android:textColor="@color/blueTextColor" />
 
             <org.mesonet.app.customviews.AutoResizeTextView
                 android:id="@+id/current_24hrRain"
@@ -135,7 +135,7 @@
                 android:layout_height="43dp"
                 android:layout_marginStart="36dp"
                 android:textSize="32dp"
-                android:textColor="@color/white_text_color"/>
+                android:textColor="@color/whiteTextColor"/>
 
         </org.mesonet.app.customviews.ScalableLayout>
 
