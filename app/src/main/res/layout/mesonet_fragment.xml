@@ -32,7 +32,8 @@
                 android:layout_height="26dp"
                 android:layout_marginStart="36dp"
                 android:textColor="@color/blueTextColor"
-                android:textSize="40dp"/>
+                android:textSize="40dp"
+                android:text="@{uiController.GetTimeString()}"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
                 android:id="@+id/current_tair"
@@ -58,7 +59,8 @@
                 android:layout_height="74.5dp"
                 android:layout_marginStart="36dp"
                 android:textColor="@color/whiteTextColor"
-                android:textSize="56dp"/>
+                android:textSize="56dp"
+                android:text="@{uiController.GetApparentTempString()}"/>
 
         </org.mesonet.app.customviews.ScalableLayout>
 
@@ -98,7 +100,8 @@
                 android:layout_height="43dp"
                 android:layout_marginStart="36dp"
                 android:textColor="@color/whiteTextColor"
-                android:textSize="32dp"/>
+                android:textSize="32dp"
+                android:text="@{uiController.GetDewPointString()}"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
                 android:layout_width="match_parent"
@@ -117,7 +120,8 @@
                 android:layout_marginStart="36dp"
                 android:layout_marginEnd="36dp"
                 android:textColor="@color/whiteTextColor"
-                android:textSize="32dp"/>
+                android:textSize="32dp"
+                android:text="@{uiController.GetWindString()}"/>
 
             <org.mesonet.app.customviews.AutoResizeTextView
                 android:layout_width="match_parent"
@@ -135,7 +139,8 @@
                 android:layout_height="43dp"
                 android:layout_marginStart="36dp"
                 android:textSize="32dp"
-                android:textColor="@color/whiteTextColor"/>
+                android:textColor="@color/whiteTextColor"
+                android:text="@{uiController.Get24HrRainfallString()}"/>
 
         </org.mesonet.app.customviews.ScalableLayout>
 

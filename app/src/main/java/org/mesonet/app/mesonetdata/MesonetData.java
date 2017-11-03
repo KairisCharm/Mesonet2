@@ -2,6 +2,9 @@ package org.mesonet.app.mesonetdata;
 
 import org.mesonet.app.formulas.UnitConverter;
 
+import java.util.Date;
+import java.util.Calendar;
+
 
 
 public interface MesonetData
@@ -15,4 +18,5 @@ public interface MesonetData
     Double Get24HrRain();
     Integer GetHumidity();
     Double GetPressure();
+    Date GetTime ();
 }

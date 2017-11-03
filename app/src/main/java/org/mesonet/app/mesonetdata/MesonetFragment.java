@@ -53,6 +53,26 @@ public class MesonetFragment extends Fragment
 
 
     @Override
+    public void onResume()
+    {
+        super.onResume();
+
+        mDataController.StartUpdating();
+    }
+
+
+
+    @Override
+    public void onPause()
+    {
+        mDataController.StopUpdating();
+
+        super.onPause();
+    }
+
+
+
+    @Override
     public void onDestroyView()
     {
         mObserver = null;

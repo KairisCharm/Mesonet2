@@ -3,6 +3,7 @@ package org.mesonet.app;
 
 import org.mesonet.app.mesonetdata.MesonetDataController;
 import org.mesonet.app.mesonetdata.MesonetModel;
+import org.mesonet.app.mesonetdata.MockMesonetDataController;
 import org.mesonet.app.userdata.Preferences;
 
 
@@ -58,6 +59,6 @@ public class ControllerCreator
 
     public MesonetDataController GetMesonetDataController(String inStid, Preferences inPreferences)
     {
-        return new MesonetDataController(MesonetModel.NewInstance(kGoodTestString), inPreferences);
+        return new MockMesonetDataController(MesonetModel.NewInstance(kGoodTestString), inPreferences);
     }
 }

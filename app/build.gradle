@@ -54,7 +54,7 @@ android {
 
         mock {
             manifest.srcFile 'src/main/AndroidManifest.xml'
-            res.srcDirs = ['src/main/res']
+            res.srcDirs = ['src/main/res', 'src/mock/res']
             java.srcDirs = ['src/main/java', 'src/mock/java']
         }
     }

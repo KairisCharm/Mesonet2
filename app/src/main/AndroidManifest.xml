@@ -2,6 +2,7 @@
     package="org.mesonet.app">
 
     <uses-permission android:name="android.permission.SET_DEBUG_APP"/>
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application android:allowBackup="false"
         android:label="@string/app_name"

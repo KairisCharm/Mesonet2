@@ -3,6 +3,7 @@ package org.mesonet.app.mesonetdata;
 import org.mesonet.app.formulas.UnitConverter;
 import org.mesonet.app.userdata.Preferences;
 
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
@@ -13,6 +14,7 @@ public class MesonetDataController extends Observable implements MesonetData, Ob
 {
     private MesonetModel mMesonetModel;
     private Preferences mPreferences;
+    private boolean mUpdating = false;
 
 
 
@@ -20,7 +22,52 @@ public class MesonetDataController extends Observable implements MesonetData, Ob
     {
         mMesonetModel = inMesonetModel;
         mPreferences = inPreferences;
-        mPreferences.GetObservable().addObserver(this);
+
+        if(mPreferences != null)
+        {
+            Observable observable = mPreferences.GetObservable();
+
+            if(observable != null)
+                observable.addObserver(this);
+        }
+    }
+
+
+
+
+    void SetData(String inMesonetDataString)
+    {
+        SetData(MesonetModel.NewInstance(inMesonetDataString));
+    }
+
+
+
+    void SetData(MesonetModel inMesonetModel)
+    {
+        mMesonetModel = inMesonetModel;
+        setChanged();
+        notifyObservers();
+    }
+
+
+
+    public void StartUpdating()
+    {
+        mUpdating = true;
+    }
+
+
+
+    public void StopUpdating()
+    {
+        mUpdating = false;
+    }
+
+
+
+    protected boolean IsUpdating()
+    {
+        return mUpdating;
     }
 
 
@@ -194,6 +241,38 @@ public class MesonetDataController extends Observable implements MesonetData, Ob
             return null;
 
         return result.doubleValue();
+    }
+
+
+    /*TODO begin add tests*/
+    @Override
+    public Date GetTime ()
+    {
+        if(mMesonetModel == null || mMesonetModel.TIME == null)
+            return null;
+
+        return new Date(mMesonetModel.TIME * 1000);
+    }
+
+
+
+    protected String GetStid ()
+    {
+        if(mMesonetModel == null)
+            return null;
+
+        return mMesonetModel.STID;
+    }
+    /*TODO end add tests*/
+
+
+
+    public Preferences.UnitPreference GetUnitPreference()
+    {
+        if(mPreferences == null)
+            return null;
+
+        return mPreferences.GetUnitPreference();
     }
 
 
