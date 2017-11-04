@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
         <variable
             name="uiController"
             type="org.mesonet.app.mesonetdata.MesonetUIController"/>
     </data>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -14,135 +16,140 @@
         android:orientation="horizontal"
         android:baselineAligned="false"
         android:background="@color/mesoBackground"
-        tools:context=".mesonetdata.MesonetFragment">
+        tools:context=".mesonetdata.MesonetFragment"
+        android:paddingStart="36dp"
+        android:paddingEnd="36dp">
 
-        <org.mesonet.app.customviews.ScalableLayout
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            base_width="3.6"
-            base_height="5.85"
-            android:gravity="center_vertical"
             android:orientation="vertical"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
             android:baselineAligned="false">
 
-            <org.mesonet.app.customviews.AutoResizeTextView
-                android:id="@+id/current_time"
+            <TextView
+                android:id="@+id/readingTime"
                 android:layout_width="match_parent"
-                android:layout_height="26dp"
-                android:layout_marginStart="36dp"
+                android:layout_height="20dp"
+                android:autoSizeTextType="uniform"
+                app:autoSizeTextType="uniform"
                 android:textColor="@color/blueTextColor"
-                android:textSize="40dp"
-                android:text="@{uiController.GetTimeString()}"/>
+                android:text="@{uiController.GetTimeString()}"
+                tools:text="Observed at 9:40 PM"/>
 
-            <org.mesonet.app.customviews.AutoResizeTextView
+            <TextView
                 android:id="@+id/current_tair"
                 android:layout_width="match_parent"
-                android:layout_height="197dp"
-                android:layout_marginStart="36dp"
+                android:layout_height="140dp"
+                android:layout_marginTop="10.5dp"
+                android:text="@{uiController.GetAirTempString()}"
                 android:textColor="@color/whiteTextColor"
-                android:textSize="148dp"
-                android:text="@{uiController.GetAirTempString()}"/>
+                app:autoSizeTextType="uniform"
+                android:autoSizeTextType="uniform"
+                android:maxLines="1"
+                tools:text="46°" />
 
-            <org.mesonet.app.customviews.AutoResizeTextView
+            <TextView
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:layout_marginStart="36dp"
+                android:layout_height="36dp"
                 android:layout_marginBottom="-8dp"
+                android:autoSizeTextType="uniform"
+                app:autoSizeTextType="uniform"
                 android:text="@string/current_feelsLike"
-                android:textSize="37.5dp"
                 android:textColor="@color/blueTextColor"/>
 
-            <org.mesonet.app.customviews.AutoResizeTextView
+            <TextView
                 android:id="@+id/current_feelsLike"
                 android:layout_width="match_parent"
-                android:layout_height="74.5dp"
-                android:layout_marginStart="36dp"
+                android:layout_height="55dp"
                 android:textColor="@color/whiteTextColor"
-                android:textSize="56dp"
-                android:text="@{uiController.GetApparentTempString()}"/>
+                android:autoSizeTextType="uniform"
+                app:autoSizeTextType="uniform"
+                android:text="@{uiController.GetApparentTempString()}"
+                tools:text="45°F"/>
 
-        </org.mesonet.app.customviews.ScalableLayout>
+        </LinearLayout>
 
-        <org.mesonet.app.customviews.ScalableLayout
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            base_width="3.6"
-            base_height="5.85"
             android:gravity="center_vertical"
             android:orientation="vertical"
-            android:baselineAligned="false">
+            android:baselineAligned="false"
+            android:paddingStart="36dp">
 
-            <!--<ImageButton-->
-                <!--android:id="@+id/meteogram_btn"-->
-                <!--android:layout_width="224dp"-->
-                <!--android:layout_height="56dp"-->
-                <!--android:layout_marginStart="36dp"-->
-                <!--android:adjustViewBounds="true"-->
-                <!--android:scaleType="fitStart"-->
-                <!--android:src="@drawable/meteogram_image"-->
-                <!--android:background="@null"/>-->
+            <ImageButton
+                android:id="@+id/meteogram_btn"
+                android:layout_width="224dp"
+                android:layout_height="40dp"
+                android:layout_marginBottom="12dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitStart"
+                android:background="@android:color/holo_blue_dark"/>
 
-            <org.mesonet.app.customviews.AutoResizeTextView
+            <TextView
                 android:layout_width="match_parent"
-                android:layout_height="43dp"
+                android:layout_height="32dp"
                 android:layout_marginBottom="-2dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="20dp"
+                android:autoSizeTextType="uniform"
+                app:autoSizeTextType="uniform"
                 android:text="@string/current_dewpoint"
-                android:textColor="@color/blueTextColor"
-                android:textSize="32dp"/>
-
-            <org.mesonet.app.customviews.AutoResizeTextView
-                android:id="@+id/current_dewpoint"
-                android:layout_width="match_parent"
-                android:layout_height="43dp"
-                android:layout_marginStart="36dp"
-                android:textColor="@color/whiteTextColor"
-                android:textSize="32dp"
-                android:text="@{uiController.GetDewPointString()}"/>
-
-            <org.mesonet.app.customviews.AutoResizeTextView
-                android:layout_width="match_parent"
-                android:layout_height="43dp"
-                android:layout_marginBottom="-2dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginTop="20dp"
-                android:text="@string/current_wind"
-                android:textColor="@color/blueTextColor"
-                android:textSize="32dp"/>
-
-            <org.mesonet.app.customviews.AutoResizeTextView
-                android:id="@+id/current_wind"
-                android:layout_width="match_parent"
-                android:layout_height="43dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginEnd="36dp"
-                android:textColor="@color/whiteTextColor"
-                android:textSize="32dp"
-                android:text="@{uiController.GetWindString()}"/>
-
-            <org.mesonet.app.customviews.AutoResizeTextView
-                android:layout_width="match_parent"
-                android:layout_height="43dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginStart="36dp"
-                android:layout_marginBottom="-2dp"
-                android:text="@string/current_24hrRain"
-                android:textSize="32dp"
                 android:textColor="@color/blueTextColor" />
 
-            <org.mesonet.app.customviews.AutoResizeTextView
+            <TextView
+                android:id="@+id/current_dewpoint"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:textColor="@color/whiteTextColor"
+                android:autoSizeTextType="uniform"
+                app:autoSizeTextType="uniform"
+                android:text="@{uiController.GetDewPointString()}"
+                tools:text="45°F"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:layout_marginBottom="-2dp"
+                android:layout_marginTop="16dp"
+                android:autoSizeTextType="uniform"
+                app:autoSizeTextType="uniform"
+                android:text="@string/current_wind"
+                android:textColor="@color/blueTextColor"/>
+
+            <TextView
+                android:id="@+id/current_wind"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:textColor="@color/whiteTextColor"
+                android:autoSizeTextType="uniform"
+                app:autoSizeTextType="uniform"
+                android:text="@{uiController.GetWindString()}"
+                tools:text="WNW at 44 MPH"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="-2dp"
+                android:text="@string/current_24hrRain"
+                android:textColor="@color/blueTextColor"
+                android:autoSizeTextType="uniform"
+                app:autoSizeTextType="uniform"/>
+
+            <TextView
                 android:id="@+id/current_24hrRain"
                 android:layout_width="match_parent"
-                android:layout_height="43dp"
-                android:layout_marginStart="36dp"
-                android:textSize="32dp"
+                android:layout_height="32dp"
                 android:textColor="@color/whiteTextColor"
-                android:text="@{uiController.Get24HrRainfallString()}"/>
+                android:text="@{uiController.Get24HrRainfallString()}"
+                android:autoSizeTextType="uniform"
+                app:autoSizeTextType="uniform"
+                tools:text="0.00 in"/>
 
-        </org.mesonet.app.customviews.ScalableLayout>
+        </LinearLayout>
 
     </LinearLayout>
+
 </layout>

@@ -40,6 +40,9 @@ public class MesonetFragment extends Fragment
         mObserver = new Observer() {
             @Override
             public void update(Observable observable, Object o) {
+                // not using databinding here because AutoSizing TextViews don't work with databound text
+//                mBinding.currentTair.setText(mBinding.getUiController().GetAirTempString());
+//                mBinding.readingTime.setText(mBinding.getUiController().GetTimeString());
                 mBinding.invalidateAll();
             }
         };
