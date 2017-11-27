@@ -7,4 +7,7 @@
     <string name="current_24hrRain">24-hr Rainfall</string>
     <string name="MetricUnits">Metric Units</string>
     <string name="ImperialUnits">Imperial Units</string>
+
+    <string name="open">open</string>
+    <string name="close">close</string>
 </resources>

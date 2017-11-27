@@ -82,11 +82,12 @@ public class MockMesonetDataController extends MesonetDataController
     private int mSampleIndex = 0;
 
 
-    public MockMesonetDataController (MesonetModel inMesonetModel,
-                                      Preferences inPreferences)
+    public MockMesonetDataController (Preferences inPreferences,
+                                      SiteSelectionInterfaces.SelectSiteController inSelectSiteController)
     {
-        super(inMesonetModel,
-              inPreferences);
+        super(null,
+              inPreferences,
+                inSelectSiteController);
     }
 
 

@@ -6,6 +6,37 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColorPrimary">@color/textColorPrimary</item>
+        <item name="android:textColorSecondaryInverse">@color/textColorPrimary</item>
+        <item name="android:textColorHint">@color/textColorPrimary</item>
+        <item name="android:editTextColor">@color/textColorPrimary</item>
+        <item name="android:actionOverflowButtonStyle">@style/OverflowButtonStyle</item>
+        <item name="android:actionOverflowMenuStyle">@style/OverflowMenuStyle</item>
+        <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
+    </style>
+
+    <style name="OverflowButtonStyle" parent="Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:tint">@color/whiteTextColor</item>
+    </style>
+
+    <style name="OverflowMenuStyle" parent="Widget.AppCompat.PopupMenu.Overflow">
+        <item name="android:itemBackground">@color/colorPrimary</item>
+        <item name="android:popupBackground">@color/colorPrimary</item>
+    </style>
+
+    <style name="SearchViewStyle" parent="Widget.AppCompat.Light.SearchView">
+        <item name="android:searchIcon">@drawable/nfg</item>
+        <item name="android:editTextStyle">@style/SearchViewEditTextStyle</item>
+    </style>
+
+    <style name="SearchViewEditTextStyle" parent="Widget.AppCompat.EditText">
+        <item name="android:editTextColor">@color/whiteTextColor</item>
+        <item name="android:background">@color/whiteTextColor</item>
+    </style>
+
+    <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
+        <item name="spinBars">true</item>
+        <item name="color">@android:color/white</item>
     </style>
 
 </resources>

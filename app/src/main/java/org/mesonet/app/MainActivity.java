@@ -1,29 +1,29 @@
 package org.mesonet.app;
 
-import android.app.Activity;
 import android.app.FragmentTransaction;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toolbar;
 
 import org.mesonet.app.databinding.MainActivityBinding;
-import org.mesonet.app.mesonetdata.MesonetFragment;
+import org.mesonet.app.site.SiteOverviewFragment;
 import org.mesonet.app.userdata.PreferenceObservable;
 import org.mesonet.app.userdata.Preferences;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Observable;
 
-
-
-public class MainActivity extends Activity implements Toolbar.OnMenuItemClickListener
+public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener
 {
     private MainActivityBinding mBinding;
     private Preferences mPreferences;
     private PreferenceObservable mPreferenceObservable;
     private Preferences.UnitPreference mUnitPreference = Preferences.UnitPreference.kMetric;
+
+    private ActionBarDrawerToggle mActionBarDrawerToggle;
 
 
     @Override
@@ -33,8 +33,32 @@ public class MainActivity extends Activity implements Toolbar.OnMenuItemClickLis
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity);
 
-        mBinding.toolBar.inflateMenu(R.menu.main_menu);
-        mBinding.toolBar.setOnMenuItemClickListener(this);
+        setSupportActionBar(mBinding.toolBar);
+
+        ActionBar actionBar = getSupportActionBar();
+
+        if(actionBar != null)
+        {
+            mActionBarDrawerToggle = new ActionBarDrawerToggle(this, mBinding.drawer, mBinding.toolBar, R.string.app_name, R.string.app_name)
+            {
+                @Override
+                public void onDrawerClosed(View drawerView) {
+                    syncState();
+                }
+
+                @Override
+                public void onDrawerOpened(View drawerView) {
+                    syncState();
+                }
+            };
+
+            mActionBarDrawerToggle.setDrawerIndicatorEnabled(true);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setHomeButtonEnabled(true);
+
+            mBinding.drawer.addDrawerListener(mActionBarDrawerToggle);
+            mActionBarDrawerToggle.syncState();
+        }
 
         mPreferenceObservable = new PreferenceObservable();
 
@@ -54,7 +78,7 @@ public class MainActivity extends Activity implements Toolbar.OnMenuItemClickLis
 
         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
         fragmentTransaction.add(R.id.fragmentLayout,
-                MesonetFragment.NewInstance(ControllerCreator.GetInstance().GetMesonetDataController("NRMN", mPreferences)));
+                SiteOverviewFragment.NewInstance(ControllerCreator.GetInstance().GetMesonetSiteDataController(), mPreferences));
         fragmentTransaction.commit();
     }
 
@@ -63,8 +87,11 @@ public class MainActivity extends Activity implements Toolbar.OnMenuItemClickLis
     @Override
     public void onDestroy()
     {
+        mBinding.drawer.removeDrawerListener(mActionBarDrawerToggle);
+
         mPreferences = null;
         mPreferenceObservable = null;
+        mActionBarDrawerToggle = null;
 
         super.onDestroy();
     }

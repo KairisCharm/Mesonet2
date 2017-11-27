@@ -6,22 +6,25 @@ import org.mesonet.app.userdata.Preferences;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
 
-public class MesonetDataController extends Observable implements MesonetData, Observer
+public class MesonetDataController extends Observable implements MesonetData, SiteSelectionInterfaces.SelectSiteListener, Observer
 {
     private MesonetModel mMesonetModel;
     private Preferences mPreferences;
     private boolean mUpdating = false;
+    private SiteSelectionInterfaces.SelectSiteController mSiteSelectController;
 
 
 
-    public MesonetDataController(MesonetModel inMesonetModel, Preferences inPreferences)
+    public MesonetDataController(MesonetModel inMesonetModel, Preferences inPreferences, SiteSelectionInterfaces.SelectSiteController inSelectSiteController)
     {
         mMesonetModel = inMesonetModel;
         mPreferences = inPreferences;
+        mSiteSelectController = inSelectSiteController;
 
         if(mPreferences != null)
         {
@@ -281,5 +284,20 @@ public class MesonetDataController extends Observable implements MesonetData, Ob
     public void update(Observable observable, Object o) {
         setChanged();
         notifyObservers();
+    }
+
+
+
+    public void StartSiteSearch(Map<String, String> inKeysToDisplayText)
+    {
+        if(mSiteSelectController != null)
+            mSiteSelectController.StartSelection(this, inKeysToDisplayText);
+    }
+
+
+
+    @Override
+    public void SetResult(String inResult) {
+
     }
 }

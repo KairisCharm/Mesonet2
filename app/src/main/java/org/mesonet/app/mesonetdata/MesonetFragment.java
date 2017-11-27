@@ -22,10 +22,10 @@ public class MesonetFragment extends Fragment
 
 
 
-    public static MesonetFragment NewInstance(MesonetDataController inController)
+    public static MesonetFragment NewInstance(MesonetDataController inMesonetDataController)
     {
         MesonetFragment fragment = new MesonetFragment();
-        fragment.mDataController = inController;
+        fragment.mDataController = inMesonetDataController;
 
         return fragment;
     }
@@ -40,9 +40,6 @@ public class MesonetFragment extends Fragment
         mObserver = new Observer() {
             @Override
             public void update(Observable observable, Object o) {
-                // not using databinding here because AutoSizing TextViews don't work with databound text
-//                mBinding.currentTair.setText(mBinding.getUiController().GetAirTempString());
-//                mBinding.readingTime.setText(mBinding.getUiController().GetTimeString());
                 mBinding.invalidateAll();
             }
         };

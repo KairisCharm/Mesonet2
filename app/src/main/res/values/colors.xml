@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">@color/mesoBackground</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#1c2893</color>
+    <color name="colorPrimaryDark">#000364</color>
+    <color name="colorPrimaryLight">#5951c4</color>
+    <color name="colorAccent">@color/mesoBackground</color>
+    <color name="textColorPrimary">@color/whiteTextColor</color>
+    <color name="textColorSecondaryInverse">@color/whiteTextColor</color>
 
-    <color name="mesoBackground">#3A5999</color>
-    <color name="blueTextColor">#aec2ff</color>
+    <color name="mesoBackground">@color/colorPrimaryLight</color>
+    <color name="blueTextColor">#c0bdE7</color>
     <color name="whiteTextColor">#fffffd</color>
-    <color name="toolbarBackgroundColor">@android:color/black</color>
+    <color name="toolbarBackgroundColor">@color/colorPrimary</color>
+    <color name="navBackground">#0E157B</color>
 </resources>

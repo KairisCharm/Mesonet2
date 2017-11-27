@@ -8,148 +8,187 @@
             type="org.mesonet.app.mesonetdata.MesonetUIController"/>
     </data>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
-        android:weightSum="2"
-        android:orientation="horizontal"
-        android:baselineAligned="false"
-        android:background="@color/mesoBackground"
-        tools:context=".mesonetdata.MesonetFragment"
-        android:paddingStart="36dp"
-        android:paddingEnd="36dp">
-
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
-            android:baselineAligned="false">
+            android:background="@color/mesoBackground"
+            android:paddingStart="36dp"
+            android:paddingEnd="36dp"
+            tools:context=".MainActivity">
 
-            <TextView
-                android:id="@+id/readingTime"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="20dp"
-                android:autoSizeTextType="uniform"
-                app:autoSizeTextType="uniform"
-                android:textColor="@color/blueTextColor"
-                android:text="@{uiController.GetTimeString()}"
-                tools:text="Observed at 9:40 PM"/>
-
-            <TextView
-                android:id="@+id/current_tair"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="140dp"
-                android:layout_marginTop="10.5dp"
-                android:text="@{uiController.GetAirTempString()}"
-                android:textColor="@color/whiteTextColor"
-                app:autoSizeTextType="uniform"
-                android:autoSizeTextType="uniform"
-                android:maxLines="1"
-                tools:text="46°" />
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:baselineAligned="false"
+                tools:context=".mesonetdata.MesonetFragment">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:layout_marginBottom="-8dp"
-                android:autoSizeTextType="uniform"
-                app:autoSizeTextType="uniform"
-                android:text="@string/current_feelsLike"
-                android:textColor="@color/blueTextColor"/>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:baselineAligned="false">
 
-            <TextView
-                android:id="@+id/current_feelsLike"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:textColor="@color/whiteTextColor"
-                android:autoSizeTextType="uniform"
-                app:autoSizeTextType="uniform"
-                android:text="@{uiController.GetApparentTempString()}"
-                tools:text="45°F"/>
+                    <TextView
+                        android:id="@+id/readingTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="20dp"
+                        android:autoSizeTextType="uniform"
+                        app:autoSizeTextType="uniform"
+                        android:textColor="@color/blueTextColor"
+                        android:text="@{uiController.GetTimeString()}"
+                        android:textAllCaps="true"
+                        android:textStyle="bold"
+                        tools:text="Observed at 9:40 PM"/>
 
+                    <TextView
+                        android:id="@+id/current_tair"
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp"
+                        android:text="@{uiController.GetAirTempString()}"
+                        android:textColor="@color/whiteTextColor"
+                        app:autoSizeTextType="uniform"
+                        android:autoSizeTextType="uniform"
+                        android:maxLines="1"
+                        tools:text="46°" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="24dp"
+                        android:autoSizeTextType="uniform"
+                        app:autoSizeTextType="uniform"
+                        android:text="@string/current_feelsLike"
+                        android:textColor="@color/blueTextColor"
+                        android:textAllCaps="true"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/current_feelsLike"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:layout_marginBottom="14dp"
+                        android:textColor="@color/whiteTextColor"
+                        android:autoSizeTextType="uniform"
+                        app:autoSizeTextType="uniform"
+                        android:text="@{uiController.GetApparentTempString()}"
+                        tools:text="45°F"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical"
+                    android:orientation="vertical"
+                    android:baselineAligned="false"
+                    android:paddingStart="36dp">
+
+                    <ImageButton
+                        android:id="@+id/meteogram_btn"
+                        android:layout_width="140dp"
+                        android:layout_height="40dp"
+                        android:layout_marginBottom="12dp"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitStart"
+                        android:background="#153679"/>
+
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="22dp"
+                            android:autoSizeTextType="uniform"
+                            app:autoSizeTextType="uniform"
+                            android:textAllCaps="true"
+                            android:textStyle="bold"
+                            android:text="@string/current_dewpoint"
+                            android:textColor="@color/blueTextColor" />
+
+                        <TextView
+                            android:id="@+id/current_dewpoint"
+                            android:layout_width="match_parent"
+                            android:layout_height="36dp"
+                            android:textColor="@color/whiteTextColor"
+                            android:autoSizeTextType="uniform"
+                            app:autoSizeTextType="uniform"
+                            android:text="@{uiController.GetDewPointString()}"
+                            tools:text="45°F"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="22dp"
+                            android:layout_marginTop="10dp"
+                            android:autoSizeTextType="uniform"
+                            app:autoSizeTextType="uniform"
+                            android:textStyle="bold"
+                            android:textAllCaps="true"
+                            android:text="@string/current_wind"
+                            android:textColor="@color/blueTextColor"/>
+
+                        <TextView
+                            android:id="@+id/current_wind"
+                            android:layout_width="match_parent"
+                            android:layout_height="36dp"
+                            android:textColor="@color/whiteTextColor"
+                            android:autoSizeTextType="uniform"
+                            app:autoSizeTextType="uniform"
+                            android:text="@{uiController.GetWindString()}"
+                            tools:text="W at 4 MPH"/>
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="22dp"
+                            android:layout_marginTop="10dp"
+                            android:text="@string/current_24hrRain"
+                            android:textColor="@color/blueTextColor"
+                            android:textAllCaps="true"
+                            android:textStyle="bold"
+                            android:autoSizeTextType="uniform"
+                            app:autoSizeTextType="uniform"/>
+
+                        <TextView
+                            android:id="@+id/current_24hrRain"
+                            android:layout_width="match_parent"
+                            android:layout_height="36dp"
+                            android:textColor="@color/whiteTextColor"
+                            android:text="@{uiController.Get24HrRainfallString()}"
+                            android:autoSizeTextType="uniform"
+                            app:autoSizeTextType="uniform"
+                            tools:text="0.00 in"/>
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center_vertical"
-            android:orientation="vertical"
-            android:baselineAligned="false"
-            android:paddingStart="36dp">
-
-            <ImageButton
-                android:id="@+id/meteogram_btn"
-                android:layout_width="224dp"
-                android:layout_height="40dp"
-                android:layout_marginBottom="12dp"
-                android:adjustViewBounds="true"
-                android:scaleType="fitStart"
-                android:background="@android:color/holo_blue_dark"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:layout_marginBottom="-2dp"
-                android:autoSizeTextType="uniform"
-                app:autoSizeTextType="uniform"
-                android:text="@string/current_dewpoint"
-                android:textColor="@color/blueTextColor" />
-
-            <TextView
-                android:id="@+id/current_dewpoint"
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:textColor="@color/whiteTextColor"
-                android:autoSizeTextType="uniform"
-                app:autoSizeTextType="uniform"
-                android:text="@{uiController.GetDewPointString()}"
-                tools:text="45°F"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:layout_marginBottom="-2dp"
-                android:layout_marginTop="16dp"
-                android:autoSizeTextType="uniform"
-                app:autoSizeTextType="uniform"
-                android:text="@string/current_wind"
-                android:textColor="@color/blueTextColor"/>
-
-            <TextView
-                android:id="@+id/current_wind"
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:textColor="@color/whiteTextColor"
-                android:autoSizeTextType="uniform"
-                app:autoSizeTextType="uniform"
-                android:text="@{uiController.GetWindString()}"
-                tools:text="WNW at 44 MPH"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="-2dp"
-                android:text="@string/current_24hrRain"
-                android:textColor="@color/blueTextColor"
-                android:autoSizeTextType="uniform"
-                app:autoSizeTextType="uniform"/>
-
-            <TextView
-                android:id="@+id/current_24hrRain"
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:textColor="@color/whiteTextColor"
-                android:text="@{uiController.Get24HrRainfallString()}"
-                android:autoSizeTextType="uniform"
-                app:autoSizeTextType="uniform"
-                tools:text="0.00 in"/>
-
-        </LinearLayout>
-
     </LinearLayout>
-
 </layout>
