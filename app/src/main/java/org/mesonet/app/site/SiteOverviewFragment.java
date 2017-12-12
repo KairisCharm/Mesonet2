@@ -7,7 +7,6 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.databinding.DataBindingUtil;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -16,7 +15,6 @@ import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 
-import org.mesonet.app.ControllerCreator;
 import org.mesonet.app.R;
 import org.mesonet.app.databinding.SiteOverviewFragmentBinding;
 import org.mesonet.app.filterlist.FilterListFragment;
@@ -24,29 +22,40 @@ import org.mesonet.app.mesonetdata.MesonetDataController;
 import org.mesonet.app.mesonetdata.MesonetFragment;
 import org.mesonet.app.mesonetdata.MesonetSiteDataController;
 import org.mesonet.app.mesonetdata.SiteSelectionInterfaces;
+import org.mesonet.app.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
 import org.mesonet.app.userdata.Preferences;
 
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.inject.Inject;
 
+import dagger.Module;
+import dagger.Provides;
+
+
+@Module
 public class SiteOverviewFragment extends Fragment implements SiteSelectionInterfaces.SelectSiteController, FilterListFragment.FilterListCloser, Observer
 {
     private SiteOverviewFragmentBinding mBinding;
-    private Preferences mPreferences;
-    private MesonetSiteDataController mSiteDataController;
+
+    @Inject
+    Preferences mPreferences;
+
+    @Inject
+    MesonetSiteDataController mSiteDataController;
 
 
 
-    public static SiteOverviewFragment NewInstance(MesonetSiteDataController inSiteDataController, Preferences inPreferences)
+    @Override
+    public void onCreate(Bundle inSavedInstanceState)
     {
-        SiteOverviewFragment fragment = new SiteOverviewFragment();
-        fragment.mPreferences = inPreferences;
-        fragment.mSiteDataController = inSiteDataController;
+        super.onCreate(inSavedInstanceState);
 
-        return fragment;
+        DaggerMesonetDataComponent.builder().siteOverviewFragment(this).build().Inject(this);
     }
+
 
 
     @Override
@@ -54,12 +63,10 @@ public class SiteOverviewFragment extends Fragment implements SiteSelectionInter
     {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.site_overview_fragment, inParent, false);
 
-        MesonetDataController mesonetDataController = ControllerCreator.GetInstance().GetMesonetDataController("NRMN", mPreferences, this);
-
         FragmentManager fragmentManager = getChildFragmentManager();
         FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.add(R.id.mesonetDetailContainer, MesonetFragment.NewInstance(mesonetDataController));
-        transaction.add(R.id.siteSelection, FilterListFragment.NewInstance(mesonetDataController, mSiteDataController.GetSiteList(), this));
+        transaction.add(R.id.mesonetDetailContainer, new MesonetFragment());
+        transaction.add(R.id.siteSelection, new FilterListFragment());
         transaction.commit();
 
         if(mSiteDataController != null)
@@ -130,7 +137,7 @@ public class SiteOverviewFragment extends Fragment implements SiteSelectionInter
 
 
     @Override
-    public void StartSelection(SiteSelectionInterfaces.SelectSiteListener inListener, Map<String, String> inKeysToNames) {
+    public void StartSelection() {
 
     }
 
@@ -140,15 +147,29 @@ public class SiteOverviewFragment extends Fragment implements SiteSelectionInter
 
     }
 
-
-
-    private void PopulateSiteList()
-    {
-
-    }
-
     @Override
     public void Close() {
         RevealView(mBinding.siteListFab);
+    }
+
+
+
+    @Provides
+    public Map<String, String> GetFilterKeyTextMap() {
+        return null;
+    }
+
+
+    @Provides
+    public FilterListFragment.FilterListCloser GetFilterListCloser()
+    {
+        return this;
+    }
+
+
+    @Provides
+    public SiteSelectionInterfaces.SelectSiteController GetSelectSiteController()
+    {
+        return this;
     }
 }

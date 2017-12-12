@@ -2,6 +2,7 @@ package org.mesonet.app.mesonetdata;
 
 import org.mesonet.app.formulas.UnitConverter;
 import org.mesonet.app.userdata.Preferences;
+import org.mesonet.app.userdata.PreferencesObservable;
 
 import java.util.Date;
 import java.util.ArrayList;
@@ -10,29 +11,31 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.annotation.OverridingMethodsMustInvokeSuper;
+import javax.inject.Inject;
+
 
 public class MesonetDataController extends Observable implements MesonetData, SiteSelectionInterfaces.SelectSiteListener, Observer
 {
-    private MesonetModel mMesonetModel;
-    private Preferences mPreferences;
+    MesonetModel mMesonetModel;
+
+    @Inject
+    Preferences mPreferences;
+
+    @Inject
+    PreferencesObservable mObservable;
+
     private boolean mUpdating = false;
-    private SiteSelectionInterfaces.SelectSiteController mSiteSelectController;
+
+    @Inject
+    SiteSelectionInterfaces.SelectSiteController mSiteSelectController;
 
 
 
-    public MesonetDataController(MesonetModel inMesonetModel, Preferences inPreferences, SiteSelectionInterfaces.SelectSiteController inSelectSiteController)
+    @Inject
+    public MesonetDataController()
     {
-        mMesonetModel = inMesonetModel;
-        mPreferences = inPreferences;
-        mSiteSelectController = inSelectSiteController;
-
-        if(mPreferences != null)
-        {
-            Observable observable = mPreferences.GetObservable();
-
-            if(observable != null)
-                observable.addObserver(this);
-        }
+        mObservable.addObserver(this);
     }
 
 
@@ -284,14 +287,6 @@ public class MesonetDataController extends Observable implements MesonetData, Si
     public void update(Observable observable, Object o) {
         setChanged();
         notifyObservers();
-    }
-
-
-
-    public void StartSiteSearch(Map<String, String> inKeysToDisplayText)
-    {
-        if(mSiteSelectController != null)
-            mSiteSelectController.StartSelection(this, inKeysToDisplayText);
     }
 
 

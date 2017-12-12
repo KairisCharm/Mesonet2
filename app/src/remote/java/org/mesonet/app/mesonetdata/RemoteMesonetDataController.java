@@ -14,11 +14,9 @@ public class RemoteMesonetDataController extends MesonetDataController
 
 
 
-    public RemoteMesonetDataController (MesonetModel inMesonetModel,
-                                        Preferences inPreferences)
+    public RemoteMesonetDataController ()
     {
-        super(inMesonetModel,
-              inPreferences);
+        super();
     }
 
 

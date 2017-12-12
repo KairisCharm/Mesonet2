@@ -9,25 +9,28 @@ import android.view.ViewGroup;
 
 import org.mesonet.app.R;
 import org.mesonet.app.databinding.MesonetFragmentBinding;
+import org.mesonet.app.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
 
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.inject.Inject;
+
 
 public class MesonetFragment extends Fragment
 {
-    private MesonetDataController mDataController;
+    @Inject
+    MesonetDataController mDataController;
     private MesonetFragmentBinding mBinding;
-    private Observer mObserver;
+    Observer mObserver;
 
 
 
-    public static MesonetFragment NewInstance(MesonetDataController inMesonetDataController)
+    public MesonetFragment()
     {
-        MesonetFragment fragment = new MesonetFragment();
-        fragment.mDataController = inMesonetDataController;
+        super();
 
-        return fragment;
+        DaggerMesonetDataComponent.builder().build().Inject(this);
     }
 
 

@@ -11,19 +11,44 @@ import android.view.View;
 import android.widget.Toolbar;
 
 import org.mesonet.app.databinding.MainActivityBinding;
+import org.mesonet.app.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
+import org.mesonet.app.mesonetdata.dependencyinjection.MesonetDataComponent;
 import org.mesonet.app.site.SiteOverviewFragment;
-import org.mesonet.app.userdata.PreferenceObservable;
 import org.mesonet.app.userdata.Preferences;
+import org.mesonet.app.userdata.PreferencesObservable;
+import org.mesonet.app.userdata.dependencyinjection.PreferencesComponent;
+
+import java.util.Observable;
+
+import javax.inject.Inject;
+
+import dagger.Module;
+import dagger.Provides;
 
 
-public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener
+@Module
+public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener, Preferences
 {
     private MainActivityBinding mBinding;
-    private Preferences mPreferences;
-    private PreferenceObservable mPreferenceObservable;
     private Preferences.UnitPreference mUnitPreference = Preferences.UnitPreference.kMetric;
 
     private ActionBarDrawerToggle mActionBarDrawerToggle;
+
+
+
+    @Inject
+    PreferencesObservable mPreferencesObservable;
+
+
+
+    @Inject
+    public MainActivity()
+    {
+        super();
+
+        MesonetDataComponent component = DaggerMesonetDataComponent.builder().mainActivity(this).preferencesComponent(new P).build();
+    }
+
 
 
     @Override
@@ -60,25 +85,8 @@ public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuIte
             mActionBarDrawerToggle.syncState();
         }
 
-        mPreferenceObservable = new PreferenceObservable();
-
-        mPreferences = new Preferences() {
-            @Override
-            public UnitPreference GetUnitPreference() {
-                return mUnitPreference;
-            }
-
-
-
-            @Override
-            public java.util.Observable GetObservable() {
-                return mPreferenceObservable;
-            }
-        };
-
         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-        fragmentTransaction.add(R.id.fragmentLayout,
-                SiteOverviewFragment.NewInstance(ControllerCreator.GetInstance().GetMesonetSiteDataController(), mPreferences));
+        fragmentTransaction.add(R.id.fragmentLayout, new SiteOverviewFragment());
         fragmentTransaction.commit();
     }
 
@@ -89,8 +97,6 @@ public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuIte
     {
         mBinding.drawer.removeDrawerListener(mActionBarDrawerToggle);
 
-        mPreferences = null;
-        mPreferenceObservable = null;
         mActionBarDrawerToggle = null;
 
         super.onDestroy();
@@ -105,14 +111,29 @@ public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuIte
         {
             case R.id.metricUnits:
                 mUnitPreference = Preferences.UnitPreference.kMetric;
-                mPreferenceObservable.notifyObservers();
+                mPreferencesObservable.notifyObservers();
                 break;
             case R.id.imperialUnits:
                 mUnitPreference = Preferences.UnitPreference.kImperial;
-                mPreferenceObservable.notifyObservers();
+                mPreferencesObservable.notifyObservers();
                 break;
         }
 
         return false;
+    }
+
+
+
+    @Override
+    public UnitPreference GetUnitPreference() {
+        return mUnitPreference;
+    }
+
+
+
+    @Provides
+    Preferences GetPreferences()
+    {
+        return this;
     }
 }

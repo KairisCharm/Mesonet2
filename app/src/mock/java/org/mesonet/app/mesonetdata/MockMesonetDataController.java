@@ -4,6 +4,7 @@ import android.os.Handler;
 
 import org.mesonet.app.userdata.Preferences;
 
+import javax.inject.Inject;
 
 
 public class MockMesonetDataController extends MesonetDataController
@@ -82,12 +83,10 @@ public class MockMesonetDataController extends MesonetDataController
     private int mSampleIndex = 0;
 
 
-    public MockMesonetDataController (Preferences inPreferences,
-                                      SiteSelectionInterfaces.SelectSiteController inSelectSiteController)
+    @Inject
+    public MockMesonetDataController ()
     {
-        super(null,
-              inPreferences,
-                inSelectSiteController);
+        super();
     }
 
 

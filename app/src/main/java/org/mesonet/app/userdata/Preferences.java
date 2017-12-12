@@ -11,5 +11,4 @@ public interface Preferences
 
 
     UnitPreference GetUnitPreference();
-    Observable GetObservable();
 }

@@ -1,6 +1,7 @@
 package org.mesonet.app.mesonetdata;
 
 
+import javax.inject.Inject;
 
 public class MockMesonetSiteDataController extends MesonetSiteDataController
 {
@@ -8,6 +9,7 @@ public class MockMesonetSiteDataController extends MesonetSiteDataController
 
 
 
+    @Inject
     public MockMesonetSiteDataController()
     {
         SetData(kTestData);

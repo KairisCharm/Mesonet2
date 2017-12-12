@@ -5,7 +5,9 @@ import android.content.res.ColorStateList;
 import android.databinding.DataBindingUtil;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -13,9 +15,13 @@ import org.mesonet.app.BasicViewHolder;
 import org.mesonet.app.R;
 import org.mesonet.app.baseclasses.RecyclerViewAdapter;
 import org.mesonet.app.databinding.FilterListFragmentBinding;
+import org.mesonet.app.mesonetdata.MesonetData;
+import org.mesonet.app.mesonetdata.MesonetDataController;
 import org.mesonet.app.mesonetdata.SiteSelectionInterfaces;
 
 import java.util.Map;
+
+import javax.inject.Inject;
 
 import kotlin.Pair;
 
@@ -23,21 +29,15 @@ import kotlin.Pair;
 public class FilterListFragment extends Fragment
 {
     FilterListFragmentBinding mBinding;
-    SiteSelectionInterfaces.SelectSiteListener mListener;
+
+    @Inject
+    MesonetData mMesonetDataController;
+
+    @Inject
     Map<String, String> mKeysToDisplayText;
+
+    @Inject
     FilterListCloser mCloser;
-
-
-
-    public static FilterListFragment NewInstance(SiteSelectionInterfaces.SelectSiteListener inListener, Map<String, String> inKeysToDisplayText, FilterListCloser inCloser)
-    {
-        FilterListFragment fragment = new FilterListFragment();
-        fragment.mListener = inListener;
-        fragment.mKeysToDisplayText = inKeysToDisplayText;
-        fragment.mCloser = inCloser;
-
-        return fragment;
-    }
 
 
 
@@ -56,6 +56,13 @@ public class FilterListFragment extends Fragment
             @Override
             public void onClick(View view) {
                 mCloser.Close();
+            }
+        });
+
+        mBinding.siteSelectionToolbar.getMenu().findItem(R.id.nearestLocation).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                return false;
             }
         });
 
@@ -109,7 +116,7 @@ public class FilterListFragment extends Fragment
 //
 //    public void Show(FragmentManager inSupportFragmentManager, SiteSelectionInterfaces.SelectSiteListener inListener, Map<String, String> inKeysToDisplayText)
 //    {
-//        mListener = inListener;
+//        mMesonetDataController = inListener;
 //        mKeysToDisplayText = inKeysToDisplayText;
 //        show(inSupportFragmentManager, getTag());
 //    }
