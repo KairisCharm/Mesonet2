@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.inject.Inject;
 
 
 public abstract class MesonetSiteDataController extends Observable implements Observer {

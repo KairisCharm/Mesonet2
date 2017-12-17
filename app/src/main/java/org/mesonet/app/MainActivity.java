@@ -1,9 +1,10 @@
 package org.mesonet.app;
 
+import android.app.ActionBar;
+import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
@@ -11,56 +12,44 @@ import android.view.View;
 import android.widget.Toolbar;
 
 import org.mesonet.app.databinding.MainActivityBinding;
-import org.mesonet.app.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
-import org.mesonet.app.mesonetdata.dependencyinjection.MesonetDataComponent;
+//import org.mesonet.app.dependencyinjection.DaggerMainActivityComponent;
 import org.mesonet.app.site.SiteOverviewFragment;
 import org.mesonet.app.userdata.Preferences;
 import org.mesonet.app.userdata.PreferencesObservable;
-import org.mesonet.app.userdata.dependencyinjection.PreferencesComponent;
-
-import java.util.Observable;
 
 import javax.inject.Inject;
 
-import dagger.Module;
-import dagger.Provides;
+import dagger.android.AndroidInjection;
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasFragmentInjector;
 
 
-@Module
-public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener, Preferences
+public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener, Preferences, HasFragmentInjector
 {
     private MainActivityBinding mBinding;
     private Preferences.UnitPreference mUnitPreference = Preferences.UnitPreference.kMetric;
 
     private ActionBarDrawerToggle mActionBarDrawerToggle;
 
-
-
-    @Inject
     PreferencesObservable mPreferencesObservable;
 
-
-
     @Inject
-    public MainActivity()
-    {
-        super();
-
-        MesonetDataComponent component = DaggerMesonetDataComponent.builder().mainActivity(this).preferencesComponent(new P).build();
-    }
+    DispatchingAndroidInjector<Fragment> mFragmentInjector;
 
 
 
     @Override
     public void onCreate(Bundle inSavedInstanceState)
     {
+        AndroidInjection.inject(this);
         super.onCreate(inSavedInstanceState);
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity);
 
         setSupportActionBar(mBinding.toolBar);
 
-        ActionBar actionBar = getSupportActionBar();
+        ActionBar actionBar = getActionBar();
 
         if(actionBar != null)
         {
@@ -131,9 +120,8 @@ public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuIte
 
 
 
-    @Provides
-    Preferences GetPreferences()
-    {
-        return this;
+    @Override
+    public AndroidInjector<Fragment> fragmentInjector() {
+        return mFragmentInjector;
     }
 }

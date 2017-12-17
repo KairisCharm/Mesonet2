@@ -1,11 +1,13 @@
 package org.mesonet.app.filterlist;
 
-import android.app.Fragment;
-import android.content.res.ColorStateList;
+
+import android.app.Activity;
+import android.content.Context;
 import android.databinding.DataBindingUtil;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,14 +17,12 @@ import org.mesonet.app.BasicViewHolder;
 import org.mesonet.app.R;
 import org.mesonet.app.baseclasses.RecyclerViewAdapter;
 import org.mesonet.app.databinding.FilterListFragmentBinding;
-import org.mesonet.app.mesonetdata.MesonetData;
-import org.mesonet.app.mesonetdata.MesonetDataController;
-import org.mesonet.app.mesonetdata.SiteSelectionInterfaces;
 
 import java.util.Map;
 
 import javax.inject.Inject;
 
+import dagger.android.AndroidInjection;
 import kotlin.Pair;
 
 
@@ -30,14 +30,33 @@ public class FilterListFragment extends Fragment
 {
     FilterListFragmentBinding mBinding;
 
-    @Inject
-    MesonetData mMesonetDataController;
-
-    @Inject
     Map<String, String> mKeysToDisplayText;
 
     @Inject
-    FilterListCloser mCloser;
+    FilterListCloser mFilterListCloser;
+
+
+
+    @Override
+    public void onAttach(Context inContext)
+    {
+        AndroidInjection.inject(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            super.onAttach(inContext);
+        }
+//        DaggerFilterListComponent.builder().build();
+        //        DaggerMesonetDataComponent.builder().siteOverviewFragment(this).build().Inject(this);
+    }
+
+
+
+    @Override
+    public void onAttach(Activity inActivity)
+    {
+        AndroidInjection.inject(this);
+//        onAttach((Context)inActivity);
+        super.onAttach(inActivity);
+    }
 
 
 
@@ -47,17 +66,19 @@ public class FilterListFragment extends Fragment
         mBinding = DataBindingUtil.inflate(inflater, R.layout.filter_list_fragment, container, false);
 
         mBinding.searchList.setAdapter(new FilterListAdapter());
-        mBinding.searchList.SetItems(new MapToListOfPairs().Create(mKeysToDisplayText));
+//        mBinding.searchList.SetItems(new MapToListOfPairs().Create(mKeysToDisplayText));
 
         Drawable closeDrawable = getResources().getDrawable(R.drawable.ic_close_white_36dp);
-        closeDrawable.setTint(getResources().getColor(R.color.blueTextColor, getActivity().getTheme()));
+
         mBinding.siteSelectionToolbar.setNavigationIcon(closeDrawable);
         mBinding.siteSelectionToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mCloser.Close();
+                mFilterListCloser.Close();
             }
         });
+
+        mBinding.siteSelectionToolbar.inflateMenu(R.menu.search_list_menu);
 
         mBinding.siteSelectionToolbar.getMenu().findItem(R.id.nearestLocation).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -66,13 +87,20 @@ public class FilterListFragment extends Fragment
             }
         });
 
-        mBinding.siteSelectionToolbar.inflateMenu(R.menu.search_list_menu);
 
-        mBinding.searchText.setTextColor(getResources().getColor(R.color.blueTextColor, getActivity().getTheme()));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            closeDrawable.setTint(getResources().getColor(R.color.blueTextColor, getActivity().getTheme()));
+            mBinding.searchText.setTextColor(getResources().getColor(R.color.blueTextColor, getActivity().getTheme()));
+        }
+        else
+        {
+            closeDrawable.setTint(getResources().getColor(R.color.blueTextColor));
+            mBinding.searchText.setTextColor(getResources().getColor(R.color.blueTextColor));
+        }
 
         return mBinding.getRoot();
     }
-
 
 
 //    private void revealView(View view) {

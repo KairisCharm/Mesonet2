@@ -1,4 +1,4 @@
-package org.mesonet.app.mesonetdata;
+package org.mesonet.app.site;
 
 
 import java.util.Map;

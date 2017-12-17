@@ -1,43 +1,26 @@
 package org.mesonet.app.mesonetdata;
 
 import org.mesonet.app.formulas.UnitConverter;
+//import org.mesonet.app.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
+import org.mesonet.app.site.SiteSelectionInterfaces;
 import org.mesonet.app.userdata.Preferences;
 import org.mesonet.app.userdata.PreferencesObservable;
 
 import java.util.Date;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.annotation.OverridingMethodsMustInvokeSuper;
-import javax.inject.Inject;
 
 
 public class MesonetDataController extends Observable implements MesonetData, SiteSelectionInterfaces.SelectSiteListener, Observer
 {
     MesonetModel mMesonetModel;
 
-    @Inject
     Preferences mPreferences;
 
-    @Inject
     PreferencesObservable mObservable;
 
     private boolean mUpdating = false;
-
-    @Inject
-    SiteSelectionInterfaces.SelectSiteController mSiteSelectController;
-
-
-
-    @Inject
-    public MesonetDataController()
-    {
-        mObservable.addObserver(this);
-    }
-
 
 
 

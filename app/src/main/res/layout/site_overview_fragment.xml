@@ -192,7 +192,7 @@
             app:layout_anchor="@id/mesoLayout"
             app:layout_anchorGravity="center_horizontal"
             android:src="@drawable/ic_view_list_white_36dp"
-            android:backgroundTint="@color/navBackground"/>
+            app:backgroundTint="@color/navBackground"/>
 
         <FrameLayout
             android:id="@+id/siteSelection"
