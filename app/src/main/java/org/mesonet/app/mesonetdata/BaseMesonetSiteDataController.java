@@ -1,6 +1,12 @@
 package org.mesonet.app.mesonetdata;
 
+import android.location.Location;
+import kotlin.Pair;
+
 import com.google.gson.Gson;
+
+import org.mesonet.app.dependencyinjection.PerChildFragment;
+import org.mesonet.app.dependencyinjection.PerFragment;
 
 import java.util.Map;
 import java.util.Observable;
@@ -8,7 +14,8 @@ import java.util.Observer;
 
 
 
-public abstract class MesonetSiteDataController extends Observable implements Observer {
+@PerFragment
+public abstract class BaseMesonetSiteDataController extends Observable implements Observer {
     MesonetSiteModel mMesonetSiteModel;
 
 
@@ -35,7 +42,7 @@ public abstract class MesonetSiteDataController extends Observable implements Ob
 
 
 
-    public Map<String, String> GetSiteList()
+    public Map<String, Pair<String, Location>> GetSiteList()
     {
         return new MesonetStidNamePair().Create(mMesonetSiteModel);
     }

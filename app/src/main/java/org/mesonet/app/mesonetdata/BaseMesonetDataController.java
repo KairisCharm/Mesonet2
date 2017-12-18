@@ -1,5 +1,9 @@
 package org.mesonet.app.mesonetdata;
 
+import org.mesonet.app.BasicViewHolder;
+import org.mesonet.app.dependencyinjection.PerActivity;
+import org.mesonet.app.dependencyinjection.PerChildFragment;
+import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.formulas.UnitConverter;
 //import org.mesonet.app.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
 import org.mesonet.app.site.SiteSelectionInterfaces;
@@ -10,17 +14,28 @@ import java.util.Date;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.inject.Inject;
 
 
-public class MesonetDataController extends Observable implements MesonetData, SiteSelectionInterfaces.SelectSiteListener, Observer
+@PerFragment
+public abstract class BaseMesonetDataController extends Observable implements MesonetData, SiteSelectionInterfaces.SelectSiteListener, Observer
 {
     MesonetModel mMesonetModel;
 
+    @Inject
     Preferences mPreferences;
 
+    @Inject
     PreferencesObservable mObservable;
 
     private boolean mUpdating = false;
+
+
+
+    public BaseMesonetDataController()
+    {
+//        mObservable.addObserver(this);
+    }
 
 
 
@@ -33,6 +48,7 @@ public class MesonetDataController extends Observable implements MesonetData, Si
 
     void SetData(MesonetModel inMesonetModel)
     {
+        mObservable.addObserver(this);
         mMesonetModel = inMesonetModel;
         setChanged();
         notifyObservers();
@@ -270,12 +286,5 @@ public class MesonetDataController extends Observable implements MesonetData, Si
     public void update(Observable observable, Object o) {
         setChanged();
         notifyObservers();
-    }
-
-
-
-    @Override
-    public void SetResult(String inResult) {
-
     }
 }

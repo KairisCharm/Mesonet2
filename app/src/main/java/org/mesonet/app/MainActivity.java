@@ -1,10 +1,12 @@
 package org.mesonet.app;
 
-import android.app.ActionBar;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
@@ -13,6 +15,7 @@ import android.widget.Toolbar;
 
 import org.mesonet.app.databinding.MainActivityBinding;
 //import org.mesonet.app.dependencyinjection.DaggerMainActivityComponent;
+import org.mesonet.app.dependencyinjection.BaseActivity;
 import org.mesonet.app.site.SiteOverviewFragment;
 import org.mesonet.app.userdata.Preferences;
 import org.mesonet.app.userdata.PreferencesObservable;
@@ -25,17 +28,19 @@ import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasFragmentInjector;
 
 
-public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuItemClickListener, Preferences, HasFragmentInjector
+public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, Preferences
 {
     private MainActivityBinding mBinding;
     private Preferences.UnitPreference mUnitPreference = Preferences.UnitPreference.kMetric;
 
     private ActionBarDrawerToggle mActionBarDrawerToggle;
 
-    PreferencesObservable mPreferencesObservable;
+    PreferencesObservable mPreferencesObservable = new PreferencesObservable();
+
+
 
     @Inject
-    DispatchingAndroidInjector<Fragment> mFragmentInjector;
+    public MainActivity(){}
 
 
 
@@ -49,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuIte
 
         setSupportActionBar(mBinding.toolBar);
 
-        ActionBar actionBar = getActionBar();
+        ActionBar actionBar = getSupportActionBar();
 
         if(actionBar != null)
         {
@@ -71,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuIte
             actionBar.setHomeButtonEnabled(true);
 
             mBinding.drawer.addDrawerListener(mActionBarDrawerToggle);
+            mBinding.drawerNavView.setNavigationItemSelectedListener(this);
             mActionBarDrawerToggle.syncState();
         }
 
@@ -94,8 +100,19 @@ public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuIte
 
 
     @Override
-    public boolean onMenuItemClick(MenuItem inMenuItem)
+    public UnitPreference GetUnitPreference() {
+        return mUnitPreference;
+    }
+
+
+
+    public PreferencesObservable GetPreferencesObservable()
     {
+        return mPreferencesObservable;
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem inMenuItem) {
         switch(inMenuItem.getItemId())
         {
             case R.id.metricUnits:
@@ -107,21 +124,6 @@ public class MainActivity extends AppCompatActivity implements Toolbar.OnMenuIte
                 mPreferencesObservable.notifyObservers();
                 break;
         }
-
         return false;
-    }
-
-
-
-    @Override
-    public UnitPreference GetUnitPreference() {
-        return mUnitPreference;
-    }
-
-
-
-    @Override
-    public AndroidInjector<Fragment> fragmentInjector() {
-        return mFragmentInjector;
     }
 }

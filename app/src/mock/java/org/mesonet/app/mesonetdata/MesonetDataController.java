@@ -1,13 +1,26 @@
 package org.mesonet.app.mesonetdata;
 
+import android.app.Activity;
+import android.content.Context;
 import android.os.Handler;
+import android.widget.Toast;
 
-import org.mesonet.app.userdata.Preferences;
+import org.mesonet.app.dependencyinjection.PerActivity;
+import org.mesonet.app.dependencyinjection.PerChildFragment;
+import org.mesonet.app.dependencyinjection.PerFragment;
+
+import javax.inject.Inject;
 
 
-
-public class MockMesonetDataController extends MesonetDataController
+@PerFragment
+public class MesonetDataController extends BaseMesonetDataController
 {
+    @Inject
+    Activity mContext;
+
+    @Inject
+    MesonetSiteDataController mSiteDataController;
+
     private static final String[] dataSamples = {
                                     // mildly chilly day
                                      "STNM=121," +
@@ -83,7 +96,8 @@ public class MockMesonetDataController extends MesonetDataController
 
 
 
-    public MockMesonetDataController ()
+    @Inject
+    public MesonetDataController ()
     {
         super();
     }
@@ -116,5 +130,13 @@ public class MockMesonetDataController extends MesonetDataController
                 }
             });
         }
+    }
+
+
+
+    @Override
+    public void SetResult(String inResult)
+    {
+        Toast.makeText(mContext, mSiteDataController.GetSiteList().get(inResult).getFirst(), Toast.LENGTH_LONG).show();
     }
 }

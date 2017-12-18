@@ -3,9 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
-        <variable
-            name="uiController"
-            type="org.mesonet.app.mesonetdata.MesonetUIController"/>
     </data>
 
     <android.support.design.widget.CoordinatorLayout

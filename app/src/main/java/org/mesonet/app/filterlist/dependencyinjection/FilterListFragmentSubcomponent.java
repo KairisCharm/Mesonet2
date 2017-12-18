@@ -1,8 +1,9 @@
-package org.mesonet.app.dependencyinjection;
+package org.mesonet.app.filterlist.dependencyinjection;
 
 import dagger.Subcomponent;
 import dagger.android.AndroidInjector;
 
+import org.mesonet.app.dependencyinjection.PerChildFragment;
 import org.mesonet.app.filterlist.FilterListFragment;
 
 

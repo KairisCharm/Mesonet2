@@ -1,5 +1,6 @@
-package org.mesonet.app.dependencyinjection;
+package org.mesonet.app.site.dependencyinjection;
 
+import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.site.SiteOverviewFragment;
 
 import dagger.Subcomponent;

@@ -1,23 +1,32 @@
 package org.mesonet.app.mesonetdata;
 
 import android.databinding.DataBindingUtil;
+import android.location.Location;
 import android.os.Bundle;
-import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import org.mesonet.app.R;
 import org.mesonet.app.databinding.MesonetFragmentBinding;
+import org.mesonet.app.dependencyinjection.BaseFragment;
 
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.inject.Inject;
 
 
-public class MesonetFragment extends Fragment
+public class MesonetFragment extends BaseFragment
 {
-//    MesonetDataController mDataController;
+    @Inject
+    MesonetDataController mDataController;
+
+    @Inject
+    MesonetUIController mUIController;
+
+
+
     private MesonetFragmentBinding mBinding;
     Observer mObserver;
 
@@ -35,8 +44,8 @@ public class MesonetFragment extends Fragment
             }
         };
 
-//        mDataController.addObserver(mObserver);
-//        mBinding.setUiController(new MesonetUIController(mDataController));
+        mDataController.addObserver(mObserver);
+        mBinding.setUiController(mUIController);
 
         return mBinding.getRoot();
     }
@@ -48,7 +57,7 @@ public class MesonetFragment extends Fragment
     {
         super.onResume();
 
-//        mDataController.StartUpdating();
+        mDataController.StartUpdating();
     }
 
 
@@ -56,7 +65,7 @@ public class MesonetFragment extends Fragment
     @Override
     public void onPause()
     {
-//        mDataController.StopUpdating();
+        mDataController.StopUpdating();
 
         super.onPause();
     }

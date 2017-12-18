@@ -3,11 +3,8 @@ package org.mesonet.app.site;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.Context;
 import android.databinding.DataBindingUtil;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,51 +16,22 @@ import android.view.ViewGroup;
 
 import org.mesonet.app.R;
 import org.mesonet.app.databinding.SiteOverviewFragmentBinding;
+import org.mesonet.app.dependencyinjection.BaseFragment;
 import org.mesonet.app.filterlist.FilterListFragment;
 //import org.mesonet.app.filterlist.dependencyinjection.DaggerFilterListComponent;
 import org.mesonet.app.mesonetdata.MesonetFragment;
+import org.mesonet.app.mesonetdata.BaseMesonetSiteDataController;
 //import org.mesonet.app.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.inject.Inject;
 
-import dagger.android.AndroidInjection;
-import dagger.android.AndroidInjector;
-import dagger.android.DispatchingAndroidInjector;
-import dagger.android.HasFragmentInjector;
 
-
-public class SiteOverviewFragment extends Fragment implements SiteSelectionInterfaces.SelectSiteController, FilterListFragment.FilterListCloser, HasFragmentInjector
+public class SiteOverviewFragment extends BaseFragment implements SiteSelectionInterfaces.SelectSiteController, FilterListFragment.FilterListCloser
 {
     private SiteOverviewFragmentBinding mBinding;
 
     @Inject
-    DispatchingAndroidInjector<Fragment> mChildFragmentInjector;
-
-
-
-    @Override
-    public void onAttach(Context inContext)
-    {
-        AndroidInjection.inject(this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            super.onAttach(inContext);
-        }
-//        DaggerFilterListComponent.builder().build();
-        //        DaggerMesonetDataComponent.builder().siteOverviewFragment(this).build().Inject(this);
-    }
-
-
-
-    @Override
-    public void onAttach(Activity inActivity)
-    {
-        AndroidInjection.inject(this);
-//        onAttach((Context)inActivity);
-        super.onAttach(inActivity);
-    }
+    BaseMesonetSiteDataController mMesonetSiteDataController;
 
 
 
@@ -154,14 +122,6 @@ public class SiteOverviewFragment extends Fragment implements SiteSelectionInter
 
 
 
-    public Map<String, String> GetFilterKeyTextMap() {
-        Map<String, String> filterKeys = new HashMap<>();
-        filterKeys.put("YRFC", "Your Face");
-        return filterKeys;
-    }
-
-
-
     public FilterListFragment.FilterListCloser GetFilterListCloser()
     {
         return this;
@@ -171,13 +131,5 @@ public class SiteOverviewFragment extends Fragment implements SiteSelectionInter
     public SiteSelectionInterfaces.SelectSiteController GetSelectSiteController()
     {
         return this;
-    }
-
-
-
-    @Override
-    public AndroidInjector<Fragment> fragmentInjector()
-    {
-        return mChildFragmentInjector;
     }
 }

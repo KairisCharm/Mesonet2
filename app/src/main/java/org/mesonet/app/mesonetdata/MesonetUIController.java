@@ -1,32 +1,34 @@
 package org.mesonet.app.mesonetdata;
 
+import org.mesonet.app.dependencyinjection.DaggerMesonetApplicationComponent;
+import org.mesonet.app.dependencyinjection.PerActivity;
+import org.mesonet.app.dependencyinjection.PerChildFragment;
 import org.mesonet.app.formulas.UnitConverter;
 import org.mesonet.app.userdata.Preferences;
 
 import java.util.Date;
 import java.text.SimpleDateFormat;
-import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
 import java.util.Locale;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.TimeZone;
 
+import javax.inject.Inject;
 
 
 //TODO TESTS!!!!!
+@PerChildFragment
 public class MesonetUIController extends Observable implements Observer
 {
-    private MesonetDataController mDataController;
+    MesonetDataController mDataController;
 
 
 
-    public MesonetUIController(MesonetDataController inDataController)
+    @Inject
+    public MesonetUIController(MesonetDataController inMesonetDataController)
     {
-        mDataController = inDataController;
-
-        if(mDataController != null)
-            mDataController.addObserver(this);
+        mDataController = inMesonetDataController;
+        mDataController.addObserver(this);
     }
 
 

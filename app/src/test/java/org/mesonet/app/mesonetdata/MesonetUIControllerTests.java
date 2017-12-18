@@ -27,7 +27,7 @@ public class MesonetUIControllerTests
     @Test
     public void NullDataStringsTests()
     {
-        MesonetUIController nullDataController = new MesonetUIController(new MesonetDataController(null, null));
+        MesonetUIController nullDataController = new MesonetUIController(new BaseMesonetDataController(null, null));
 
         assertEquals("_", nullDataController.GetAirTempString());
         assertEquals("_", nullDataController.GetApparentTempString());
@@ -41,7 +41,7 @@ public class MesonetUIControllerTests
     @Test
     public void EmptyDataStringsTests()
     {
-        MesonetUIController nullDataController = new MesonetUIController(new MesonetDataController(new MesonetModel(), null));
+        MesonetUIController nullDataController = new MesonetUIController(new BaseMesonetDataController(new MesonetModel(), null));
 
         assertEquals("_", nullDataController.GetAirTempString());
         assertEquals("_", nullDataController.GetApparentTempString());
@@ -55,7 +55,7 @@ public class MesonetUIControllerTests
     @Test
     public void NoPreferenceStringsTests()
     {
-        MesonetUIController nullDataController = new MesonetUIController(new MesonetDataController(MesonetModel.NewInstance(kGoodTestString), null));
+        MesonetUIController nullDataController = new MesonetUIController(new BaseMesonetDataController(MesonetModel.NewInstance(kGoodTestString), null));
 
         assertEquals("4°", nullDataController.GetAirTempString());
         assertEquals("_", nullDataController.GetApparentTempString());
