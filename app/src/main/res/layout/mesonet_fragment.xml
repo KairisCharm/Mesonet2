@@ -1,40 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:card_view="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
         <variable
             name="uiController"
-            type="org.mesonet.app.mesonetdata.MesonetUIController"/>
+            type="org.mesonet.app.site.mesonetdata.MesonetUIController"/>
     </data>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:background="@color/mesoBackground"
-            android:paddingStart="36dp"
-            android:paddingEnd="36dp"
-            tools:context=".MainActivity">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/mesoBackground">
+        <!--<android.support.v7.widget.CardView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:gravity="center_vertical"-->
+            <!--android:orientation="vertical"-->
+            <!--android:background="@color/mesoBackground"-->
+            <!--card_view:cardBackgroundColor="@color/mesoBackground"-->
+            <!--card_view:cardElevation="2dp"-->
+            <!--card_view:cardUseCompatPadding="true"-->
+            <!--app:cardBackgroundColor="@color/mesoBackground"-->
+            <!--app:cardElevation="2dp"-->
+            <!--app:cardUseCompatPadding="true"-->
+            <!--android:paddingStart="16dp"-->
+            <!--android:paddingEnd="16dp"-->
+            <!--tools:context=".MainActivity">-->
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:padding="16dp">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:baselineAligned="false"
-                tools:context=".mesonetdata.MesonetFragment">
+                tools:context=".site.mesonetdata.MesonetFragment">
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:layout_weight="1"
-                    android:gravity="center_vertical"
                     android:baselineAligned="false">
 
                     <TextView
@@ -56,9 +68,22 @@
                         android:text="@{uiController.GetAirTempString()}"
                         android:textColor="@color/whiteTextColor"
                         app:autoSizeTextType="uniform"
+                        android:layout_below="@id/readingTime"
                         android:autoSizeTextType="uniform"
                         android:maxLines="1"
                         tools:text="46°" />
+
+                    <TextView
+                        android:id="@+id/current_feelsLike"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+
+                        android:textColor="@color/whiteTextColor"
+                        android:layout_alignParentBottom="true"
+                        android:autoSizeTextType="uniform"
+                        app:autoSizeTextType="uniform"
+                        android:text="@{uiController.GetApparentTempString()}"
+                        tools:text="45°F"/>
 
                     <TextView
                         android:layout_width="match_parent"
@@ -67,21 +92,11 @@
                         app:autoSizeTextType="uniform"
                         android:text="@string/current_feelsLike"
                         android:textColor="@color/blueTextColor"
+                        android:layout_above="@id/current_feelsLike"
                         android:textAllCaps="true"
                         android:textStyle="bold"/>
 
-                    <TextView
-                        android:id="@+id/current_feelsLike"
-                        android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:layout_marginBottom="14dp"
-                        android:textColor="@color/whiteTextColor"
-                        android:autoSizeTextType="uniform"
-                        app:autoSizeTextType="uniform"
-                        android:text="@{uiController.GetApparentTempString()}"
-                        tools:text="45°F"/>
-
-                </LinearLayout>
+                </RelativeLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -91,16 +106,6 @@
                     android:orientation="vertical"
                     android:baselineAligned="false"
                     android:paddingStart="36dp">
-
-                    <ImageButton
-                        android:id="@+id/meteogram_btn"
-                        android:layout_width="140dp"
-                        android:layout_height="40dp"
-                        android:layout_marginBottom="12dp"
-                        android:adjustViewBounds="true"
-                        android:scaleType="fitStart"
-                        android:background="#153679"/>
-
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -190,5 +195,6 @@
 
             </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+    <!--</android.support.v7.widget.CardView>-->
+    </RelativeLayout>
 </layout>

@@ -16,9 +16,10 @@ import org.mesonet.app.baseclasses.RecyclerViewHolder;
 import org.mesonet.app.databinding.BasicViewHolderBinding;
 import org.mesonet.app.site.SiteSelectionInterfaces;
 
-public class BasicViewHolder extends RecyclerViewHolder<Pair<String, Pair<String, Location>>, BasicViewHolderBinding>
+public class BasicViewHolder extends RecyclerViewHolder<Pair<String, BasicViewHolder.BasicViewHolderData>, BasicViewHolderBinding>
 {
     SiteSelectionInterfaces.SelectSiteListener mSelectedListener;
+
 
 
 
@@ -30,14 +31,47 @@ public class BasicViewHolder extends RecyclerViewHolder<Pair<String, Pair<String
 
 
     @Override
-    public void SetData(final Pair<String, Pair<String, Location>> inData)
+    public void SetData(final Pair<String, BasicViewHolder.BasicViewHolderData> inData)
     {
-        GetBinding().setText(inData.getSecond().getFirst());
+        GetBinding().setFavorite(inData.getSecond().mFavorite);
+        GetBinding().setText(inData.getSecond().mName);
         GetBinding().getRoot().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 mSelectedListener.SetResult(inData.getFirst());
             }
         });
+    }
+
+
+
+    public static class BasicViewHolderData
+    {
+        String mName;
+        Location mLocation;
+        boolean mFavorite;
+
+
+
+        public String GetName()
+        {
+            return mName;
+        }
+
+
+
+        public boolean IsFavorite()
+        {
+            return mFavorite;
+        }
+
+
+
+        public BasicViewHolderData(String inName, Location inLocation, boolean inFavorite)
+        {
+            mName = inName;
+            mLocation = inLocation;
+            mFavorite = inFavorite;
+        }
     }
 }

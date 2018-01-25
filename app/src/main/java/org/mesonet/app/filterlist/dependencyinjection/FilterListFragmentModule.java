@@ -1,7 +1,7 @@
 package org.mesonet.app.filterlist.dependencyinjection;
 
-import android.app.Fragment;
 import android.location.Location;
+import android.support.v4.app.Fragment;
 import android.util.Pair;
 
 import org.mesonet.app.dependencyinjection.PerChildFragment;

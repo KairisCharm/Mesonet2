@@ -1,25 +1,29 @@
 package org.mesonet.app.dependencyinjection;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 
 import org.mesonet.app.MainActivity;
-import org.mesonet.app.mesonetdata.dependencyinjection.MesonetFragmentSubcomponent;
+import org.mesonet.app.baseclasses.BaseActivity;
 import org.mesonet.app.site.SiteOverviewFragment;
 import org.mesonet.app.site.dependencyinjection.SiteOverviewFragmentSubcomponent;
+import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetSiteDataControllerSubcomponent;
 import org.mesonet.app.userdata.Preferences;
 import org.mesonet.app.userdata.PreferencesObservable;
+import org.mesonet.app.webview.WebViewFragment;
+import org.mesonet.app.webview.dependencyinjection.WebViewFragmentSubcomponent;
 
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 import dagger.android.AndroidInjector;
-import dagger.android.FragmentKey;
+import dagger.android.support.FragmentKey;
 import dagger.multibindings.IntoMap;
 
 
 
-@Module(subcomponents = {SiteOverviewFragmentSubcomponent.class})
+@Module(subcomponents = {SiteOverviewFragmentSubcomponent.class,
+        MesonetSiteDataControllerSubcomponent.class})
 public abstract class MainActivityModule
 {
     @Binds
@@ -32,14 +36,16 @@ public abstract class MainActivityModule
     @PerActivity
     abstract Activity Activity(MainActivity inMainActivity);
 
+
     @Binds
     @PerActivity
-    abstract Preferences Preferences(MainActivity inMainActivity);
+    abstract BaseActivity BaseActivity(MainActivity inMainActivity);
+
 
     @Provides
     @PerActivity
-    static PreferencesObservable PreferencesObservable(MainActivity inMainActivity)
+    static Preferences Preferences(BaseActivity inActivity)
     {
-        return inMainActivity.GetPreferencesObservable();
+        return inActivity;
     }
 }

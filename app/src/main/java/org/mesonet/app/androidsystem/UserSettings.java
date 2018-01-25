@@ -3,34 +3,37 @@ package org.mesonet.app.androidsystem;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import javax.inject.Inject;
+
 
 public class UserSettings
 {
-    private static UserSettings sUserSettings;
+    private static final String kMesonetSettings = "MesonetSettings";
+    public static final String kUnitPreference = "UnitPreference";
+    public static final String kSelectedStid = "SelectedStid";
+
+    @Inject
+    UserSettings(){}
 
 
 
-    public static UserSettings GetInstance()
+
+    public void SetPreference(Context inContext, String inName, String inValue)
     {
-        if(sUserSettings == null)
-            sUserSettings = new UserSettings();
-
-        return sUserSettings;
-    }
-
-
-
-    private UserSettings(){}
-
-
-
-
-    private void SetPreference(Context inContext, String inName, String inValue)
-    {
-        SharedPreferences preferences = inContext.getSharedPreferences("MesonetSettings", Context.MODE_PRIVATE);
+        SharedPreferences preferences = inContext.getSharedPreferences(kMesonetSettings, Context.MODE_PRIVATE);
 
         SharedPreferences.Editor editor = preferences.edit();
         editor.putString(inName, inValue);
         editor.apply();
+    }
+
+
+
+    public String GetStringPreference(Context inContext, String inName, String inDefault)
+    {
+        SharedPreferences preferences = inContext.getSharedPreferences(kMesonetSettings, Context.MODE_PRIVATE);
+
+        String result = preferences.getString(inName, inDefault);
+        return result;
     }
 }

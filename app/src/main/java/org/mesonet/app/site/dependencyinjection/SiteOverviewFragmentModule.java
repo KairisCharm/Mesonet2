@@ -1,33 +1,32 @@
 package org.mesonet.app.site.dependencyinjection;
 
-import android.app.Fragment;
 import android.location.Location;
+import android.support.v4.app.Fragment;
 
 import dagger.Provides;
+import dagger.android.support.FragmentKey;
 import kotlin.Pair;
 
-import org.mesonet.app.BasicViewHolder;
-import org.mesonet.app.dependencyinjection.PerChildFragment;
 import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.filterlist.FilterListFragment;
 import org.mesonet.app.filterlist.dependencyinjection.FilterListFragmentSubcomponent;
-import org.mesonet.app.mesonetdata.BaseMesonetSiteDataController;
-import org.mesonet.app.mesonetdata.MesonetDataController;
-import org.mesonet.app.mesonetdata.MesonetFragment;
-import org.mesonet.app.mesonetdata.MesonetSiteDataController;
-import org.mesonet.app.mesonetdata.dependencyinjection.MesonetFragmentSubcomponent;
-import org.mesonet.app.mesonetdata.dependencyinjection.MesonetUIControllerSubcomponent;
+import org.mesonet.app.site.mesonetdata.BaseMesonetSiteDataController;
+import org.mesonet.app.site.mesonetdata.MesonetDataController;
+import org.mesonet.app.site.mesonetdata.MesonetFragment;
+import org.mesonet.app.site.mesonetdata.MesonetSiteDataController;
+import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetFragmentSubcomponent;
+import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetUIControllerSubcomponent;
 import org.mesonet.app.site.SiteOverviewFragment;
 import org.mesonet.app.site.SiteSelectionInterfaces;
+import org.mesonet.app.webview.WebViewFragment;
+import org.mesonet.app.webview.dependencyinjection.WebViewFragmentSubcomponent;
 
 import java.util.Map;
-
-import javax.inject.Named;
 
 import dagger.Binds;
 import dagger.Module;
 import dagger.android.AndroidInjector;
-import dagger.android.FragmentKey;
+
 import dagger.multibindings.IntoMap;
 
 
@@ -58,18 +57,14 @@ abstract class SiteOverviewFragmentModule {
     @PerFragment
     abstract FilterListFragment.FilterListCloser FilterListCloser(SiteOverviewFragment inSiteOverviewFragment);
 
-    @Binds
-    @PerFragment
-    abstract BaseMesonetSiteDataController MesonetSiteDataController(MesonetSiteDataController inMesonetSiteDataController);
-
     @Provides
     @PerFragment
-    static Map<String, Pair<String, Location>> KeyToInfoMap(MesonetSiteDataController inSiteDataController)
+    static FilterListFragment.FilterListDataProvider FilterListDataProvider(MesonetSiteDataController inSiteDataController)
     {
-        return inSiteDataController.GetSiteList();
+        return inSiteDataController;
     }
 
     @Binds
     @PerFragment
-    abstract SiteSelectionInterfaces.SelectSiteListener OnSelectedListener(MesonetDataController inSiteDataController);
+    abstract SiteSelectionInterfaces.SelectSiteListener OnSelectedListener(MesonetSiteDataController inSiteDataController);
 }

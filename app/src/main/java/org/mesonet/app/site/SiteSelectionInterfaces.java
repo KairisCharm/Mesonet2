@@ -9,11 +9,4 @@ public class SiteSelectionInterfaces
     {
         void SetResult(String inResult);
     }
-
-
-
-    public interface SelectSiteController
-    {
-        void StartSelection();
-    }
 }

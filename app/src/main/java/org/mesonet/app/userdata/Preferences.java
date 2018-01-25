@@ -11,4 +11,8 @@ public interface Preferences
 
 
     UnitPreference GetUnitPreference();
+    void SetUnitPreference(UnitPreference inPreference);
+    String GetSelectedStid();
+    void SetSelectedStid(String inStid);
+    PreferencesObservable GetPreferencesObservable();
 }

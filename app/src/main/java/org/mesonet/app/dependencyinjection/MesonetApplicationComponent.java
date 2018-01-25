@@ -1,7 +1,6 @@
 package org.mesonet.app.dependencyinjection;
 
 import org.mesonet.app.MesonetApplication;
-import org.mesonet.app.mesonetdata.MesonetUIController;
 
 import javax.inject.Singleton;
 
