@@ -45,7 +45,6 @@
                     android:elevation="8dp"
                     android:background="@color/navBackground"
                     app:itemBackground="@color/navBackground"
-                    app:itemIconTint="@drawable/nav_selector"
                     app:itemTextColor="@drawable/nav_selector"
                     app:menu="@menu/bottom_nav_menu"
                     android:layout_alignParentBottom="true"/>

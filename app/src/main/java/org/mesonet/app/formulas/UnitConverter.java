@@ -1,33 +1,21 @@
 package org.mesonet.app.formulas;
 
 
+import javax.inject.Inject;
 
 public class UnitConverter
 {
     public enum TempUnits { kCelsius, kFahrenheit }
     public enum SpeedUnits { kMps, kKmph, kMph }
     public enum LengthUnits { kMm, kIn }
-    public enum PressureUnits { kMmHg, kInHg }
+    public enum PressureUnits {kMb, kInHg }
 
     public enum CompassDirections { N, NNE, NE, ENE, E, ESE, SE, SSE, S, SSW, SW, WSW, W, WNW, NW, NNW }
 
 
 
-    private static UnitConverter sUnitConverter;
-
-
-
-    public static UnitConverter GetInstance()
-    {
-        if(sUnitConverter == null)
-            sUnitConverter = new UnitConverter();
-
-        return sUnitConverter;
-    }
-
-
-
-    private UnitConverter(){}
+    @Inject
+    UnitConverter(){}
 
 
 
@@ -131,6 +119,26 @@ public class UnitConverter
 
 
 
+    public Number InHgToMb(Number inIn)
+    {
+        if(inIn == null)
+            return null;
+
+        return inIn.doubleValue() * 33.8639;
+    }
+
+
+
+    public Number MbToInHg(Number inIn)
+    {
+        if(inIn == null)
+            return null;
+
+        return inIn.doubleValue() / 33.8639;
+    }
+
+
+
     public Number GetTempInPreferredUnits(Number inBaseValue, DefaultUnits inDefaultUnits, TempUnits inPreference)
     {
         if (inBaseValue == null || inDefaultUnits == null || inDefaultUnits.GetDefaultTempUnit() == null || inPreference == null)
@@ -227,12 +235,12 @@ public class UnitConverter
         switch (inDefaultUnits.GetDefaultPressureUnit())
         {
             case kInHg:
-                if(inPreference == PressureUnits.kMmHg)
-                    return InToMm(inBaseValue);
+                if(inPreference == PressureUnits.kMb)
+                    return InHgToMb(inBaseValue);
                 break;
-            case kMmHg:
+            case kMb:
                 if(inPreference == PressureUnits.kInHg)
-                    return MmToIn(inBaseValue);
+                    return MbToInHg(inBaseValue);
                 break;
         }
 

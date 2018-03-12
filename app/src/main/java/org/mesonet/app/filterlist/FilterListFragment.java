@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 
 import org.mesonet.app.BasicViewHolder;
 import org.mesonet.app.R;
+import org.mesonet.app.androidsystem.DeviceLocation;
 import org.mesonet.app.baseclasses.RecyclerViewAdapter;
 import org.mesonet.app.databinding.FilterListFragmentBinding;
 import org.mesonet.app.baseclasses.BaseFragment;
@@ -36,6 +37,8 @@ import kotlin.Pair;
 
 public class FilterListFragment extends BaseFragment implements SiteSelectionInterfaces.SelectSiteListener, Observer
 {
+    private boolean mSortByNearest = false;
+
     TextWatcher mTextChangedListener;
 
     FilterListFragmentBinding mBinding;
@@ -48,6 +51,9 @@ public class FilterListFragment extends BaseFragment implements SiteSelectionInt
 
     @Inject
     SiteSelectionInterfaces.SelectSiteListener mSelectedListener;
+
+    @Inject
+    DeviceLocation mDeviceLocation;
 
 
 
@@ -73,6 +79,8 @@ public class FilterListFragment extends BaseFragment implements SiteSelectionInt
         mBinding.siteSelectionToolbar.getMenu().findItem(R.id.nearestLocation).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem menuItem) {
+                mSortByNearest = true;
+                FillList();
                 return false;
             }
         });
@@ -80,13 +88,13 @@ public class FilterListFragment extends BaseFragment implements SiteSelectionInt
 
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            closeDrawable.setTint(getResources().getColor(R.color.blueTextColor, getActivity().getTheme()));
-            mBinding.searchText.setTextColor(getResources().getColor(R.color.blueTextColor, getActivity().getTheme()));
+            closeDrawable.setTint(getResources().getColor(R.color.lightTextColor, getActivity().getTheme()));
+            mBinding.searchText.setTextColor(getResources().getColor(R.color.lightTextColor, getActivity().getTheme()));
         }
         else
         {
-            closeDrawable.setTint(getResources().getColor(R.color.blueTextColor));
-            mBinding.searchText.setTextColor(getResources().getColor(R.color.blueTextColor));
+            closeDrawable.setTint(getResources().getColor(R.color.lightTextColor));
+            mBinding.searchText.setTextColor(getResources().getColor(R.color.lightTextColor));
         }
 
         mTextChangedListener = new TextWatcher() {
@@ -106,13 +114,15 @@ public class FilterListFragment extends BaseFragment implements SiteSelectionInt
             }
         };
 
-        Map<String, BasicViewHolder.BasicViewHolderData> data = mFilterListData.AllData();
+        Map<String, BasicViewHolder.BasicViewHolderData> data = mFilterListData.AllViewHolderData();
 
         if(data != null && data.containsKey(mFilterListData.CurrentSelection()))
             mBinding.searchText.setText(data.get(mFilterListData.CurrentSelection()).GetName());
         mBinding.searchText.addTextChangedListener(mTextChangedListener);
 
         mFilterListData.GetDataObservable().addObserver(this);
+
+
 
         FillList();
 
@@ -142,18 +152,41 @@ public class FilterListFragment extends BaseFragment implements SiteSelectionInt
 
     private void FillList()
     {
-        mBinding.searchList.SetItems(new ArrayList());
+        if(mSortByNearest) {
+            mDeviceLocation.GetLocation(new DeviceLocation.LocationListener() {
+                @Override
+                public void LastLocationFound(Location inLocation) {
+                    FillList(inLocation);
+                }
 
-        Map<String, BasicViewHolder.BasicViewHolderData> data = mFilterListData.AllData();
-
-        if(data != null) {
-            mBinding.searchList.SetItems(SortList(mBinding.searchText.getText().toString(), new MapToListOfPairs().Create(data)));
+                @Override
+                public void LocationUnavailable() {
+                    FillList(null);
+                }
+            });
+        }
+        else
+        {
+            FillList(null);
         }
     }
 
 
 
-    private List<Pair<String, BasicViewHolder.BasicViewHolderData>> SortList(final String inCurrentValue, List<Pair<String, BasicViewHolder.BasicViewHolderData>> inSearchFields)
+    private void FillList(Location inLocation)
+    {
+        mBinding.searchList.SetItems(new ArrayList());
+
+        Map<String, BasicViewHolder.BasicViewHolderData> data = mFilterListData.AllViewHolderData();
+
+        if(data != null) {
+            mBinding.searchList.SetItems(SortList(mBinding.searchText.getText().toString(), new MapToListOfPairs().Create(data), inLocation));
+        }
+    }
+
+
+
+    private List<Pair<String, BasicViewHolder.BasicViewHolderData>> SortList(final String inCurrentValue, List<Pair<String, BasicViewHolder.BasicViewHolderData>> inSearchFields, final Location inLocation)
     {
         Collections.sort(inSearchFields, new Comparator<Pair<String, BasicViewHolder.BasicViewHolderData>>() {
             @Override
@@ -163,11 +196,22 @@ public class FilterListFragment extends BaseFragment implements SiteSelectionInt
 
                 int result = 0;
 
-                if(stringPairPair.getSecond().IsFavorite() && !t1.getSecond().IsFavorite())
-                    result = -1;
+                if(inLocation != null)
+                {
+                    if(stringPairPair.getSecond().GetLocation().distanceTo(inLocation) < t1.getSecond().GetLocation().distanceTo(inLocation))
+                        result = -1;
+                    else if(stringPairPair.getSecond().GetLocation().distanceTo(inLocation) > t1.getSecond().GetLocation().distanceTo(inLocation))
+                        result = 1;
+                }
 
-                if(!stringPairPair.getSecond().IsFavorite() && t1.getSecond().IsFavorite())
-                    result = 1;
+
+                if(result == 0) {
+                    if (stringPairPair.getSecond().IsFavorite() && !t1.getSecond().IsFavorite())
+                        result = -1;
+
+                    else if (!stringPairPair.getSecond().IsFavorite() && t1.getSecond().IsFavorite())
+                        result = 1;
+                }
 
                 if(result == 0)
                     result = HasSearchValue(inCurrentValue, name1, name2);
@@ -223,7 +267,7 @@ public class FilterListFragment extends BaseFragment implements SiteSelectionInt
 
     public interface FilterListDataProvider
     {
-        Map<String, BasicViewHolder.BasicViewHolderData> AllData();
+        Map<String, BasicViewHolder.BasicViewHolderData> AllViewHolderData();
         String CurrentSelection();
         Observable GetDataObservable();
     }

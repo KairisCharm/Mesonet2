@@ -4,6 +4,8 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 
+import javax.inject.Inject;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -12,6 +14,8 @@ import static junit.framework.Assert.fail;
 
 public class ModelParserTests
 {
+    @Inject
+    MesonetModelParser mMesonetModelParser;
 
     private static final String kEmptyTestString = "";
 
@@ -167,18 +171,23 @@ public class ModelParserTests
         String mStringTest1;
         String mStringTest2;
     }
+    
+    
+    
+    @Inject
+    public ModelParserTests(){}
 
 
 
     @Test
     public void ParseNullObjTests()
     {
-        assertEquals(null, MesonetModelParser.GetInstance().Parse(null, null));
-        assertEquals(null, MesonetModelParser.GetInstance().Parse(null, kEmptyTestString));
-        assertEquals(null, MesonetModelParser.GetInstance().Parse(null, kCantParseString));
-        assertEquals(null, MesonetModelParser.GetInstance().Parse(null, kBadNameTestString));
-        assertEquals(null, MesonetModelParser.GetInstance().Parse(null, kBadValuesTestString));
-        assertEquals(null, MesonetModelParser.GetInstance().Parse(null, kGoodTestString));
+        assertEquals(null, mMesonetModelParser.Parse(null, null));
+        assertEquals(null, mMesonetModelParser.Parse(null, kEmptyTestString));
+        assertEquals(null, mMesonetModelParser.Parse(null, kCantParseString));
+        assertEquals(null, mMesonetModelParser.Parse(null, kBadNameTestString));
+        assertEquals(null, mMesonetModelParser.Parse(null, kBadValuesTestString));
+        assertEquals(null, mMesonetModelParser.Parse(null, kGoodTestString));
     }
 
 
@@ -186,9 +195,9 @@ public class ModelParserTests
     @Test
     public void ParseNullStringTests() throws IllegalAccessException
     {
-        assertTrue(AllFieldsEqualToNew(MesonetModelParser.GetInstance().Parse(ModelParserTestModel.class, null)));
-        assertTrue(AllFieldsEqualToNew(MesonetModelParser.GetInstance().Parse(ModelParserTestModel.class, kEmptyTestString)));
-        assertTrue(AllFieldsEqualToNew(MesonetModelParser.GetInstance().Parse(ModelParserTestModel.class, kCantParseString)));
+        assertTrue(AllFieldsEqualToNew(mMesonetModelParser.Parse(ModelParserTestModel.class, null)));
+        assertTrue(AllFieldsEqualToNew(mMesonetModelParser.Parse(ModelParserTestModel.class, kEmptyTestString)));
+        assertTrue(AllFieldsEqualToNew(mMesonetModelParser.Parse(ModelParserTestModel.class, kCantParseString)));
     }
 
 
@@ -196,7 +205,7 @@ public class ModelParserTests
     @Test
     public void ParseBadNamesStringTests()
     {
-        ModelParserTestModel testModel = MesonetModelParser.GetInstance().Parse(ModelParserTestModel.class, kBadNameTestString);
+        ModelParserTestModel testModel = mMesonetModelParser.Parse(ModelParserTestModel.class, kBadNameTestString);
 
         assertEquals(0, testModel.mByteTest1);
         assertEquals(2, testModel.mByteTest2);
@@ -241,7 +250,7 @@ public class ModelParserTests
     @Test
     public void ParseBadValuesStringTests()
     {
-        ModelParserTestModel testModel = MesonetModelParser.GetInstance().Parse(ModelParserTestModel.class, kBadValuesTestString);
+        ModelParserTestModel testModel = mMesonetModelParser.Parse(ModelParserTestModel.class, kBadValuesTestString);
 
         assertEquals(1, testModel.mByteTest1);
         assertEquals(0, testModel.mByteTest2);
@@ -286,7 +295,7 @@ public class ModelParserTests
     @Test
     public void ParseGoodStringTests()
     {
-        ModelParserTestModel testModel = MesonetModelParser.GetInstance().Parse(ModelParserTestModel.class, kGoodTestString);
+        ModelParserTestModel testModel = mMesonetModelParser.Parse(ModelParserTestModel.class, kGoodTestString);
 
         assertEquals(1, testModel.mByteTest1);
         assertEquals(2, testModel.mByteTest2);

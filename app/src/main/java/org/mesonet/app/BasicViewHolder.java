@@ -67,6 +67,13 @@ public class BasicViewHolder extends RecyclerViewHolder<Pair<String, BasicViewHo
 
 
 
+        public Location GetLocation()
+        {
+            return mLocation;
+        }
+
+
+
         public BasicViewHolderData(String inName, Location inLocation, boolean inFavorite)
         {
             mName = inName;

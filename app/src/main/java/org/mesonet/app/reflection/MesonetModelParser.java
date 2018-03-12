@@ -3,23 +3,12 @@ package org.mesonet.app.reflection;
 
 import java.lang.reflect.Field;
 
+import javax.inject.Inject;
+
 public class MesonetModelParser
 {
-    private static MesonetModelParser sModelParser;
-
-
-
-    public static MesonetModelParser GetInstance()
-    {
-        if(sModelParser == null)
-            sModelParser = new MesonetModelParser();
-
-        return sModelParser;
-    }
-
-
-
-    private MesonetModelParser(){}
+    @Inject
+    MesonetModelParser(){}
 
 
 

@@ -1,5 +1,10 @@
 package org.mesonet.app.forecast;
 
+import android.content.Context;
+import android.content.res.Configuration;
+
+import org.mesonet.app.R;
+import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.formulas.DefaultUnits;
 import org.mesonet.app.formulas.UnitConverter;
 import org.mesonet.app.userdata.Preferences;
@@ -15,17 +20,22 @@ import static org.mesonet.app.userdata.Preferences.UnitPreference.kMetric;
 
 public class SemiDayForecastDataController extends Observable implements ForecastData
 {
-    @Inject
     Preferences mPreferences;
 
+    UnitConverter mUnitConverter;
 
     ForecastModel mForecastModel;
 
+    Context mContext;
 
-    @Inject
-    public SemiDayForecastDataController(ForecastModel inForecastModel)
+
+
+    public SemiDayForecastDataController(Context inContext, Preferences inPreferences, UnitConverter inUnitConverter, ForecastModel inForecastModel)
     {
+        mPreferences = inPreferences;
+        mUnitConverter = inUnitConverter;
         mForecastModel = inForecastModel;
+        mContext = inContext;
     }
 
     public void SetData(ForecastModel inForecast)
@@ -38,12 +48,17 @@ public class SemiDayForecastDataController extends Observable implements Forecas
 
     @Override
     public String GetTime() {
-        return mForecastModel.mTime;
+        String result = mForecastModel.mTime;
+
+        if((mContext != null && mContext.getResources().getBoolean(R.bool.forceWrapForecasts)) && !result.contains(" "))
+            result += "\n";
+
+        return result;
     }
 
     @Override
     public String GetIconUrl() {
-        return mForecastModel.mIconUrl.replace("http://www.nws.noaa.gov/weather/images/fcicons", "http://www.mesonet.org/images/fcicons-android").replace(".jpg", ".png");
+        return mForecastModel.mIconUrl.replace("http://www.nws.noaa.gov/weather/images/fcicons", "http://www.mesonet.org/images/fcicons-android").replace(".jpg", "@4x.png");
     }
 
     @Override
@@ -75,29 +90,45 @@ public class SemiDayForecastDataController extends Observable implements Forecas
                     break;
             }
 
-        Integer value = UnitConverter.GetInstance().GetTempInPreferredUnits(mForecastModel.mTemp, mForecastModel, tempUnits).intValue();
+        if(mUnitConverter == null)
+            return null;
+
+        Integer value = mUnitConverter.GetTempInPreferredUnits(mForecastModel.mTemp, mForecastModel, tempUnits).intValue();
 
         return String.format(Locale.getDefault(),"%d", value) + "°" + unit;
     }
 
-    @Override
-    public String GetWindDirection() {
-        return mForecastModel.mWindDirection.name();
-    }
+
 
     @Override
-    public String GetWindGustsDirection() {
-        return mForecastModel.mWindDirection.name();
-    }
+    public String GetWindDescription()
+    {
+        if(mForecastModel.mWindSpd == null)
+            return "Calm\n";
 
-    @Override
-    public String GetWindSpeed() {
-        return Integer.toString(mForecastModel.mWindSpd.intValue());
-    }
+        UnitConverter.SpeedUnits speedUnits = UnitConverter.SpeedUnits.kMps;
 
-    @Override
-    public String GetWindGusts() {
-        return Integer.toString(mForecastModel.mWindGusts.intValue());
+        if(mPreferences == null || mPreferences.GetUnitPreference() == kImperial)
+            speedUnits = UnitConverter.SpeedUnits.kMph;
+
+        String unit = "";
+
+        switch (speedUnits)
+        {
+            case kMps:
+                unit = "mps";
+                break;
+            case kMph:
+                unit = "mph";
+                break;
+        }
+
+        if(mUnitConverter == null)
+            return null;
+
+        Integer value = mUnitConverter.GetSpeedInPreferredUnits(mForecastModel.mWindSpd, mForecastModel, speedUnits).intValue();
+
+        return "Wind " + value.toString() + " at " + unit;
     }
 
     @Override

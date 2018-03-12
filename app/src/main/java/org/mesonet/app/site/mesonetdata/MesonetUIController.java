@@ -1,6 +1,6 @@
 package org.mesonet.app.site.mesonetdata;
 
-import org.mesonet.app.dependencyinjection.PerChildFragment;
+import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.formulas.UnitConverter;
 import org.mesonet.app.userdata.Preferences;
 
@@ -15,7 +15,7 @@ import javax.inject.Inject;
 
 
 //TODO TESTS!!!!!
-@PerChildFragment
+@PerFragment
 public class MesonetUIController extends Observable implements Observer
 {
     MesonetDataController mDataController;
@@ -42,12 +42,12 @@ public class MesonetUIController extends Observable implements Observer
     public String GetAirTempString()
     {
         if(mDataController == null)
-            return "_";
+            return "-";
 
         Double temp = mDataController.GetTemp();
 
         if(temp == null)
-            return "_";
+            return "-";
 
         return String.format(Locale.getDefault(),"%.0f", temp) + "°";
     }
@@ -57,12 +57,12 @@ public class MesonetUIController extends Observable implements Observer
     public String GetApparentTempString()
     {
         if(mDataController == null)
-            return "_";
+            return "-";
 
         Double apparentTemp = mDataController.GetApparentTemp();
 
         if(apparentTemp == null)
-            return "_";
+            return "-";
 
         String unit = "";
 
@@ -86,15 +86,15 @@ public class MesonetUIController extends Observable implements Observer
 
 
 
-    public String GetDewPointString()
+    public String GetDewpointString()
     {
         if(mDataController == null)
-            return "_";
+            return "-";
 
-        Double dewPoint = mDataController.GetDewPoint();
+        Double dewPoint = mDataController.GetDewpoint();
 
         if(dewPoint == null)
-            return "_";
+            return "-";
 
         String unit = "";
 
@@ -116,13 +116,13 @@ public class MesonetUIController extends Observable implements Observer
     public String GetWindString ()
     {
         if(mDataController == null)
-            return "_";
+            return "-";
 
         Double windSpd = mDataController.GetWindSpd();
         UnitConverter.CompassDirections direction = mDataController.GetWindDirection();
 
         if(windSpd == null || direction == null)
-            return "_";
+            return "-";
 
         String unit = "";
 
@@ -132,7 +132,7 @@ public class MesonetUIController extends Observable implements Observer
             unit = "mps";
             break;
         case kImperial:
-            unit = "MPH";
+            unit = "mph";
             break;
         }
 
@@ -144,12 +144,12 @@ public class MesonetUIController extends Observable implements Observer
     public String Get24HrRainfallString()
     {
         if(mDataController == null)
-            return "_";
+            return "-";
 
         Double rain24h = mDataController.Get24HrRain();
 
         if(rain24h == null)
-            return "_";
+            return "-";
 
         String unit = "";
 
@@ -168,17 +168,89 @@ public class MesonetUIController extends Observable implements Observer
 
 
 
+    public String GetHumidityString()
+    {
+        if(mDataController == null)
+            return "-";
+
+        Integer humidity = mDataController.GetHumidity();
+
+        if(humidity == null)
+            return "-";
+
+        return humidity.toString() + "%";
+    }
+    
+    
+    
+    public String GetWindGustsString()
+    {
+        if(mDataController == null)
+            return "-";
+
+        Double windSpd = mDataController.GetMaxWind();
+
+        if(windSpd == null)
+            return "-";
+
+        String unit = "";
+
+        switch (mDataController.GetUnitPreference())
+        {
+            case kMetric:
+                unit = "mps";
+                break;
+            case kImperial:
+                unit = "mph";
+                break;
+        }
+
+        return String.format(Locale.getDefault(),"%.0f", windSpd) + " " + unit;
+    }
+
+
+
+    public String GetPressureString()
+    {
+        if(mDataController == null)
+            return "-";
+
+        Double pressure = mDataController.GetPressure();
+
+        if(pressure == null)
+            return "-";
+
+        String unit = "";
+        String format = "";
+
+        switch (mDataController.GetUnitPreference())
+        {
+            case kMetric:
+                unit = "mb";
+                format = "%.1f";
+                break;
+            case kImperial:
+                unit = "inHg";
+                format = "%.2f";
+                break;
+        }
+
+        return String.format(Locale.getDefault(),format, pressure) + " " + unit;
+    }
+
+
+
     public String GetTimeString()
     {
         String formattedString = "Observed at %s";
 
         if(mDataController == null)
-            return String.format(formattedString, "_:_");
+            return String.format(formattedString, "-:-");
 
         Date time = mDataController.GetTime();
 
         if(time == null)
-            return String.format(formattedString, "_:_");
+            return String.format(formattedString, "-:-");
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
         dateFormat.setTimeZone(TimeZone.getTimeZone("America/Chicago"));

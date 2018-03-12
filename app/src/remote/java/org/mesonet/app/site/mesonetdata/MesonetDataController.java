@@ -10,13 +10,21 @@ import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.userdata.Preferences;
 
 import java.net.HttpURLConnection;
+import java.util.Observer;
 
 import javax.inject.Inject;
 
 
 @PerFragment
-public class MesonetDataController extends BaseMesonetDataController
+public class MesonetDataController extends BaseMesonetDataController implements Observer
 {
+    @Inject
+    DataDownloader mDataDownloader;
+
+    private long mLastUpdated = 0;
+
+
+
     @Inject
     public MesonetDataController (MesonetSiteDataController inSiteDataController, Preferences inPreferences)
     {
@@ -28,26 +36,22 @@ public class MesonetDataController extends BaseMesonetDataController
     @Override
     public void StartUpdating()
     {
-        super.StartUpdating();
-        Update(60000);
+        if(!IsUpdating()) {
+            super.StartUpdating();
+            Update(60000);
+        }
     }
 
 
 
-    private void Update (long inInterval)
+    protected void Update (final long inInterval)
     {
-
-        boolean resumeUpdating = false;
-        if(!mSiteDataController.CurrentSelection().equals(GetStid()) )
-        {
-            resumeUpdating = IsUpdating();
+        if(!mSiteDataController.SiteDataFound()) {
             StopUpdating();
+            return;
         }
 
-        final boolean finalResumeUpdating = resumeUpdating;
-
-        DataDownloader.GetInstance()
-                .Download("http://www.mesonet.org/index.php/app/latest_iphone/" + mSiteDataController.CurrentSelection(),
+        mDataDownloader.Download("http://www.mesonet.org/index.php/app/latest_iphone/" + mSiteDataController.CurrentSelection(),
                         inInterval,
                         new DataDownloader.DownloadCallback()
                         {
@@ -59,8 +63,6 @@ public class MesonetDataController extends BaseMesonetDataController
                                         inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE)
                                 {
                                     SetData(inResult);
-                                    if(finalResumeUpdating)
-                                        StartUpdating();
                                 }
                             }
 
@@ -76,7 +78,10 @@ public class MesonetDataController extends BaseMesonetDataController
                             @Override
                             public void CheckForUpdate (long inLastUpdated)
                             {
-                                Update(inLastUpdated);
+                                if(inLastUpdated > mLastUpdated) {
+                                    mLastUpdated = inLastUpdated;
+                                    Update(inInterval);
+                                }
                             }
 
 
@@ -92,7 +97,7 @@ public class MesonetDataController extends BaseMesonetDataController
                             @Override
                             public long GetInterval ()
                             {
-                                return 60000;
+                                return inInterval;
                             }
                         });
     }

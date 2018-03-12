@@ -12,9 +12,6 @@ public interface ForecastData
     String GetStatus();
     String GetHighOrLow();
     String GetTemp();
-    String GetWindDirection();
-    String GetWindGustsDirection();
-    String GetWindSpeed();
-    String GetWindGusts();
+    String GetWindDescription();
     Observable GetObservable();
 }

@@ -2,15 +2,15 @@ package org.mesonet.app.site;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.content.Intent;
+import android.content.res.Configuration;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewAnimationUtils;
@@ -18,14 +18,16 @@ import android.view.ViewGroup;
 import android.support.v7.widget.Toolbar;
 
 import org.mesonet.app.R;
+import org.mesonet.app.databinding.MesonetDataContainerBinding;
 import org.mesonet.app.forecast.FiveDayForecastDataController;
 import org.mesonet.app.forecast.ForecastListView;
-import org.mesonet.app.webview.WebViewFragment;
+import org.mesonet.app.site.mesonetdata.MesonetDataController;
+import org.mesonet.app.site.mesonetdata.MesonetUIController;
+import org.mesonet.app.webview.WebViewActivity;
 import org.mesonet.app.databinding.SiteOverviewFragmentBinding;
 import org.mesonet.app.baseclasses.BaseFragment;
 import org.mesonet.app.filterlist.FilterListFragment;
 //import org.mesonet.app.filterlist.dependencyinjection.DaggerFilterListComponent;
-import org.mesonet.app.site.mesonetdata.MesonetFragment;
 import org.mesonet.app.site.mesonetdata.MesonetSiteDataController;
 //import org.mesonet.app.site.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
 
@@ -37,8 +39,9 @@ import java.util.Observer;
 import javax.inject.Inject;
 
 
-public class SiteOverviewFragment extends BaseFragment implements FilterListFragment.FilterListCloser, WebViewFragment.WebViewInformation, Toolbar.OnMenuItemClickListener, Observer
+public class SiteOverviewFragment extends BaseFragment implements FilterListFragment.FilterListCloser, Toolbar.OnMenuItemClickListener, Observer
 {
+    private MesonetDataContainerBinding mMesonetDataBinding;
     private SiteOverviewFragmentBinding mBinding;
 
     @Inject
@@ -47,6 +50,12 @@ public class SiteOverviewFragment extends BaseFragment implements FilterListFrag
     @Inject
     FiveDayForecastDataController mFiveDayForecastDataController;
 
+    @Inject
+    MesonetDataController mMesonetDataController;
+
+    @Inject
+    MesonetUIController mMesonetUIController;
+
 
 
     @Override
@@ -54,27 +63,14 @@ public class SiteOverviewFragment extends BaseFragment implements FilterListFrag
     {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.site_overview_fragment, inParent, false);
 
-        mBinding.setMesonetSiteDataController(mMesonetSiteDataController);
-
         mMesonetSiteDataController.GetDataObservable().addObserver(this);
         mFiveDayForecastDataController.GetObservable().addObserver(this);
+        mMesonetDataController.addObserver(this);
 
-        mBinding.siteToolbar.inflateMenu(R.menu.mesonet_site_menu);
-        mBinding.siteToolbar.setOnMenuItemClickListener(this);
-        mBinding.siteToolbar.setNavigationIcon(R.drawable.ic_multiline_chart_white_36dp);
-        mBinding.siteToolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                WebViewFragment webViewFragment = new WebViewFragment();
-                webViewFragment.SetInfo(SiteOverviewFragment.this);
-                webViewFragment.show(getChildFragmentManager(), "MeteogramWebview");
-            }
-        });
-
-        FragmentManager fragmentManager = getChildFragmentManager();
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.add(R.id.mesonetDetailContainer, new MesonetFragment());
-        transaction.commit();
+//        FragmentManager fragmentManager = getChildFragmentManager();
+//        FragmentTransaction transaction = fragmentManager.beginTransaction();
+//        transaction.add(R.id.mesonetDetailContainer, new MesonetFragment());
+//        transaction.commit();
 
         Update();
 
@@ -102,14 +98,14 @@ public class SiteOverviewFragment extends BaseFragment implements FilterListFrag
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
                 if(position > 0)
-                    mBinding.previousFab.show();
+                    mBinding.previousFab.setVisibility(View.VISIBLE);
                 else
-                    mBinding.previousFab.hide();
+                    mBinding.previousFab.setVisibility(View.GONE);
 
                 if(position < (mBinding.forecastViewPager.getChildCount() - 1))
-                    mBinding.nextFab.show();
+                    mBinding.nextFab.setVisibility(View.VISIBLE);
                 else
-                    mBinding.nextFab.hide();
+                    mBinding.nextFab.setVisibility(View.GONE);
             }
 
             @Override
@@ -134,7 +130,7 @@ public class SiteOverviewFragment extends BaseFragment implements FilterListFrag
         final int cy = (view.getTop() + view.getBottom()) / 2;
         final float radius = Math.max(mBinding.childFragmentContainer.getWidth(), mBinding.childFragmentContainer.getHeight()) * 2.0f;
 
-        if (mBinding.childFragmentContainer.getVisibility() == View.INVISIBLE) {
+        if (mBinding.childFragmentContainer.getVisibility() != View.VISIBLE) {
 
 
             mBinding.childFragmentContainer.setVisibility(View.VISIBLE);
@@ -164,7 +160,7 @@ public class SiteOverviewFragment extends BaseFragment implements FilterListFrag
 
     @Override
     public void Close() {
-        RevealView(mBinding.siteToolbar);
+        RevealView(mBinding.mesonetDataContainer.siteToolbar);
     }
 
     @Override
@@ -175,7 +171,7 @@ public class SiteOverviewFragment extends BaseFragment implements FilterListFrag
                 FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
                 transaction.replace(R.id.childFragmentContainer, new FilterListFragment());
                 transaction.commit();
-                RevealView(mBinding.siteToolbar);
+                RevealView(mBinding.mesonetDataContainer.siteToolbar);
                 break;
             case R.id.favorite:
                 ToggleFavorite();
@@ -197,15 +193,26 @@ public class SiteOverviewFragment extends BaseFragment implements FilterListFrag
         }
     }
 
-    @Override
-    public String Url() {
-        return "http://www.mesonet.org/data/public/mesonet/meteograms/" + mMesonetSiteDataController.CurrentSelection().toUpperCase() + ".met.gif";
-    }
+
 
     @Override
-    public String Title() {
-        return mMesonetSiteDataController.CurrentStationName() + " Meteogram";
+    public void onResume()
+    {
+        super.onResume();
+
+        mMesonetDataController.StartUpdating();
     }
+
+
+
+    @Override
+    public void onPause()
+    {
+        mMesonetDataController.StopUpdating();
+
+        super.onPause();
+    }
+
 
 
 
@@ -218,62 +225,105 @@ public class SiteOverviewFragment extends BaseFragment implements FilterListFrag
 
     private void Update()
     {
-        mBinding.setMesonetSiteDataController(mMesonetSiteDataController);
+        if(isAdded()) {
+            if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+                SetMesonetBinding(mBinding.mesonetDataContainer);
 
-        if(mMesonetSiteDataController.IsFavorite(mMesonetSiteDataController.CurrentSelection())) {
-            mBinding.siteToolbar.getMenu().findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_white_36dp);
-        }
-        else
-        {
-            mBinding.siteToolbar.getMenu().findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_border_white_36dp);
-        }
+            mBinding.forecastViewPager.removeAllViews();
 
-        mBinding.forecastViewPager.removeAllViews();
+            int forecastsPerPage = getResources().getInteger(R.integer.forecastsPerPage);
+            int pageCount = mFiveDayForecastDataController.GetCount() / forecastsPerPage;
 
-        int forecastsPerPage = getResources().getInteger(R.integer.forecastsPerPage);
-        final int pageCount = mFiveDayForecastDataController.GetCount() / forecastsPerPage;
+            final List<ForecastListView> forecastPages = new ArrayList<>();
+            for (int i = 0; i < mFiveDayForecastDataController.GetCount(); i += forecastsPerPage) {
+                ForecastListView forecastListView = new ForecastListView(getContext());
 
-        final List<ForecastListView> forecastPages = new ArrayList<>();
-        for(int i = 0; i < mFiveDayForecastDataController.GetCount(); i += forecastsPerPage)
-        {
-            ForecastListView forecastListView = new ForecastListView(getContext());
+                for (int j = 0; j < forecastsPerPage && (i + j) < mFiveDayForecastDataController.GetCount(); j++) {
+                    forecastListView.SetSemiDayForecast(j, mFiveDayForecastDataController.GetForecast(i + j));
+                }
 
-            for(int j = 0; j < forecastsPerPage; j++)
+                forecastPages.add(forecastListView);
+            }
+
+            if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
             {
-                forecastListView.SetSemiDayForecast(j, mFiveDayForecastDataController.GetForecast(i + j));
+                pageCount++;
             }
 
-            forecastPages.add(forecastListView);
+            final int finalPageCount = pageCount;
+
+            if(mBinding.forecastViewPager.getChildCount() == 0) {
+                PagerAdapter pagerAdapter = new PagerAdapter() {
+                    @Override
+                    public int getCount() {
+                        return finalPageCount;
+                    }
+
+                    @Override
+                    public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
+                        return view.equals(object);
+                    }
+
+                    @Override
+                    public View instantiateItem(ViewGroup inViewGroup, int inPosition) {
+                        int forecastPostion = inPosition;
+                        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                            if (inPosition == 0) {
+                                MesonetDataContainerBinding mesonetBinding = DataBindingUtil.inflate(LayoutInflater.from(getContext()), R.layout.mesonet_data_container, null, false);
+                                SetMesonetBinding(mesonetBinding);
+                                inViewGroup.addView(mesonetBinding.getRoot());
+                                return mesonetBinding.getRoot();
+                            }
+
+                            forecastPostion--;
+                        }
+
+                        if (forecastPages.get(forecastPostion).getParent() != null)
+                            ((ViewGroup) forecastPages.get(forecastPostion).getParent()).removeView(forecastPages.get(forecastPostion));
+                        inViewGroup.addView(forecastPages.get(forecastPostion));
+                        return forecastPages.get(forecastPostion);
+                    }
+
+                    @Override
+                    public void destroyItem(ViewGroup inParent, int inPosition, Object inObject) {
+
+                    }
+                };
+
+                mBinding.forecastViewPager.setAdapter(pagerAdapter);
+                pagerAdapter.notifyDataSetChanged();
+            }
+
+//            mBinding.invalidateAll();
         }
+    }
 
-        PagerAdapter pagerAdapter = new PagerAdapter() {
+
+
+    private void SetMesonetBinding(MesonetDataContainerBinding inContainerBinding)
+    {
+        mMesonetDataBinding = inContainerBinding;
+
+        if(!mMesonetDataBinding.siteToolbar.getMenu().hasVisibleItems()) {
+            mMesonetDataBinding.siteToolbar.inflateMenu(R.menu.mesonet_site_menu);
+        }
+        mMesonetDataBinding.siteToolbar.setOnMenuItemClickListener(this);
+        mMesonetDataBinding.siteToolbar.setNavigationIcon(R.drawable.ic_multiline_chart_white_36dp);
+        mMesonetDataBinding.siteToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
-            public int getCount() {
-                return pageCount;
+            public void onClick(View view) {
+                Intent intent = new Intent(getActivity().getBaseContext(), WebViewActivity.class);
+                intent.putExtra(WebViewActivity.kTitle, mMesonetSiteDataController.CurrentStationName() + " Meteogram");
+                intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/data/public/mesonet/meteograms/" + mMesonetSiteDataController.CurrentSelection().toUpperCase() + ".met.gif");
+                startActivity(intent);
             }
-
-            @Override
-            public boolean isViewFromObject(@NonNull View view, @NonNull Object object) {
-                return view.equals(object);
-            }
-
-            @Override
-            public View instantiateItem(ViewGroup inViewGroup, int inPosition) {
-                if(forecastPages.get(inPosition).getParent() != null)
-                    ((ViewGroup)forecastPages.get(inPosition).getParent()).removeView(forecastPages.get(inPosition));
-                inViewGroup.addView(forecastPages.get(inPosition));
-                return forecastPages.get(inPosition);
-            }
-
-            @Override
-            public void destroyItem(ViewGroup inParent, int inPosition, Object inObject){
-
-            }
-        };
-
-        mBinding.forecastViewPager.setAdapter(pagerAdapter);
-        pagerAdapter.notifyDataSetChanged();
-
-        mBinding.invalidateAll();
+        });
+        if (mMesonetSiteDataController.IsFavorite(mMesonetSiteDataController.CurrentSelection())) {
+            mMesonetDataBinding.siteToolbar.getMenu().findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_white_36dp);
+        } else {
+            mMesonetDataBinding.siteToolbar.getMenu().findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_border_white_36dp);
+        }
+        mMesonetDataBinding.setMesonetSiteDataController(mMesonetSiteDataController);
+        mMesonetDataBinding.mesonetData.setUiController(mMesonetUIController);
     }
 }

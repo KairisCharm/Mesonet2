@@ -9,7 +9,7 @@ public interface MesonetData
 {
     Double GetTemp();
     Double GetApparentTemp();
-    Double GetDewPoint();
+    Double GetDewpoint();
     Double GetWindSpd();
     UnitConverter.CompassDirections GetWindDirection();
     Double GetMaxWind();

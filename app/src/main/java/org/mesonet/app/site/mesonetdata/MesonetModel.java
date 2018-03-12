@@ -3,7 +3,6 @@ package org.mesonet.app.site.mesonetdata;
 
 import org.mesonet.app.formulas.DefaultUnits;
 import org.mesonet.app.formulas.UnitConverter;
-import org.mesonet.app.reflection.MesonetModelParser;
 
 public class MesonetModel implements DefaultUnits
 {
@@ -42,13 +41,6 @@ public class MesonetModel implements DefaultUnits
 
 
 
-    public static MesonetModel NewInstance(String inTextToParse)
-    {
-        return MesonetModelParser.GetInstance().Parse(MesonetModel.class, inTextToParse);
-    }
-
-
-
     @Override
     public UnitConverter.TempUnits GetDefaultTempUnit()
     {
@@ -76,6 +68,6 @@ public class MesonetModel implements DefaultUnits
     @Override
     public UnitConverter.PressureUnits GetDefaultPressureUnit()
     {
-        return UnitConverter.PressureUnits.kMmHg;
+        return UnitConverter.PressureUnits.kMb;
     }
 }

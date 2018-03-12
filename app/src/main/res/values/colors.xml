@@ -7,12 +7,16 @@
     <color name="textColorPrimary">@color/whiteTextColor</color>
     <color name="textColorSecondaryInverse">@color/whiteTextColor</color>
 
-    <color name="mesoBackground">#26418f</color>
+    <color name="mesoBackground">#415fad</color>
     <color name="siteBackground">@color/colorPrimary</color>
-    <color name="forecastDayBackground">@color/colorPrimaryLight</color>
-    <color name="forecastNightBackground">@color/colorPrimaryDark</color>
-    <color name="blueTextColor">#b8ffffff</color>
+    <color name="forecastDayBackground">#264192</color>
+    <color name="forecastNightBackground">#0d114d</color>
+    <color name="lightTextColor">#b8ffffff</color>
     <color name="whiteTextColor">#fff</color>
+    <color name="darkTextColor">#C000</color>
+    <color name="dividerColor">#8888</color>
+    <color name="listBackgroundColor">#303039</color>
+    <color name="listItemBackgroundColor">#42424B</color>
     <color name="toolbarBackgroundColor">@color/colorPrimary</color>
     <color name="navBackground">@color/colorPrimary</color>
 </resources>

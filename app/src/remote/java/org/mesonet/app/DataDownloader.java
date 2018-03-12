@@ -10,25 +10,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Scanner;
 
+import javax.inject.Inject;
 
 
 public class DataDownloader
 {
-    private static DataDownloader sDataDownloader;
-
-
-
-    public static DataDownloader GetInstance()
-    {
-        if(sDataDownloader == null)
-            sDataDownloader = new DataDownloader();
-
-        return sDataDownloader;
-    }
-
-
-
-    private DataDownloader(){}
+    @Inject
+    DataDownloader(){}
 
 
 

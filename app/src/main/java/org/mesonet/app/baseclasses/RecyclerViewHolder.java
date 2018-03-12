@@ -9,7 +9,7 @@ import android.support.v7.widget.RecyclerView;
 
 public abstract class RecyclerViewHolder<TData extends Object, TViewDataBinding extends ViewDataBinding> extends RecyclerView.ViewHolder
 {
-    private ViewDataBinding mBinding;
+    protected ViewDataBinding mBinding;
 
 
 

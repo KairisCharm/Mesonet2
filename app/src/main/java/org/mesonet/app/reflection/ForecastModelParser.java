@@ -8,23 +8,12 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 public class ForecastModelParser
 {
-    private static ForecastModelParser sModelParser;
-
-
-
-    public static ForecastModelParser GetInstance()
-    {
-        if(sModelParser == null)
-            sModelParser = new ForecastModelParser();
-
-        return sModelParser;
-    }
-
-
-
-    private ForecastModelParser(){}
+    @Inject
+    ForecastModelParser(){}
 
 
 

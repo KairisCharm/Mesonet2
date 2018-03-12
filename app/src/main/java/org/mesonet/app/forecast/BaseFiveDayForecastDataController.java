@@ -1,20 +1,43 @@
 package org.mesonet.app.forecast;
 
 
+import android.app.Activity;
+import android.content.Context;
+
+import org.mesonet.app.formulas.UnitConverter;
 import org.mesonet.app.reflection.ForecastModelParser;
+import org.mesonet.app.userdata.Preferences;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 
+import javax.inject.Inject;
+
 public class BaseFiveDayForecastDataController extends Observable
 {
+    @Inject
+    ForecastModelParser mModelParser;
+
+    @Inject
+    Preferences mPreferences;
+
+    @Inject
+    UnitConverter mUnitConverter;
+
+    @Inject
+    Activity mActivity;
+
     List<SemiDayForecastDataController> mSemiDayForecasts = new ArrayList<>();
+
+
+    @Inject
+    BaseFiveDayForecastDataController(){}
 
 
     public void SetData(String inForecast)
     {
-        SetData(ForecastModelParser.GetInstance().Parse(inForecast));
+        SetData(mModelParser.Parse(inForecast));
     }
 
 
@@ -25,7 +48,7 @@ public class BaseFiveDayForecastDataController extends Observable
         if(inForecast != null) {
 
             for (int i = 0; i < inForecast.size(); i++) {
-                mSemiDayForecasts.add(new SemiDayForecastDataController(inForecast.get(i)));
+                mSemiDayForecasts.add(new SemiDayForecastDataController(mActivity, mPreferences, mUnitConverter, inForecast.get(i)));
             }
         }
 

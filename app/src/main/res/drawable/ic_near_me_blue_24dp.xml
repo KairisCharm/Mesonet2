@@ -2,4 +2,4 @@
 <bitmap xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:src="@drawable/ic_near_me_black_24dp"
-    android:tint="@color/blueTextColor" />
+    android:tint="@color/lightTextColor" />

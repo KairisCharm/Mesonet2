@@ -1,24 +1,12 @@
 package org.mesonet.app.formulas;
 
 
+import javax.inject.Inject;
 
 public class MathMethods
 {
-    private static MathMethods sMathMethods;
-
-
-
-    public static MathMethods GetInstance()
-    {
-        if(sMathMethods == null)
-            sMathMethods = new MathMethods();
-
-        return sMathMethods;
-    }
-
-
-
-    private MathMethods(){}
+    @Inject
+    MathMethods(){}
 
 
 

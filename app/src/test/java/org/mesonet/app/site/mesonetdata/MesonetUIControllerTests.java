@@ -17,7 +17,7 @@ public class MesonetUIControllerTests
 
         assertEquals("_", nullControllerController.GetAirTempString());
         assertEquals("_", nullControllerController.GetApparentTempString());
-        assertEquals("_", nullControllerController.GetDewPointString());
+        assertEquals("_", nullControllerController.GetDewpointString());
         assertEquals("_", nullControllerController.GetWindString());
         assertEquals("_", nullControllerController.Get24HrRainfallString());
     }
@@ -31,7 +31,7 @@ public class MesonetUIControllerTests
 
         assertEquals("_", nullDataController.GetAirTempString());
         assertEquals("_", nullDataController.GetApparentTempString());
-        assertEquals("_", nullDataController.GetDewPointString());
+        assertEquals("_", nullDataController.GetDewpointString());
         assertEquals("_", nullDataController.GetWindString());
         assertEquals("_", nullDataController.Get24HrRainfallString());
     }
@@ -45,7 +45,7 @@ public class MesonetUIControllerTests
 
         assertEquals("_", nullDataController.GetAirTempString());
         assertEquals("_", nullDataController.GetApparentTempString());
-        assertEquals("_", nullDataController.GetDewPointString());
+        assertEquals("_", nullDataController.GetDewpointString());
         assertEquals("_", nullDataController.GetWindString());
         assertEquals("_", nullDataController.Get24HrRainfallString());
     }
@@ -59,7 +59,7 @@ public class MesonetUIControllerTests
 
         assertEquals("4°", nullDataController.GetAirTempString());
         assertEquals("_", nullDataController.GetApparentTempString());
-        assertEquals("_", nullDataController.GetDewPointString());
+        assertEquals("_", nullDataController.GetDewpointString());
         assertEquals("_", nullDataController.GetWindString());
         assertEquals("_", nullDataController.Get24HrRainfallString());
     }

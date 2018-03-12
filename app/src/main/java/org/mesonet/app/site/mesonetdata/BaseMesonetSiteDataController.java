@@ -1,17 +1,13 @@
 package org.mesonet.app.site.mesonetdata;
 
-import android.app.Activity;
 import android.location.Location;
-
-import kotlin.Pair;
 
 import com.google.gson.Gson;
 
 import org.mesonet.app.BasicViewHolder;
-import org.mesonet.app.MainActivity;
-import org.mesonet.app.caching.Cacher;
+import org.mesonet.app.androidsystem.DeviceLocation;
+import org.mesonet.app.androidsystem.Permissions;
 import org.mesonet.app.dependencyinjection.PerActivity;
-import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.filterlist.FilterListFragment;
 import org.mesonet.app.site.SiteSelectionInterfaces;
 import org.mesonet.app.site.caching.SiteCache;
@@ -27,13 +23,20 @@ import java.util.Observable;
 import java.util.Observer;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 
 @PerActivity
 public abstract class BaseMesonetSiteDataController extends Observable implements FilterListFragment.FilterListDataProvider, SiteSelectionInterfaces.SelectSiteListener, Observer {
     @Inject
     Preferences mPreferences;
+
+    @Inject
+    Permissions mPermissions;
+
+    @Inject
+    DeviceLocation mDeviceLocation;
+
+
 
     SiteCache mCache;
 
@@ -43,8 +46,9 @@ public abstract class BaseMesonetSiteDataController extends Observable implement
 
 
 
-    public BaseMesonetSiteDataController(SiteCache inCache)
+    public BaseMesonetSiteDataController(DeviceLocation inDeviceLocation, SiteCache inCache)
     {
+        mDeviceLocation = inDeviceLocation;
         mCache = inCache;
         mCache.GetSites(new SiteCache.SitesCacheListener() {
             @Override
@@ -69,8 +73,6 @@ public abstract class BaseMesonetSiteDataController extends Observable implement
 
             }
         });
-
-        LoadData();
     }
 
 
@@ -103,7 +105,7 @@ public abstract class BaseMesonetSiteDataController extends Observable implement
             try {
                 date = dateFormat.parse(mMesonetSiteModel.get(keys.get(i)).mDatd);
             }
-            catch (ParseException e)
+            catch (ParseException | NullPointerException e)
             {
                 e.printStackTrace();
             }
@@ -118,14 +120,59 @@ public abstract class BaseMesonetSiteDataController extends Observable implement
 
         mCache.SaveSites(mMesonetSiteModel);
 
-        setChanged();
-        notifyObservers();
+        mDeviceLocation.GetLocation(new DeviceLocation.LocationListener() {
+            @Override
+            public void LastLocationFound(Location inLocation) {
+                mPreferences.SetSelectedStid(GetNearestSite(inLocation));
+                setChanged();
+                notifyObservers();
+            }
+
+            @Override
+            public void LocationUnavailable() {
+                setChanged();
+                notifyObservers();
+            }
+        });
+    }
+
+
+
+    private String GetNearestSite(Location inLocation)
+    {
+        List<String> keys = new ArrayList<>(mMesonetSiteModel.keySet());
+
+        int shortestDistanceIndex = -1;
+        float shortestDistance = Float.MAX_VALUE;
+
+        for(int i = 0; i < keys.size(); i++)
+        {
+            MesonetSiteListModel.MesonetSiteModel site = mMesonetSiteModel.get(keys.get(i));
+
+            Location siteLocation = new Location("none");
+
+            siteLocation.setLatitude(Double.parseDouble(site.mLat));
+            siteLocation.setLongitude(Double.parseDouble(site.mLon));
+
+            float distance = siteLocation.distanceTo(inLocation);
+
+            if(distance < shortestDistance)
+            {
+                shortestDistance = distance;
+                shortestDistanceIndex = i;
+            }
+        }
+
+        if(shortestDistanceIndex == -1)
+            return null;
+
+        return keys.get(shortestDistanceIndex);
     }
 
 
 
     @Override
-    public Map<String, BasicViewHolder.BasicViewHolderData> AllData()
+    public Map<String, BasicViewHolder.BasicViewHolderData> AllViewHolderData()
     {
         if(mMesonetSiteModel == null)
             return null;
@@ -141,13 +188,46 @@ public abstract class BaseMesonetSiteDataController extends Observable implement
     }
 
 
+    public boolean SiteDataFound()
+    {
+        return mMesonetSiteModel != null && mMesonetSiteModel.size() > 0;
+    }
+
+
     public String CurrentStationName()
     {
         String currentSelection = CurrentSelection();
-        Map<String, BasicViewHolder.BasicViewHolderData> data = AllData();
-        if(data == null)
+
+        if(currentSelection == null || mMesonetSiteModel == null || !mMesonetSiteModel.containsKey(currentSelection))
             return null;
-        return data.get(currentSelection).GetName();
+        return mMesonetSiteModel.get(currentSelection).mName;
+    }
+
+
+
+    public Number CurrentStationElevation()
+    {
+        String currentSelection = CurrentSelection();
+
+        if(currentSelection == null ||
+                mMesonetSiteModel == null ||
+                !mMesonetSiteModel.containsKey(currentSelection) ||
+                mMesonetSiteModel.get(currentSelection) == null ||
+                mMesonetSiteModel.get(currentSelection).mElev == null)
+            return null;
+
+        Double result = null;
+
+        try
+        {
+            result = Double.parseDouble(mMesonetSiteModel.get(currentSelection).mElev);
+        }
+        catch (NumberFormatException e)
+        {
+            return null;
+        }
+
+        return result;
     }
 
 

@@ -14,5 +14,7 @@ public interface Preferences
     void SetUnitPreference(UnitPreference inPreference);
     String GetSelectedStid();
     void SetSelectedStid(String inStid);
+    String GetSelectedRadar();
+    void SetSelectedRadar(String inRadarName);
     PreferencesObservable GetPreferencesObservable();
 }

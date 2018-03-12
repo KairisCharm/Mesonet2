@@ -3,10 +3,9 @@ package org.mesonet.app.site.mesonetdata;
 import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.formulas.UnitConverter;
 //import org.mesonet.app.site.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
-import org.mesonet.app.site.SiteSelectionInterfaces;
+import org.mesonet.app.reflection.MesonetModelParser;
 import org.mesonet.app.site.caching.SiteCache;
 import org.mesonet.app.userdata.Preferences;
-import org.mesonet.app.userdata.PreferencesObservable;
 
 import java.util.Date;
 import java.util.Observable;
@@ -27,6 +26,15 @@ public abstract class BaseMesonetDataController extends Observable implements Me
     @Inject
     SiteCache mCache;
 
+    @Inject
+    DerivedValues mDerivedValues;
+    
+    @Inject
+    UnitConverter mUnitConverter;
+
+    @Inject
+    MesonetModelParser mModelParser;
+
 
     private boolean mUpdating = false;
 
@@ -38,19 +46,23 @@ public abstract class BaseMesonetDataController extends Observable implements Me
         mPreferences = inPreferences;
         mSiteDataController.GetDataObservable().addObserver(this);
         mPreferences.GetPreferencesObservable().addObserver(this);
+        mSiteDataController.addObserver(this);
     }
 
 
 
     void SetData(String inMesonetDataString)
     {
-        SetData(MesonetModel.NewInstance(inMesonetDataString));
+        SetData(mModelParser.Parse(MesonetModel.class, inMesonetDataString));
     }
 
 
 
     void SetData(MesonetModel inMesonetModel)
     {
+        if(!inMesonetModel.STID.toLowerCase().equals(mSiteDataController.CurrentSelection().toLowerCase()))
+            return;
+
         mPreferences.GetPreferencesObservable().addObserver(this);
         mMesonetModel = inMesonetModel;
         setChanged();
@@ -94,7 +106,7 @@ public abstract class BaseMesonetDataController extends Observable implements Me
         if(mPreferences == null || mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
             tempUnits = UnitConverter.TempUnits.kFahrenheit;
 
-        Number result = UnitConverter.GetInstance().GetTempInPreferredUnits(mMesonetModel.TAIR, mMesonetModel, tempUnits);
+        Number result = mUnitConverter.GetTempInPreferredUnits(mMesonetModel.TAIR, mMesonetModel, tempUnits);
 
         if(result == null)
             return null;
@@ -118,9 +130,9 @@ public abstract class BaseMesonetDataController extends Observable implements Me
         if(mPreferences == null || mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
             tempUnits = UnitConverter.TempUnits.kFahrenheit;
 
-        Number apparentTemp = DerivedValues.GetInstance().GetApparentTemperature(mMesonetModel.TAIR, mMesonetModel.WSPD, mMesonetModel.RELH);
+        Number apparentTemp = mDerivedValues.GetApparentTemperature(mMesonetModel.TAIR, mMesonetModel.WSPD, mMesonetModel.RELH);
 
-        Number result = UnitConverter.GetInstance().GetTempInPreferredUnits(apparentTemp, mMesonetModel, tempUnits);
+        Number result = mUnitConverter.GetTempInPreferredUnits(apparentTemp, mMesonetModel, tempUnits);
 
         if(result == null)
             return null;
@@ -131,7 +143,7 @@ public abstract class BaseMesonetDataController extends Observable implements Me
 
 
     @Override
-    public Double GetDewPoint()
+    public Double GetDewpoint()
     {
         if(mMesonetModel == null)
             return null;
@@ -144,9 +156,9 @@ public abstract class BaseMesonetDataController extends Observable implements Me
         if(mPreferences == null || mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
             tempUnits = UnitConverter.TempUnits.kFahrenheit;
 
-        Number apparentTemp = DerivedValues.GetInstance().GetDewPoint(mMesonetModel.TAIR, mMesonetModel.RELH);
+        Number apparentTemp = mDerivedValues.GetDewpoint(mMesonetModel.TAIR, mMesonetModel.RELH);
 
-        Number result = UnitConverter.GetInstance().GetTempInPreferredUnits(apparentTemp, mMesonetModel, tempUnits);
+        Number result = mUnitConverter.GetTempInPreferredUnits(apparentTemp, mMesonetModel, tempUnits);
 
         if(result == null)
             return null;
@@ -173,7 +185,7 @@ public abstract class BaseMesonetDataController extends Observable implements Me
         if(mPreferences == null || mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
             speedUnits = UnitConverter.SpeedUnits.kMph;
 
-        Number result = UnitConverter.GetInstance().GetSpeedInPreferredUnits(mMesonetModel.WSPD, mMesonetModel, speedUnits);
+        Number result = mUnitConverter.GetSpeedInPreferredUnits(mMesonetModel.WSPD, mMesonetModel, speedUnits);
 
         if(result == null)
             return null;
@@ -192,7 +204,7 @@ public abstract class BaseMesonetDataController extends Observable implements Me
         if(mMesonetModel.WDIR.doubleValue() < -900.0)
             return null;
 
-        return UnitConverter.GetInstance().GetCompassDirection(mMesonetModel.WDIR);
+        return mUnitConverter.GetCompassDirection(mMesonetModel.WDIR);
     }
 
 
@@ -211,7 +223,7 @@ public abstract class BaseMesonetDataController extends Observable implements Me
         if(mPreferences == null || mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
             speedUnits = UnitConverter.SpeedUnits.kMph;
 
-        Number result = UnitConverter.GetInstance().GetSpeedInPreferredUnits(mMesonetModel.WMAX, mMesonetModel, speedUnits);
+        Number result = mUnitConverter.GetSpeedInPreferredUnits(mMesonetModel.WMAX, mMesonetModel, speedUnits);
 
         if(result == null)
             return null;
@@ -235,7 +247,7 @@ public abstract class BaseMesonetDataController extends Observable implements Me
         if(mPreferences != null && mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
             lengthUnits = UnitConverter.LengthUnits.kIn;
 
-        Number result = UnitConverter.GetInstance().GetLengthInPreferredUnits(mMesonetModel.RAIN_24H, mMesonetModel, lengthUnits);
+        Number result = mUnitConverter.GetLengthInPreferredUnits(mMesonetModel.RAIN_24H, mMesonetModel, lengthUnits);
 
         if(result == null)
             return null;
@@ -265,12 +277,12 @@ public abstract class BaseMesonetDataController extends Observable implements Me
         if(mMesonetModel.PRES.doubleValue() < -900.0)
             return null;
 
-        UnitConverter.PressureUnits pressureUnits = UnitConverter.PressureUnits.kMmHg;
+        UnitConverter.PressureUnits pressureUnits = UnitConverter.PressureUnits.kMb;
 
         if(mPreferences != null && mPreferences.GetUnitPreference() == Preferences.UnitPreference.kImperial)
             pressureUnits = UnitConverter.PressureUnits.kInHg;
 
-        Number result = UnitConverter.GetInstance().GetPressureInPreferredUnits(mMesonetModel.PRES, mMesonetModel, pressureUnits);
+        Number result = mUnitConverter.GetPressureInPreferredUnits(mDerivedValues.GetMSLPressure(mMesonetModel.TAIR, mMesonetModel.PRES, mSiteDataController.CurrentStationElevation()), mMesonetModel, pressureUnits);
 
         if(result == null)
             return null;
@@ -314,8 +326,11 @@ public abstract class BaseMesonetDataController extends Observable implements Me
 
     @Override
     public void update(Observable observable, Object o) {
-        if(mMesonetModel != null && !mMesonetModel.STID.toLowerCase().equals(mPreferences.GetSelectedStid()))
-            mMesonetModel = null;
+        if(mMesonetModel != null && !GetStid().toLowerCase().equals(mPreferences.GetSelectedStid()))
+            StopUpdating();
+
+        if(!IsUpdating())
+            StartUpdating();
 
         setChanged();
         notifyObservers();

@@ -11,6 +11,7 @@ public class UserSettings
     private static final String kMesonetSettings = "MesonetSettings";
     public static final String kUnitPreference = "UnitPreference";
     public static final String kSelectedStid = "SelectedStid";
+    public static final String kSelectedRadar = "SelectedRadar";
 
     @Inject
     UserSettings(){}

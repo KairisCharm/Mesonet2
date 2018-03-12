@@ -3,32 +3,33 @@ package org.mesonet.app.site.mesonetdata;
 
 import org.mesonet.app.formulas.UnitConverter;
 
+import javax.inject.Inject;
+
 public class DerivedValues
 {
     private static final double kWindChillTempThreshold = 50.0;
     private static final double kHeatIndexTempThreshold = 80.0;
+    
+    
+    @Inject
+    UnitConverter mUnitConverter;
 
-    private static DerivedValues sDerivedValues;
 
+    @Inject
+    public DerivedValues(){}
 
-    public static DerivedValues GetInstance() {
-        if (sDerivedValues == null)
-            sDerivedValues = new DerivedValues();
-
-        return sDerivedValues;
-    }
 
 
     public Number GetHeatIndex(Number inTemp, Number inHumidity) {
         if (inTemp == null || inHumidity == null)
             return null;
 
-        double fahrenheit = UnitConverter.GetInstance().CelsiusToFahrenheit(inTemp).doubleValue();
+        double fahrenheit = mUnitConverter.CelsiusToFahrenheit(inTemp).doubleValue();
 
         if (fahrenheit < kHeatIndexTempThreshold)
             return null;
 
-        return UnitConverter.GetInstance().FahrenheitToCelsius(-42.379 +
+        return mUnitConverter.FahrenheitToCelsius(-42.379 +
                 2.04901523 * fahrenheit +
                 10.14333127 * inHumidity.doubleValue() -
                 0.22475541 * fahrenheit * inHumidity.doubleValue() -
@@ -40,19 +41,20 @@ public class DerivedValues
     }
 
 
+
     public Number GetWindChill(Number inTemp, Number inWindSpeed) {
         if (inTemp == null || inWindSpeed == null)
             return null;
 
-        double fahrenheit = UnitConverter.GetInstance().CelsiusToFahrenheit(inTemp).doubleValue();
-        double mph = UnitConverter.GetInstance().MpsToMph(inWindSpeed).doubleValue();
+        double fahrenheit = mUnitConverter.CelsiusToFahrenheit(inTemp).doubleValue();
+        double mph = mUnitConverter.MpsToMph(inWindSpeed).doubleValue();
 
         if (fahrenheit > kWindChillTempThreshold || mph < 3.0)
             return null;
 
         double windSpeedFunction = Math.pow(mph, 0.16);
 
-        return UnitConverter.GetInstance().FahrenheitToCelsius(35.74 + 0.6215 * fahrenheit - 35.75 * windSpeedFunction + 0.4275 * fahrenheit * windSpeedFunction);
+        return mUnitConverter.FahrenheitToCelsius(35.74 + 0.6215 * fahrenheit - 35.75 * windSpeedFunction + 0.4275 * fahrenheit * windSpeedFunction);
     }
 
 
@@ -62,7 +64,7 @@ public class DerivedValues
         if(inTemp == null)
             return null;
 
-        double fahrenheit = UnitConverter.GetInstance().CelsiusToFahrenheit(inTemp).doubleValue();
+        double fahrenheit = mUnitConverter.CelsiusToFahrenheit(inTemp).doubleValue();
 
         if(fahrenheit <= kWindChillTempThreshold)
         {
@@ -91,7 +93,7 @@ public class DerivedValues
 
 
 
-    public Number GetDewPoint(Number inTemperature, Number inHumidity)
+    public Number GetDewpoint(Number inTemperature, Number inHumidity)
     {
         if(inTemperature == null || inHumidity == null)
             return null;
@@ -99,5 +101,15 @@ public class DerivedValues
         double saturatedPressure = 6.11 * Math.pow(10, ((7.5 * inTemperature.doubleValue()) / (237.3 + inTemperature.doubleValue())));
 
         return (237.3 * Math.log((saturatedPressure * inHumidity.doubleValue()) / 611.0)) / (7.5 * Math.log(10) - Math.log((saturatedPressure * inHumidity.doubleValue()) / 611.0));
+    }
+
+
+
+    public Number GetMSLPressure(Number inTemperature, Number inStationPressure, Number inElevation)
+    {
+        if(inStationPressure == null || inElevation == null)
+            return null;
+
+         return inStationPressure.doubleValue() * Math.pow(1 - ((0.0065 * inElevation.doubleValue()) / ((inTemperature.doubleValue() + (0.0065 * inElevation.doubleValue()) + 273))), -5.257);
     }
 }
