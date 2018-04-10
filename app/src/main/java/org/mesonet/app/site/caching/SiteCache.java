@@ -5,7 +5,6 @@ import org.mesonet.app.caching.Cacher;
 import org.mesonet.app.dependencyinjection.PerActivity;
 import org.mesonet.app.site.mesonetdata.MesonetSiteListModel;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -54,7 +53,7 @@ public class SiteCache
 
             @Override
             public void Found(MesonetSiteListModel inResults) {
-                inSitesCacheListener.SitesLodaded(inResults);
+                inSitesCacheListener.SitesLoaded(inResults);
             }
 
             @Override
@@ -93,7 +92,7 @@ public class SiteCache
 
             @Override
             public void Found(List<String> inResults) {
-                inFavoritesCacheListener.FavoritesLodaded(inResults);
+                inFavoritesCacheListener.FavoritesLoaded(inResults);
             }
 
             @Override
@@ -107,13 +106,13 @@ public class SiteCache
 
     public interface SitesCacheListener
     {
-        void SitesLodaded(MesonetSiteListModel inResults);
+        void SitesLoaded(MesonetSiteListModel inResults);
     }
 
 
 
     public interface FavoritesCacheListener
     {
-        void FavoritesLodaded(List<String> inResults);
+        void FavoritesLoaded(List<String> inResults);
     }
 }

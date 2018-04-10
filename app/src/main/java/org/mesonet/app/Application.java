@@ -17,7 +17,7 @@ import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasActivityInjector;
 
 @Singleton
-public class MesonetApplication extends Application implements HasActivityInjector
+public class Application extends android.app.Application implements HasActivityInjector
 {
     @Inject
     DispatchingAndroidInjector<Activity> mActivityInjector;
@@ -25,7 +25,7 @@ public class MesonetApplication extends Application implements HasActivityInject
 
 
     @Inject
-    public MesonetApplication(){}
+    public Application(){}
 
 
 

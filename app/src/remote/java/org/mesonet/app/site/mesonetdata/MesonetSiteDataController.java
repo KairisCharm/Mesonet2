@@ -34,7 +34,7 @@ public class MesonetSiteDataController extends BaseMesonetSiteDataController
     {
         mCache.GetSites(new SiteCache.SitesCacheListener() {
             @Override
-            public void SitesLodaded(MesonetSiteListModel inResults) {
+            public void SitesLoaded(MesonetSiteListModel inResults) {
                 if(mMesonetSiteModel == null || mMesonetSiteModel.size() == 0)
                     SetData(inResults);
             }

@@ -52,11 +52,11 @@ public abstract class BaseMesonetSiteDataController extends Observable implement
         mCache = inCache;
         mCache.GetSites(new SiteCache.SitesCacheListener() {
             @Override
-            public void SitesLodaded(final MesonetSiteListModel inSiteResults) {
+            public void SitesLoaded(final MesonetSiteListModel inSiteResults) {
 
                 mCache.GetFavorites(new SiteCache.FavoritesCacheListener() {
                     @Override
-                    public void FavoritesLodaded(List<String> inResults) {
+                    public void FavoritesLoaded(List<String> inResults) {
                         if(mMesonetSiteModel == null) {
                             mMesonetSiteModel = inSiteResults;
                         }

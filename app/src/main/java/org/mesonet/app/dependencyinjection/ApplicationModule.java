@@ -4,9 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 
 import org.mesonet.app.MainActivity;
-import org.mesonet.app.MesonetApplication;
-import org.mesonet.app.userdata.Preferences;
-import org.mesonet.app.userdata.PreferencesObservable;
+import org.mesonet.app.Application;
 
 import javax.inject.Singleton;
 
@@ -20,7 +18,7 @@ import dagger.multibindings.IntoMap;
 
 @Module(includes = AndroidInjectionModule.class,
         subcomponents = {MainActivitySubcomponent.class})
-abstract class MesonetApplicationModule
+abstract class ApplicationModule
 {
     @Binds
     @IntoMap
@@ -31,7 +29,7 @@ abstract class MesonetApplicationModule
 
     @Provides
     @Singleton
-    static Context Context(MesonetApplication inApp)
+    static Context Context(Application inApp)
     {
         return inApp;
     }

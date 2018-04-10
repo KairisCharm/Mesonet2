@@ -37,8 +37,8 @@ import javax.inject.Inject;
 import dagger.android.AndroidInjection;
 
 
-public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer
-{
+public class MainActivity extends BaseActivity implements NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer {
+}
     private MainActivityBinding mBinding;
 
     private ActionBarDrawerToggle mActionBarDrawerToggle;
