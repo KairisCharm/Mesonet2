@@ -3,7 +3,6 @@ package org.mesonet.app.site.mesonetdata;
 
 import org.mesonet.app.dependencyinjection.PerActivity;
 import org.mesonet.app.dependencyinjection.PerFragment;
-import org.mesonet.app.site.caching.SiteCache;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

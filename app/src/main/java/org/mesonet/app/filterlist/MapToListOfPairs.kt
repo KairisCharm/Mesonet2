@@ -7,8 +7,8 @@ import org.mesonet.app.BasicViewHolder
 
 class MapToListOfPairs
 {
-    fun Create(inMaps : Map<String, BasicViewHolder.BasicViewHolderData>) : List<Pair<String,BasicViewHolder.BasicViewHolderData>>
+    fun Create(inMaps : Map<String, BasicViewHolder.BasicViewHolderData>) : MutableList<Pair<String,BasicViewHolder.BasicViewHolderData>>
     {
-        return inMaps.toList()
+        return inMaps.toList() as MutableList<Pair<String, BasicViewHolder.BasicViewHolderData>>
     }
 }

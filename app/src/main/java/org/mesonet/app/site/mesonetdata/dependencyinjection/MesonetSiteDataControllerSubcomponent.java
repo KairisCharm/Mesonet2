@@ -1,9 +1,7 @@
 package org.mesonet.app.site.mesonetdata.dependencyinjection;
 
 
-import org.mesonet.app.MainActivity;
 import org.mesonet.app.dependencyinjection.PerFragment;
-import org.mesonet.app.site.mesonetdata.MesonetDataController;
 import org.mesonet.app.site.mesonetdata.MesonetSiteDataController;
 
 import dagger.Subcomponent;

@@ -7,7 +7,6 @@ import org.mesonet.app.dependencyinjection.PerChildFragment;
 import org.mesonet.app.filterlist.FilterListFragment;
 
 
-
 @PerChildFragment
 @Subcomponent(modules = FilterListFragmentModule.class)
 public interface FilterListFragmentSubcomponent extends AndroidInjector<FilterListFragment> {

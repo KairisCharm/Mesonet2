@@ -8,10 +8,10 @@ import dagger.android.support.FragmentKey;
 import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.filterlist.FilterListFragment;
 import org.mesonet.app.filterlist.dependencyinjection.FilterListFragmentSubcomponent;
-import org.mesonet.app.site.mesonetdata.MesonetSiteDataController;
-import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetUIControllerSubcomponent;
 import org.mesonet.app.site.SiteOverviewFragment;
 import org.mesonet.app.site.SiteSelectionInterfaces;
+import org.mesonet.app.site.mesonetdata.MesonetSiteDataController;
+import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetUIControllerSubcomponent;
 
 import dagger.Binds;
 import dagger.Module;

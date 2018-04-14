@@ -1,7 +1,6 @@
 package org.mesonet.app.advisories.dependencyinjection;
 
 import org.mesonet.app.advisories.AdvisoriesFragment;
-import org.mesonet.app.maps.MapListFragment;
 
 import dagger.Subcomponent;
 import dagger.android.AndroidInjector;

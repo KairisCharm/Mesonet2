@@ -15,9 +15,9 @@ class MesonetStidNamePair
         inSiteModel.forEach(
         {
             val location = Location("none")
-            location.latitude = it.value.mLat.toDouble()
-            location.longitude = it.value.mLon.toDouble()
-            result.put(it.key, BasicViewHolder.BasicViewHolderData(it.value.mName, location, inFavorites.contains(it.key)))
+            location.latitude = it.value.mLat!!.toDouble()
+            location.longitude = it.value.mLon!!.toDouble()
+            result.put(it.key, BasicViewHolder.BasicViewHolderData(it.value.mName!!, location, inFavorites.contains(it.key)))
         })
 
         return result

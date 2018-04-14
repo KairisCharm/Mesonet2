@@ -3,8 +3,8 @@ package org.mesonet.app.dependencyinjection;
 import android.app.Activity;
 import android.content.Context;
 
-import org.mesonet.app.MainActivity;
 import org.mesonet.app.Application;
+import org.mesonet.app.MainActivity;
 
 import javax.inject.Singleton;
 

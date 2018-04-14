@@ -13,19 +13,19 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <meta-data android:name="com.google.android.geo.API_KEY" android:value="@string/google_api_key"/>
-
-        <activity
-            android:name=".MainActivity"
-            android:label="@string/app_name"
-            android:windowSoftInputMode="adjustPan">
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".webview.WebViewActivity"
-            android:theme="@style/WebViewActivityTheme"/>
+
+        <activity android:name=".webview.WebViewActivity"/>
+
+        <meta-data android:name="com.google.android.geo.API_KEY" android:value="@string/google_api_key"/>
+
     </application>
 </manifest>

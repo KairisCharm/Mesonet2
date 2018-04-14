@@ -6,7 +6,6 @@ import android.widget.Toast;
 
 import org.mesonet.app.dependencyinjection.PerActivity;
 import org.mesonet.app.dependencyinjection.PerFragment;
-import org.mesonet.app.userdata.Preferences;
 
 import javax.inject.Inject;
 
