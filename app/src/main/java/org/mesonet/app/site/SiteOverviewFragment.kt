@@ -268,10 +268,15 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         mMesonetDataBinding!!.siteToolbar.setOnMenuItemClickListener(this)
         mMesonetDataBinding!!.siteToolbar.setNavigationIcon(R.drawable.ic_multiline_chart_white_36dp)
         mMesonetDataBinding!!.siteToolbar.setNavigationOnClickListener {
-            val intent = Intent(activity?.baseContext, WebViewActivity::class.java)
-            intent.putExtra(WebViewActivity.kTitle, mMesonetSiteDataController.CurrentStationName()!! + " Meteogram")
-            intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/data/public/mesonet/meteograms/" + mMesonetSiteDataController.CurrentSelection().toUpperCase() + ".met.gif")
-            startActivity(intent)
+            if(mMesonetSiteDataController.CurrentSelection() != "") {
+                val intent = Intent(activity?.baseContext, WebViewActivity::class.java)
+                intent.putExtra(WebViewActivity.kTitle, mMesonetSiteDataController.CurrentStationName()!! + " Meteogram")
+                intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/data/public/mesonet/meteograms/" + mMesonetSiteDataController.CurrentSelection().toUpperCase() + ".met.gif")
+                intent.putExtra(WebViewActivity.kInitialZoom, 1)
+                intent.putExtra(WebViewActivity.kAllowUserZoom, true)
+                intent.putExtra(WebViewActivity.kAllowShare, true)
+                startActivity(intent)
+            }
         }
         if (mMesonetSiteDataController.IsFavorite(mMesonetSiteDataController.CurrentSelection())) {
             mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_white_36dp)

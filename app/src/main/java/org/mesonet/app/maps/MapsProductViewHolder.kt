@@ -39,6 +39,7 @@ class MapsProductViewHolder(internal var mFragmentManager: FragmentManager, inBi
                 intent.putExtra(WebViewActivity.kUrl, inData.Url())
                 intent.putExtra(WebViewActivity.kAllowShare, true)
                 intent.putExtra(WebViewActivity.kInitialZoom, 1)
+                intent.putExtra(WebViewActivity.kAllowUserZoom, true)
                 binding.root.context.startActivity(intent)
             })
         }

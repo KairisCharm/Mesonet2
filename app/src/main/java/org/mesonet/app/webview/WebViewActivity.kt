@@ -32,6 +32,11 @@ class WebViewActivity : AppCompatActivity() {
         if (intent.getBooleanExtra(kUseGoogleDocs, false))
             url = "http://docs.google.com/gview?embedded=true&url=$url"
 
+        if (intent.getBooleanExtra(kAllowUserZoom, false)) {
+            binding.webView.settings.setSupportZoom(true)
+            binding.webView.settings.builtInZoomControls = true
+        }
+
         val webSettings = binding.webView.settings
         webSettings.javaScriptEnabled = true
 
@@ -136,6 +141,7 @@ class WebViewActivity : AppCompatActivity() {
         val kTitle = "title"
         val kUrl = "url"
         val kInitialZoom = "initialZoom"
+        val kAllowUserZoom = "allowUserZoom"
         val kUseGoogleDocs = "useGoogleDocs"
         val kAllowShare = "allowShare"
     }
