@@ -84,15 +84,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
 
         mBinding!!.forecastViewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
             override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
-                if (position > 0)
-                    mBinding!!.previousFab.visibility = View.VISIBLE
-                else
-                    mBinding!!.previousFab.visibility = View.GONE
-
-                if (position < mBinding!!.forecastViewPager.childCount - 1)
-                    mBinding!!.nextFab.visibility = View.VISIBLE
-                else
-                    mBinding!!.nextFab.visibility = View.GONE
+                CalculateScrollButtonVisibility()
             }
 
             override fun onPageSelected(position: Int) {
@@ -104,7 +96,23 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
             }
         })
 
+        CalculateScrollButtonVisibility()
+
         return mBinding!!.root
+    }
+
+
+    private fun CalculateScrollButtonVisibility()
+    {
+        if(mBinding?.forecastViewPager?.currentItem == 0)
+            mBinding!!.previousFab.visibility = View.GONE
+        else
+            mBinding!!.previousFab.visibility = View.VISIBLE
+
+        if (mBinding?.forecastViewPager?.currentItem!! < mBinding!!.forecastViewPager.childCount - 1)
+            mBinding!!.nextFab.visibility = View.VISIBLE
+        else
+            mBinding!!.nextFab.visibility = View.GONE
     }
 
 
