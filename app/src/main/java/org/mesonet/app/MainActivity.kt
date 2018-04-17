@@ -1,5 +1,6 @@
 package org.mesonet.app
 
+import android.content.Context
 import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.os.Bundle
@@ -18,6 +19,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 
 import org.mesonet.app.advisories.AdvisoryDataProvider
 import org.mesonet.app.databinding.MainActivityBinding
@@ -119,7 +121,14 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         fragmentTransaction.replace(R.id.fragmentLayout, SiteOverviewFragment())
         fragmentTransaction.commit()
 
-        mAdvisoryDataProvider!!.addObserver(this)
+        mAdvisoryDataProvider.addObserver(this)
+    }
+
+
+    fun CloseKeyboard()
+    {
+        var imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(mBinding?.root?.windowToken, 0)
     }
 
 

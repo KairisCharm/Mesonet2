@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 
 import org.mesonet.app.BasicViewHolder
+import org.mesonet.app.MainActivity
 import org.mesonet.app.R
 import org.mesonet.app.androidsystem.DeviceLocation
 import org.mesonet.app.baseclasses.BaseFragment
@@ -49,16 +50,19 @@ class FilterListFragment : BaseFragment(), SiteSelectionInterfaces.SelectSiteLis
     @Inject
     lateinit var mDeviceLocation: DeviceLocation
 
+    @Inject
+    lateinit var mMainActivity: MainActivity
+
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inflater, R.layout.filter_list_fragment, container, false)
 
         mBinding.searchList.setAdapter(FilterListAdapter())
 
-        val closeDrawable = getResources().getDrawable(R.drawable.ic_close_white_36dp)
+        val closeDrawable = resources.getDrawable(R.drawable.ic_close_white_36dp)
 
-        mBinding.siteSelectionToolbar.setNavigationIcon(closeDrawable)
-        mBinding.siteSelectionToolbar.setNavigationOnClickListener { mFilterListCloser!!.Close() }
+        mBinding.siteSelectionToolbar.navigationIcon = closeDrawable
+        mBinding.siteSelectionToolbar.setNavigationOnClickListener { Close() }
 
         mBinding.siteSelectionToolbar.inflateMenu(R.menu.search_list_menu)
 
@@ -68,14 +72,12 @@ class FilterListFragment : BaseFragment(), SiteSelectionInterfaces.SelectSiteLis
             false
         }
 
-
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            closeDrawable.setTint(getResources().getColor(R.color.lightTextColor, getActivity()?.getTheme()))
-            mBinding.searchText.setTextColor(getResources().getColor(R.color.lightTextColor, getActivity()?.getTheme()))
+            closeDrawable.setTint(resources.getColor(R.color.lightTextColor, activity?.theme))
+            mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor, activity?.theme))
         } else {
-            closeDrawable.setTint(getResources().getColor(R.color.lightTextColor))
-            mBinding.searchText.setTextColor(getResources().getColor(R.color.lightTextColor))
+            closeDrawable.setTint(resources.getColor(R.color.lightTextColor))
+            mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor))
         }
 
         mTextChangedListener = object : TextWatcher {
@@ -92,15 +94,13 @@ class FilterListFragment : BaseFragment(), SiteSelectionInterfaces.SelectSiteLis
             }
         }
 
-        val data = mFilterListData!!.AllViewHolderData()
+        val data = mFilterListData.AllViewHolderData()
 
-        if (data != null && data.containsKey(mFilterListData!!.CurrentSelection()))
-            mBinding.searchText.setText(data[mFilterListData!!.CurrentSelection()]?.GetName())
+        if (data != null && data.containsKey(mFilterListData.CurrentSelection()))
+            mBinding.searchText.setText(data[mFilterListData.CurrentSelection()]?.GetName())
         mBinding.searchText.addTextChangedListener(mTextChangedListener)
 
-        mFilterListData!!.GetDataObservable().addObserver(this)
-
-
+        mFilterListData.GetDataObservable().addObserver(this)
 
         FillList()
 
@@ -109,7 +109,7 @@ class FilterListFragment : BaseFragment(), SiteSelectionInterfaces.SelectSiteLis
 
 
     override fun onDestroyView() {
-        mFilterListData!!.GetDataObservable().deleteObserver(this)
+        mFilterListData.GetDataObservable().deleteObserver(this)
         mBinding.searchText.removeTextChangedListener(mTextChangedListener)
         mTextChangedListener = null
         super.onDestroyView()
@@ -117,8 +117,15 @@ class FilterListFragment : BaseFragment(), SiteSelectionInterfaces.SelectSiteLis
 
 
     override fun SetResult(inResult: String) {
-        mFilterListCloser!!.Close()
-        mSelectedListener!!.SetResult(inResult)
+        Close()
+        mSelectedListener.SetResult(inResult)
+    }
+
+
+    fun Close()
+    {
+        mMainActivity.CloseKeyboard()
+        mFilterListCloser.Close()
     }
 
 
