@@ -28,7 +28,7 @@ import javax.inject.Inject
 
 abstract class BaseRadarDataController(internal var mSiteDataProvider: RadarSiteDataProvider) : Observable(), Observer {
 
-    internal lateinit var mRadarImages: List<RadarImageModel>
+    var mRadarImages: List<RadarImageModel>? = null
 
 
     init {
