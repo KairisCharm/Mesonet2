@@ -2,6 +2,7 @@ package org.mesonet.app.radar
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.content.res.Configuration
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.design.widget.Snackbar
@@ -39,7 +40,7 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapProvider, Fil
     override fun onCreate(inSavedInstanceState: Bundle?) {
         super.onCreate(inSavedInstanceState)
 
-        mMapController!!.SetProvider(this)
+        mMapController.SetProvider(this)
     }
 
 
@@ -73,7 +74,7 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapProvider, Fil
         mBinding!!.transparencySeekBar.progress = Math.round(255.0f * (1 - mMapController!!.GetTransparency()))
         mBinding!!.transparencySeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(inSeekBar: SeekBar, inProgress: Int, inFromUser: Boolean) {
-                mMapController!!.SetTransparency(1 - inProgress / 255.0f)
+                mMapController.SetTransparency(1 - inProgress / 255.0f)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {
@@ -148,12 +149,17 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapProvider, Fil
             var timeString = ""
 
             if (inTimeString != null && !inTimeString.isEmpty()) {
-                timeString = "\n" + inTimeString
+                if(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+                    timeString = "\n"
+                else
+                    timeString += ", "
+
+                timeString += inTimeString
                 mBinding!!.playPauseButton.show()
             } else
                 mBinding!!.playPauseButton.hide()
 
-            mSnackbar!!.setText(mMapController!!.GetRadarName() + timeString)
+            mSnackbar!!.setText(mMapController.GetRadarName() + timeString)
         }
     }
 

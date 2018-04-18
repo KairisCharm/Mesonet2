@@ -39,6 +39,8 @@ import org.mesonet.app.webview.WebViewActivity
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer {
 
+    private val kSelectedTabId = "selectedTabId"
+
     private var mBinding: MainActivityBinding? = null
 
     private var mActionBarDrawerToggle: ActionBarDrawerToggle? = null
@@ -117,11 +119,36 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             iconView.layoutParams = layoutParams
         }
 
-        val fragmentTransaction = supportFragmentManager.beginTransaction()
-        fragmentTransaction.replace(R.id.fragmentLayout, SiteOverviewFragment())
-        fragmentTransaction.commit()
+        var fragment: Fragment? = null
+        var selectedTab = R.id.mesonetOption
+
+        if(inSavedInstanceState != null)
+            selectedTab = inSavedInstanceState.getInt(kSelectedTabId)
+
+        when (selectedTab) {
+            R.id.mesonetOption -> fragment = SiteOverviewFragment()
+
+            R.id.mapsOption -> fragment = MapListFragment()
+
+            R.id.radarOption -> fragment = RadarFragment()
+
+            R.id.advisoriesOption -> fragment = AdvisoriesFragment()
+        }
+
+        if(fragment != null) {
+            val fragmentTransaction = supportFragmentManager.beginTransaction()
+            fragmentTransaction.replace(R.id.fragmentLayout, fragment)
+            fragmentTransaction.commit()
+        }
 
         mAdvisoryDataProvider.addObserver(this)
+    }
+
+
+    override fun onSaveInstanceState(outState: Bundle)
+    {
+        outState.putInt(kSelectedTabId, mBinding?.bottomNav?.selectedItemId!!)
+        super.onSaveInstanceState(outState)
     }
 
 
