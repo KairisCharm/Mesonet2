@@ -17,7 +17,7 @@ constructor(var mDataDownloader: DataDownloader) : BaseAdvisoryDataProvider() {
 
 
     override fun Update() {
-        mDataDownloader.Download("https://www.mesonet.org/data/public/noaa/wwa/mobile.txt", 60000, object : DataDownloader.DownloadCallback {
+        mDataDownloader.Download("https://www.mesonet.org/data/public/noaa/wwa/mobile-ok.txt", 60000, object : DataDownloader.DownloadCallback {
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
                     SetData(inResult!!)
