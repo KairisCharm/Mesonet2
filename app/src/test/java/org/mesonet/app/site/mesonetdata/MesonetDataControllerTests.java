@@ -2,6 +2,8 @@ package org.mesonet.app.site.mesonetdata;
 
 
 import org.junit.Test;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetDataController;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetModel;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -33,7 +35,7 @@ public class MesonetDataControllerTests
     public void MesonetNullDataTests()
     {
         mObserverCheck = 0;
-        BaseMesonetDataController nullDataController = new MesonetDataController(null, null);
+        MesonetDataController nullDataController = new MesonetDataController(null, null);
 
         assertEquals(null, nullDataController.GetTemp());
         assertEquals(null, nullDataController.GetApparentTemp());
@@ -60,7 +62,7 @@ public class MesonetDataControllerTests
     @Test
     public void MesonetEmptyDataTests()
     {
-        BaseMesonetDataController emtpyDataController = new MesonetDataController(MesonetModel.NewInstance(""), null);
+        MesonetDataController emtpyDataController = new MesonetDataController(MesonetModel.NewInstance(""), null);
 
         assertEquals(null, emtpyDataController.GetTemp());
         assertEquals(null, emtpyDataController.GetApparentTemp());
@@ -87,7 +89,7 @@ public class MesonetDataControllerTests
     @Test
     public void MesonetGoodDataNoPreferenceTests()
     {
-        BaseMesonetDataController noPreferenceDataController = new MesonetDataController(MesonetModel.NewInstance(kGoodTestString), null);
+        MesonetDataController noPreferenceDataController = new MesonetDataController(MesonetModel.NewInstance(kGoodTestString), null);
 
         assertEquals(4.0, noPreferenceDataController.GetTemp());
         assertEquals(2.42748, mMathMethods.Round(noPreferenceDataController.GetApparentTemp(), 5));
@@ -114,7 +116,7 @@ public class MesonetDataControllerTests
     @Test
     public void MesonetGoodDataMetricTests()
     {
-        BaseMesonetDataController metricDataController = new BaseMesonetDataController(MesonetModel.NewInstance(kGoodTestString),
+        MesonetDataController metricDataController = new MesonetDataController(MesonetModel.NewInstance(kGoodTestString),
                                                                              new Preferences(){
                                                                                  @Override
                                                                                  public UnitPreference GetUnitPreference ()
@@ -153,7 +155,7 @@ public class MesonetDataControllerTests
     @Test
     public void MesonetGoodDataImperialTests()
     {
-        BaseMesonetDataController imperialDataController = new BaseMesonetDataController(MesonetModel.NewInstance(kGoodTestString),
+        MesonetDataController imperialDataController = new MesonetDataController(MesonetModel.NewInstance(kGoodTestString),
                                                                              new Preferences(){
                                                                                  @Override
                                                                                  public UnitPreference GetUnitPreference ()
@@ -192,7 +194,7 @@ public class MesonetDataControllerTests
     @Test
     public void MesonetDataControllerUpdatingTests()
     {
-        BaseMesonetDataController imperialDataController = new BaseMesonetDataController(MesonetModel.NewInstance(kGoodTestString),
+        MesonetDataController imperialDataController = new MesonetDataController(MesonetModel.NewInstance(kGoodTestString),
                                                                                  new Preferences(){
                                                                                      @Override
                                                                                      public UnitPreference GetUnitPreference ()
@@ -207,9 +209,9 @@ public class MesonetDataControllerTests
                                                                                  });
 
         assertEquals(false, imperialDataController.IsUpdating());
-        imperialDataController.StartUpdating();
+        imperialDataController.StartUpdates();
         assertEquals(true, imperialDataController.IsUpdating());
-        imperialDataController.StopUpdating();
+        imperialDataController.StopUpdates();
         assertEquals(false, imperialDataController.IsUpdating());
     }
 }

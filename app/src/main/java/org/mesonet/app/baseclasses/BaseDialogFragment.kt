@@ -15,7 +15,7 @@ import dagger.android.support.HasSupportFragmentInjector
 
 abstract class BaseDialogFragment : DialogFragment(), HasSupportFragmentInjector {
     @Inject
-    lateinit var mChildFragmentInjector: DispatchingAndroidInjector<Fragment>
+    internal lateinit var mChildFragmentInjector: DispatchingAndroidInjector<Fragment>
 
     override fun onAttach(inContext: Context?) {
         AndroidSupportInjection.inject(this)

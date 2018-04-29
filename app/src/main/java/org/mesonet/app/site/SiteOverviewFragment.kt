@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.databinding.DataBindingUtil
 import android.os.Bundle
-import android.support.v4.app.FragmentTransaction
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewPager
 import android.view.LayoutInflater
@@ -19,15 +18,16 @@ import android.support.v7.widget.Toolbar
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.MesonetDataContainerBinding
-import org.mesonet.app.forecast.FiveDayForecastDataController
-import org.mesonet.app.site.mesonetdata.MesonetDataController
 import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.app.databinding.SiteOverviewFragmentBinding
 import org.mesonet.app.filterlist.FilterListFragment
-import org.mesonet.app.forecast.ForecastListView
+import org.mesonet.app.site.forecast.ForecastListView
 //import org.mesonet.app.filterlist.dependencyinjection.DaggerFilterListComponent;
-import org.mesonet.app.site.mesonetdata.MesonetSiteDataController
-import org.mesonet.app.site.mesonetdata.MesonetUIController
+import org.mesonet.dataprocessing.site.MesonetSiteDataController
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController
+import org.mesonet.core.ThreadHandler
+import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetDataController
 //import org.mesonet.app.site.mesonetdata.dependencyinjection.DaggerMesonetDataComponent;
 
 import java.util.ArrayList
@@ -42,16 +42,19 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     private var mBinding: SiteOverviewFragmentBinding? = null
 
     @Inject
-    lateinit var mMesonetSiteDataController: MesonetSiteDataController
+    internal lateinit var mMesonetSiteDataController: MesonetSiteDataController
 
     @Inject
-    lateinit var mFiveDayForecastDataController: FiveDayForecastDataController
+    internal lateinit var mFiveDayForecastDataController: FiveDayForecastDataController
 
     @Inject
-    lateinit var mMesonetDataController: MesonetDataController
+    internal lateinit var mMesonetDataController: MesonetDataController
 
     @Inject
-    lateinit var mMesonetUIController: MesonetUIController
+    internal lateinit var mMesonetUIController: MesonetUIController
+
+    @Inject
+    internal lateinit var mThreadHandler: ThreadHandler
 
 
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View {
@@ -148,7 +151,9 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     }
 
     override fun Close() {
-        RevealView(mBinding!!.mesonetDataContainer?.siteToolbar!!)
+        activity?.runOnUiThread({
+            RevealView(mBinding!!.mesonetDataContainer?.siteToolbar!!)
+        })
     }
 
     override fun onMenuItemClick(menuItem: MenuItem): Boolean {
@@ -166,30 +171,30 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
 
 
     private fun ToggleFavorite() {
-        if (mMesonetSiteDataController.IsFavorite(mMesonetSiteDataController.CurrentSelection())) {
-            mMesonetSiteDataController.RemoveFavorite(mMesonetSiteDataController.CurrentSelection())
-        } else {
-            mMesonetSiteDataController.AddFavorite(mMesonetSiteDataController.CurrentSelection())
-        }
+        mMesonetSiteDataController.ToggleFavorite(mMesonetSiteDataController.CurrentStationName())
     }
 
 
     override fun onResume() {
         super.onResume()
 
-        mMesonetDataController.StartUpdating()
+        mMesonetDataController.StartUpdates()
+        mFiveDayForecastDataController.StartUpdates()
     }
 
 
     override fun onPause() {
-        mMesonetDataController.StopUpdating()
+        mMesonetDataController.StopUpdates()
+        mFiveDayForecastDataController.StopUpdates()
 
         super.onPause()
     }
 
 
     override fun update(observable: Observable, o: Any?) {
-        Update()
+        activity?.runOnUiThread({
+            Update()
+        })
     }
 
 
@@ -206,7 +211,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
             val forecastPages = ArrayList<ForecastListView>()
             var i = 0
             while (i < mFiveDayForecastDataController.GetCount()) {
-                val forecastListView = ForecastListView(context!!)
+                val forecastListView = ForecastListView(activity!!, mThreadHandler)
 
                 var j = 0
                 while (j < forecastsPerPage && i + j < mFiveDayForecastDataController.GetCount()) {
@@ -286,7 +291,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                 startActivity(intent)
             }
         }
-        if (mMesonetSiteDataController.IsFavorite(mMesonetSiteDataController.CurrentSelection())) {
+        if (mMesonetSiteDataController.CurrentIsFavorite()) {
             mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_white_36dp)
         } else {
             mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_border_white_36dp)

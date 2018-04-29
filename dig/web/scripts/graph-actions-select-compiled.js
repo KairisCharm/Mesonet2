@@ -102,7 +102,7 @@ var graph_actions = {
             },
 
             selectNodesStartingFromNode: function selectNodesStartingFromNode(node) {
-                var maxLevel = arguments.length <= 1 || arguments[1] === undefined ? 100 : arguments[1];
+                private var maxLevel = arguments.length <= 1 || arguments[1] === undefined ? 100 : arguments[1];
 
                 if (this._deselectNodeIfNeeded(node, "level" + maxLevel)) {
                     return;

@@ -2,12 +2,13 @@ package org.mesonet.app.radar.dependencyinjection;
 
 import android.support.v4.app.Fragment;
 
-import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.filterlist.FilterListFragment;
 import org.mesonet.app.filterlist.dependencyinjection.FilterListFragmentSubcomponent;
 import org.mesonet.app.radar.RadarFragment;
-import org.mesonet.app.radar.RadarSiteDataProvider;
-import org.mesonet.app.site.SiteSelectionInterfaces;
+import org.mesonet.dataprocessing.SelectSiteListener;
+import org.mesonet.dataprocessing.filterlist.FilterListDataProvider;
+import org.mesonet.dataprocessing.radar.RadarSiteDataProvider;
+import org.mesonet.core.PerFragment;
 
 import dagger.Binds;
 import dagger.Module;
@@ -38,7 +39,7 @@ abstract class RadarFragmentModule
 
     @Provides
     @PerFragment
-    static FilterListFragment.FilterListDataProvider FilterListDataProvider(RadarSiteDataProvider inSiteDataProvider)
+    static FilterListDataProvider FilterListDataProvider(RadarSiteDataProvider inSiteDataProvider)
     {
         return inSiteDataProvider;
     }
@@ -47,5 +48,5 @@ abstract class RadarFragmentModule
 
     @Binds
     @PerFragment
-    abstract SiteSelectionInterfaces.SelectSiteListener OnSelectedListener(RadarSiteDataProvider inSiteDataController);
+    abstract SelectSiteListener OnSelectedListener(RadarSiteDataProvider inSiteDataController);
 }

@@ -14,13 +14,13 @@ import org.mesonet.app.R
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.MapsProductViewHolderBinding
 import org.mesonet.app.webview.WebViewActivity
+import org.mesonet.dataprocessing.maps.MapsDataProvider
 
 
-class MapsProductViewHolder(internal var mFragmentManager: FragmentManager, inBinding: MapsProductViewHolderBinding) : RecyclerViewHolder<MapsProductViewHolder.MapsProductViewHolderData, MapsProductViewHolderBinding>(inBinding) {
-
+class MapsProductViewHolder(private var mFragmentManager: FragmentManager, inBinding: MapsProductViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.MapsProductData, MapsProductViewHolderBinding>(inBinding) {
 
     override fun SetData(inData: Any?) {
-        if (inData != null && inData is MapsProductViewHolder.MapsProductViewHolderData) {
+        if (inData != null && inData is MapsDataProvider.MapsProductData) {
             val binding = GetBinding()
 
             binding?.productTitle?.text = inData.Product()
@@ -45,12 +45,6 @@ class MapsProductViewHolder(internal var mFragmentManager: FragmentManager, inBi
         }
     }
 
-
-    interface MapsProductViewHolderData {
-        fun Product(): String
-        fun Section(): String?
-        fun Url(): String
-    }
 
     companion object {
 

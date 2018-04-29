@@ -1,8 +1,11 @@
 package org.mesonet.app.dependencyinjection;
 
 import android.app.Activity;
+import android.content.Context;
 import android.support.v4.app.Fragment;
 
+import org.mesonet.androidsystem.DeviceLocation;
+import org.mesonet.androidsystem.UserSettings;
 import org.mesonet.app.MainActivity;
 import org.mesonet.app.advisories.AdvisoriesFragment;
 import org.mesonet.app.advisories.dependencyinjection.AdvisoriesFragmentSubcomponent;
@@ -13,10 +16,14 @@ import org.mesonet.app.radar.RadarFragment;
 import org.mesonet.app.radar.dependencyinjection.RadarDataControllerSubcomponent;
 import org.mesonet.app.radar.dependencyinjection.RadarFragmentSubcomponent;
 import org.mesonet.app.radar.dependencyinjection.RadarSiteDataProviderSubcomponent;
-import org.mesonet.app.site.SiteOverviewFragment;
 import org.mesonet.app.site.dependencyinjection.SiteOverviewFragmentSubcomponent;
 import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetSiteDataControllerSubcomponent;
-import org.mesonet.app.userdata.Preferences;
+import org.mesonet.app.site.SiteOverviewFragment;
+import org.mesonet.dataprocessing.userdata.Preferences;
+import org.mesonet.core.PerActivity;
+import org.mesonet.dataprocessing.LocationProvider;
+
+import javax.inject.Singleton;
 
 import dagger.Binds;
 import dagger.Module;
@@ -64,6 +71,10 @@ public abstract class MainActivityModule
     @PerActivity
     abstract Activity Activity(MainActivity inMainActivity);
 
+    @Binds
+    @PerActivity
+    abstract Context Context(Activity inActivity);
+
 
     @Binds
     @PerActivity
@@ -72,8 +83,16 @@ public abstract class MainActivityModule
 
     @Provides
     @PerActivity
-    static Preferences Preferences(BaseActivity inActivity)
+    static Preferences Preferences(UserSettings inSettings)
     {
-        return inActivity;
+        return inSettings;
+    }
+
+
+    @Provides
+    @PerActivity
+    static LocationProvider LocationProvider(DeviceLocation inDeviceLocation)
+    {
+        return inDeviceLocation;
     }
 }

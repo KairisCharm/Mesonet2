@@ -1,7 +1,7 @@
 package org.mesonet.app.site.dependencyinjection;
 
-import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.site.SiteOverviewFragment;
+import org.mesonet.core.PerFragment;
 
 import dagger.Subcomponent;
 import dagger.android.AndroidInjector;

@@ -9,8 +9,9 @@ import android.view.ViewGroup
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.AdvisoriesFragmentBinding
+import org.mesonet.dataprocessiFilenamevisories.AdvisoryListBuilder
+import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
 
-import java.util.ArrayList
 import java.util.Observable
 import java.util.Observer
 
@@ -21,10 +22,10 @@ class AdvisoriesFragment : BaseFragment(), Observer {
     private var mBinding: AdvisoriesFragmentBinding? = null
 
     @Inject
-    lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
+    internal lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
 
     @Inject
-    lateinit var mAdvisorySorter: AdvisorySorter
+    internal lateinit var mAdvisoryListBuilder: AdvisoryListBuilder
 
 
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View? {
@@ -38,27 +39,15 @@ class AdvisoriesFragment : BaseFragment(), Observer {
 
 
     override fun update(o: Observable, arg: Any?) {
-        var advisories: List<AdvisoryModel>? = mAdvisoryDataProvider.GetAdvisories()
-
-        if (advisories != null) {
-            val endResult = ArrayList<Any>()
-
-            var currentLevel: AdvisoryModel.AdvisoryLevel? = null
-            var currentType: AdvisoryModel.AdvisoryType? = null
-
-            advisories = mAdvisorySorter.Sort(advisories)
-
-            for (i in advisories!!.indices) {
-                if (advisories[i].mAdvisoryType.mAdvisoryLevel != currentLevel || advisories[i].mAdvisoryType.mAdvisoryType != currentType) {
-                    endResult.add(advisories[i].mAdvisoryType)
-                    currentLevel = advisories[i].mAdvisoryType.mAdvisoryLevel
-                    currentType = advisories[i].mAdvisoryType.mAdvisoryType
-                }
-
-                endResult.add(advisories[i])
-            }
-
-            mBinding!!.advisoriesRecyclerView.SetItems(endResult)
+        if(activity != null && isAdded()) {
+            activity!!.runOnUiThread({
+                mAdvisoryListBuilder.BuildList(mAdvisoryDataProvider.GetAdvisories(), object : AdvisoryListBuilder.AdvisoryListListener {
+                    override fun ListComplete(inResult: MutableList<Pair<AdvisoryListBuilder.AdvisoryDataType, AdvisoryListBuilder.AdvisoryData>>) {
+                        if (mBinding != null)
+                            mBinding?.advisoriesRecyclerView?.SetItems(inResult)
+                    }
+                })
+            })
         }
     }
 }

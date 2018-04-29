@@ -4,20 +4,16 @@ import android.view.ViewGroup
 
 import org.mesonet.app.baseclasses.RecyclerViewAdapter
 import org.mesonet.app.baseclasses.RecyclerViewHolder
+import org.mesonet.dataprocessiFilenamevisories.AdvisoryListBuilder
 
 
-class AdvisoriesRecyclerViewAdapter : RecyclerViewAdapter<Any, RecyclerViewHolder<Any, *>>() {
-    internal enum class AdvisoryViewHolderType {
-        kHeader, kContent
-    }
+class AdvisoriesRecyclerViewAdapter : RecyclerViewAdapter<Pair<AdvisoryListBuilder.AdvisoryDataType, AdvisoryListBuilder.AdvisoryData>, RecyclerViewHolder<Any, *>>() {
+
 
     override fun getItemViewType(inPosition: Int): Int {
-        if (inPosition >= 0 && inPosition < mDataItems!!.size) {
-            if (mDataItems?.get(inPosition) is AdvisoryModel.AdvisoryTypeModel)
-                return AdvisoryViewHolderType.kHeader.ordinal
-
-            if (mDataItems?.get(inPosition) is AdvisoryModel)
-                return AdvisoryViewHolderType.kContent.ordinal
+        if(mDataItems != null && inPosition >= 0 && inPosition < mDataItems!!.size && mDataItems?.get(inPosition) != null && mDataItems?.get(inPosition)?.first != null)
+        {
+            return mDataItems?.get(inPosition)?.first!!.ordinal
         }
 
         return -1
@@ -25,9 +21,9 @@ class AdvisoriesRecyclerViewAdapter : RecyclerViewAdapter<Any, RecyclerViewHolde
 
 
     override fun onCreateViewHolder(inParent: ViewGroup, inViewType: Int): RecyclerViewHolder<Any, *> {
-        return when (AdvisoryViewHolderType.values()[inViewType]) {
-            AdvisoriesRecyclerViewAdapter.AdvisoryViewHolderType.kHeader -> AdvisoryHeaderViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, *>
-            AdvisoriesRecyclerViewAdapter.AdvisoryViewHolderType.kContent -> AdvisoryViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, *>
+        return when (AdvisoryListBuilder.AdvisoryDataType.values()[inViewType]) {
+            AdvisoryListBuilder.AdvisoryDataType.kHeader -> AdvisoryHeaderViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, *>
+            AdvisoryListBuilder.AdvisoryDataType.kContent -> AdvisoryViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, *>
         }
     }
 }

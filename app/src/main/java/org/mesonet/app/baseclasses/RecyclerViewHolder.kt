@@ -7,10 +7,10 @@ import android.support.v7.widget.RecyclerView
 abstract class RecyclerViewHolder<in TData : Any?, out TViewDataBinding : ViewDataBinding>(protected var mBinding: ViewDataBinding) : RecyclerView.ViewHolder(mBinding.root) {
 
 
-    abstract fun SetData(inData: Any?)
+    abstract internal fun SetData(inData: Any?)
 
 
-    fun GetBinding(): TViewDataBinding? {
+    internal fun GetBinding(): TViewDataBinding? {
         try {
             return mBinding as TViewDataBinding
         } catch (e: ClassCastException) {

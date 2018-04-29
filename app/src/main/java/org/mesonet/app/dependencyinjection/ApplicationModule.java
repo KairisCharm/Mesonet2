@@ -25,12 +25,4 @@ abstract class ApplicationModule
     @ActivityKey(MainActivity.class)
     abstract AndroidInjector.Factory<? extends Activity>
     MainActivityInjectorFactory(MainActivitySubcomponent.Builder inBuilder);
-
-
-    @Provides
-    @Singleton
-    static Context Context(Application inApp)
-    {
-        return inApp;
-    }
 }

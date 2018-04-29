@@ -62,7 +62,7 @@ var objcdv = {
                 var _ref = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
                 var _ref$max_level = _ref.max_level;
-                var max_level = _ref$max_level === undefined ? 100 : _ref$max_level;
+                private var max_level = _ref$max_level === undefined ? 100 : _ref$max_level;
                 var _ref$use_backward_search = _ref.use_backward_search;
                 var use_backward_search = _ref$use_backward_search === undefined ? false : _ref$use_backward_search;
                 var _ref$use_forward_search = _ref.use_forward_search;

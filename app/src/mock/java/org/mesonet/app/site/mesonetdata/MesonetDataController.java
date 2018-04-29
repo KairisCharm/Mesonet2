@@ -10,7 +10,7 @@ import org.mesonet.app.dependencyinjection.PerFragment;
 import javax.inject.Inject;
 
 
-@PerFragment
+@PerActivity
 public class MesonetDataController extends BaseMesonetDataController
 {
     @Inject

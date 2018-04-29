@@ -5,13 +5,14 @@ import android.support.v4.app.Fragment;
 import dagger.Provides;
 import dagger.android.support.FragmentKey;
 
-import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.filterlist.FilterListFragment;
 import org.mesonet.app.filterlist.dependencyinjection.FilterListFragmentSubcomponent;
-import org.mesonet.app.site.SiteOverviewFragment;
-import org.mesonet.app.site.SiteSelectionInterfaces;
-import org.mesonet.app.site.mesonetdata.MesonetSiteDataController;
+import org.mesonet.dataprocessing.SelectSiteListener;
+import org.mesonet.dataprocessing.site.MesonetSiteDataController;
 import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetUIControllerSubcomponent;
+import org.mesonet.app.site.SiteOverviewFragment;
+import org.mesonet.core.PerFragment;
+import org.mesonet.dataprocessing.filterlist.FilterListDataProvider;
 
 import dagger.Binds;
 import dagger.Module;
@@ -42,12 +43,12 @@ abstract class SiteOverviewFragmentModule {
 
     @Provides
     @PerFragment
-    static FilterListFragment.FilterListDataProvider FilterListDataProvider(MesonetSiteDataController inSiteDataController)
+    static FilterListDataProvider FilterListDataProvider(MesonetSiteDataController inSiteDataController)
     {
         return inSiteDataController;
     }
 
     @Binds
     @PerFragment
-    abstract SiteSelectionInterfaces.SelectSiteListener OnSelectedListener(MesonetSiteDataController inSiteDataController);
+    abstract SelectSiteListener OnSelectedListener(MesonetSiteDataController inSiteDataController);
 }

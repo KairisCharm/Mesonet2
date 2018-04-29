@@ -5,7 +5,7 @@ import android.support.v7.widget.LinearLayoutManager
 import android.util.AttributeSet
 
 
-class RecyclerView<TRecyclerViewAdapter : RecyclerViewAdapter<Any, RecyclerViewHolder<*,*>>> @JvmOverloads constructor(inContext: Context, inAttrs: AttributeSet? = null, inDefStyle: Int = 0) : android.support.v7.widget.RecyclerView(inContext, inAttrs, inDefStyle) {
+class RecyclerView<TRecyclerViewAdapter : RecyclerViewAdapter<Any, RecyclerViewHolder<*, *>>> @JvmOverloads constructor(inContext: Context, inAttrs: AttributeSet? = null, inDefStyle: Int = 0) : android.support.v7.widget.RecyclerView(inContext, inAttrs, inDefStyle) {
 
 
 
@@ -16,7 +16,7 @@ class RecyclerView<TRecyclerViewAdapter : RecyclerViewAdapter<Any, RecyclerViewH
     }
 
 
-    fun GetAdapter(): TRecyclerViewAdapter? {
+    internal fun GetAdapter(): TRecyclerViewAdapter? {
         try {
             return adapter as TRecyclerViewAdapter
         } catch (e: ClassCastException) {
@@ -28,7 +28,7 @@ class RecyclerView<TRecyclerViewAdapter : RecyclerViewAdapter<Any, RecyclerViewH
 
 
     @Synchronized
-    fun SetItems(inData: MutableList<Any>) {
+    internal fun SetItems(inData: MutableList<Any>) {
         recycledViewPool.clear()
         GetAdapter()?.SetItems(inData)
     }

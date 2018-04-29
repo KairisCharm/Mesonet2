@@ -6,32 +6,40 @@ import android.content.res.Configuration
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.design.widget.Snackbar
-import android.support.v4.app.FragmentTransaction
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewAnimationUtils
 import android.view.ViewGroup
 import android.widget.SeekBar
-
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.GroundOverlay
+import com.google.android.gms.maps.model.GroundOverlayOptions
+import com.google.android.gms.maps.model.LatLng
 
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.RadarFragmentBinding
 import org.mesonet.app.filterlist.FilterListFragment
+import org.mesonet.dataprocessing.radar.GoogleMapController
+import org.mesonet.dataprocessing.radar.RadarImageDataProvider
+import java.util.ArrayList
 
 import javax.inject.Inject
 
 
-class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapProvider, FilterListFragment.FilterListCloser {
+class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapSetup, FilterListFragment.FilterListCloser {
+
     @Inject
-    lateinit var mMapController: GoogleMapController
+    internal lateinit var mMapController: GoogleMapController
+
+    private val mGroundOverlays = ArrayList<GroundOverlay?>(6)
 
 
-    internal var mBinding: RadarFragmentBinding? = null
+    private var mBinding: RadarFragmentBinding? = null
 
     private var mSnackbar: Snackbar? = null
+    private var mLastLocation: LatLng? = null
 
 
     private var mBindingReadyListener: BindingReadyListener? = null
@@ -67,11 +75,11 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapProvider, Fil
             mBinding!!.playPauseButton.hide()
         }
 
-        mBinding!!.playPauseButton.SetPlayPauseState(mMapController!!.GetPlayPauseState())
-        mBinding!!.playPauseButton.setOnClickListener { mMapController!!.TogglePlay() }
+        mBinding!!.playPauseButton.SetPlayPauseState(mMapController.GetPlayPauseState())
+        mBinding!!.playPauseButton.setOnClickListener { mMapController.TogglePlay() }
 
         mBinding!!.transparencySeekBar.max = 255
-        mBinding!!.transparencySeekBar.progress = Math.round(255.0f * (1 - mMapController!!.GetTransparency()))
+        mBinding!!.transparencySeekBar.progress = Math.round(255.0f * (1 - mMapController.GetTransparency()))
         mBinding!!.transparencySeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(inSeekBar: SeekBar, inProgress: Int, inFromUser: Boolean) {
                 mMapController.SetTransparency(1 - inProgress / 255.0f)
@@ -85,8 +93,6 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapProvider, Fil
 
             }
         })
-
-        mSnackbar!!.show()
 
         return mBinding!!.root
     }
@@ -110,6 +116,8 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapProvider, Fil
         mMapController.SetProvider(null)
         mBinding!!.map.onDestroy()
 
+        mMapController.StopUpdates()
+
         super.onDestroy()
     }
 
@@ -128,45 +136,65 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapProvider, Fil
     }
 
 
-    override fun GetMap(inListener: GoogleMapListener) {
-        val bindingReadyListener = object : BindingReadyListener {
-            override fun BindingReady(inBinding: RadarFragmentBinding?) {
-                if (inListener != null && inBinding != null) {
-                    inBinding.map.getMapAsync { inMap -> inListener.MapFound(getContext()!!, inMap) }
+    override fun GetMap(inListener: RadarImageDataProvider) {
+        if(activity != null && isAdded()) {
+            activity?.runOnUiThread({
+                val bindingReadyListener = object : BindingReadyListener {
+                    override fun BindingReady(inBinding: RadarFragmentBinding?) {
+                        if (inBinding != null) {
+                            inBinding.map.getMapAsync { inMap ->
+                                val listener = object : RadarImageDataProvider.RadarDataListener {
+                                    override fun FoundImage(inRadarImage: GroundOverlayOptions, inIndex: Int, inTransparency: Float) {
+                                        if(activity != null && isAdded()) {
+                                            activity?.runOnUiThread({
+                                                while (inIndex >= mGroundOverlays.size)
+                                                    mGroundOverlays.add(null)
+
+                                                if (mGroundOverlays[inIndex] == null) {
+                                                    mGroundOverlays[inIndex] = inMap.addGroundOverlay(inRadarImage)
+                                                } else {
+                                                    mGroundOverlays[inIndex]?.setImage(inRadarImage.image)
+                                                    mGroundOverlays[inIndex]?.position = inRadarImage.location
+                                                    mGroundOverlays[inIndex]?.setDimensions(inRadarImage.width, inRadarImage.height)
+                                                }
+
+                                                mGroundOverlays[inIndex]?.transparency = inTransparency
+                                            })
+                                        }
+                                    }
+
+                                    override fun FoundLatLng(inLatLng: LatLng) {
+                                        if(mLastLocation == null || !mLastLocation!!.equals(inLatLng) && activity != null) {
+                                            mLastLocation = inLatLng
+                                            activity?.runOnUiThread({
+                                                inMap.moveCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(LatLng(inLatLng.latitude, inLatLng.longitude), 7f)))
+                                            })
+                                        }
+                                    }
+                                }
+                                mMapController.GetLocation(listener)
+                                inListener.GetImages(context!!, listener)
+                            }
+                        }
+                    }
                 }
-            }
-        }
 
-        if (mBinding == null)
-            mBindingReadyListener = bindingReadyListener
-        else
-            bindingReadyListener.BindingReady(mBinding)
-    }
-
-
-    override fun SetTime(inTimeString: String?) {
-        if (mSnackbar != null) {
-            var timeString = ""
-
-            if (inTimeString != null && !inTimeString.isEmpty()) {
-                if(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-                    timeString = "\n"
+                if (mBinding == null)
+                    mBindingReadyListener = bindingReadyListener
                 else
-                    timeString += ", "
-
-                timeString += inTimeString
-                mBinding!!.playPauseButton.show()
-            } else
-                mBinding!!.playPauseButton.hide()
-
-            mSnackbar!!.setText(mMapController.GetRadarName() + timeString)
+                    bindingReadyListener.BindingReady(mBinding)
+            })
         }
     }
 
     override fun Close() {
-        RevealView(mBinding!!.radarLayout)
-        mSnackbar!!.show()
-        mBinding!!.playPauseButton.show()
+        if(activity != null && isAdded()) {
+            activity?.runOnUiThread({
+                RevealView(mBinding!!.radarLayout)
+                mSnackbar!!.show()
+                mBinding!!.playPauseButton.show()
+            })
+        }
     }
 
 
@@ -196,6 +224,38 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapProvider, Fil
                 }
             })
             reveal.start()
+        }
+    }
+
+
+    override fun SetActiveImage(inIndex: Int, inTransparency: Float, inTimeString: String?) {
+        if(activity != null && isAdded()) {
+            activity?.runOnUiThread({
+                for (i in mGroundOverlays.indices) {
+                    if (mGroundOverlays[i] != null) {
+                        var transparency = 1f
+                        if (i == inIndex)
+                            transparency = inTransparency
+
+                        mGroundOverlays[i]!!.transparency = transparency
+                    }
+                }
+
+                if (inTimeString != null && !inTimeString.isEmpty()) {
+                    var timeString = ""
+                    if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+                        timeString = "\n"
+                    else
+                        timeString += ", "
+
+                    timeString += inTimeString
+                    mSnackbar!!.setText(mMapController.GetRadarName() + timeString)
+                    mSnackbar!!.show()
+                    mBinding!!.playPauseButton.show()
+                } else {
+                    mBinding!!.playPauseButton.hide()
+                }
+            })
         }
     }
 

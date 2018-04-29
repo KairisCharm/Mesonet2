@@ -7,23 +7,22 @@ import android.view.ViewGroup
 import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.baseclasses.RecyclerViewAdapter
 import org.mesonet.app.baseclasses.RecyclerViewHolder
+import org.mesonet.dataprocessing.maps.MapsDataProvider
 
 
 open class MapsRecyclerViewAdapter(private val mBaseActivity: BaseActivity?) : RecyclerViewAdapter<Any, RecyclerViewHolder<Any, ViewDataBinding>>() {
-    internal enum class MapViewHolderTypes {
-        kHeader, kProduct, kGroup
-    }
+
 
     override fun getItemViewType(inPosition: Int): Int {
         if (inPosition >= 0 && inPosition < mDataItems?.size!!) {
             if (mDataItems?.get(inPosition) is String)
-                return MapViewHolderTypes.kHeader.ordinal
+                return MapsDataProvider.MapViewHolderTypes.kHeader.ordinal
 
-            if (mDataItems?.get(inPosition) is MapsProductViewHolder.MapsProductViewHolderData)
-                return MapViewHolderTypes.kProduct.ordinal
+            if (mDataItems?.get(inPosition) is MapsDataProvider.MapsProductData)
+                return MapsDataProvider.MapViewHolderTypes.kProduct.ordinal
 
             if (mDataItems?.get(inPosition) is Pair<*, *>)
-                return MapViewHolderTypes.kGroup.ordinal
+                return MapsDataProvider.MapViewHolderTypes.kGroup.ordinal
         }
 
         return -1
@@ -33,10 +32,10 @@ open class MapsRecyclerViewAdapter(private val mBaseActivity: BaseActivity?) : R
     override fun onCreateViewHolder(inParent: ViewGroup, inViewType: Int): RecyclerViewHolder<Any, ViewDataBinding> {
 
         try {
-            return when (MapViewHolderTypes.values()[inViewType]) {
-                MapsRecyclerViewAdapter.MapViewHolderTypes.kHeader -> MapsHeaderViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, ViewDataBinding>
-                MapsRecyclerViewAdapter.MapViewHolderTypes.kProduct -> MapsProductViewHolder.NewInstance(mBaseActivity?.supportFragmentManager!!, inParent) as RecyclerViewHolder<Any, ViewDataBinding>
-                MapsRecyclerViewAdapter.MapViewHolderTypes.kGroup -> mBaseActivity?.let { MapsGroupViewHolder.NewInstance(it, inParent) } as RecyclerViewHolder<Any, ViewDataBinding>
+            return when (MapsDataProvider.MapViewHolderTypes.values()[inViewType]) {
+                MapsDataProvider.MapViewHolderTypes.kHeader -> MapsHeaderViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, ViewDataBinding>
+                MapsDataProvider.MapViewHolderTypes.kProduct -> MapsProductViewHolder.NewInstance(mBaseActivity?.supportFragmentManager!!, inParent) as RecyclerViewHolder<Any, ViewDataBinding>
+                MapsDataProvider.MapViewHolderTypes.kGroup -> mBaseActivity?.let { MapsGroupViewHolder.NewInstance(it, inParent) } as RecyclerViewHolder<Any, ViewDataBinding>
             }
         } catch (e: ArrayIndexOutOfBoundsException) {
             e.printStackTrace()

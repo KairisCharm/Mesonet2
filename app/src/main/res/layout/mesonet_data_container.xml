@@ -6,7 +6,7 @@
     <data>
         <variable
             name="mesonetSiteDataController"
-            type="org.mesonet.app.site.mesonetdata.MesonetSiteDataController"/>
+            type="org.mesonet.dataprocessing.site.MesonetSiteDataController"/>
     </data>
 
     <RelativeLayout

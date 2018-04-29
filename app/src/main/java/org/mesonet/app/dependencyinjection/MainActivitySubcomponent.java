@@ -1,6 +1,7 @@
 package org.mesonet.app.dependencyinjection;
 
 import org.mesonet.app.MainActivity;
+import org.mesonet.core.PerActivity;
 
 import dagger.Subcomponent;
 import dagger.android.AndroidInjector;

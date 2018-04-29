@@ -2,6 +2,7 @@ package org.mesonet.app.site.mesonetdata;
 
 
 import org.junit.Test;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetModel;
 
 import java.lang.reflect.Field;
 

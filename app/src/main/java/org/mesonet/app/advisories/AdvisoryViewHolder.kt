@@ -11,39 +11,31 @@ import org.mesonet.app.R
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.AdvisoryViewHolderBinding
 import org.mesonet.app.webview.WebViewActivity
+import org.mesonet.dataprocessiFilenamevisories.AdvisoryListBuilder
 
-class AdvisoryViewHolder(inBinding: AdvisoryViewHolderBinding) : RecyclerViewHolder<AdvisoryModel, AdvisoryViewHolderBinding>(inBinding) {
+class AdvisoryViewHolder(inBinding: AdvisoryViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryListBuilder.AdvisoryDataType, AdvisoryListBuilder.AdvisoryData>, AdvisoryViewHolderBinding>(inBinding) {
 
 
     override fun SetData(inData: Any?) {
-        if(inData != null && inData is AdvisoryModel) {
+        if(inData != null && inData is Pair<*,*> && inData.first is AdvisoryListBuilder.AdvisoryDataType && inData.second is AdvisoryListBuilder.AdvisoryData) {
             val binding = GetBinding()
 
-            binding?.countyListTextView!!.text = MakeCountyListString(inData.mCountyCodes!!)
+            if(binding != null) {
+                val advisoryData = inData.second as AdvisoryListBuilder.AdvisoryData
+                binding.countyListTextView.text = advisoryData.Counties()
 
-            binding.root.setOnClickListener {
-                val intent = Intent(binding.root.context, WebViewActivity::class.java)
-                intent.putExtra(WebViewActivity.kTitle, inData.mAdvisoryType.mAdvisoryType.toString() + " " + inData.mAdvisoryType.mAdvisoryLevel)
-                intent.putExtra(WebViewActivity.kUrl, "https://www.mesonet.org/data/public/noaa/text/archive" + inData.mFilePath!!)
-                intent.putExtra(WebViewActivity.kUseGoogleDocs, true)
-                binding.root.context.startActivity(intent)
+                binding.root.setOnClickListener {
+                    val intent = Intent(binding.root.context, WebViewActivity::class.java)
+                    intent.putExtra(WebViewActivity.kTitle, advisoryData.AdvisoryType())
+                    intent.putExtra(WebViewActivity.kUrl, advisoryData.Url())
+                    intent.putExtra(WebViewActivity.kUseGoogleDocs, true)
+                    binding.root.context.startActivity(intent)
+                }
             }
         }
     }
 
 
-    private fun MakeCountyListString(inCounties: List<String>): String {
-        val result = StringBuilder()
-
-        for (i in inCounties.indices) {
-            if (i > 0)
-                result.append(", ")
-
-            result.append(inCounties[i])
-        }
-
-        return result.toString()
-    }
 
     companion object {
         fun NewInstance(inParent: ViewGroup): AdvisoryViewHolder {

@@ -70,7 +70,7 @@ abstract class RecyclerViewAdapter<TData : Any?, TRecyclerViewHolder : RecyclerV
     }
 
 
-    fun SetItems(inDataItems: MutableList<TData>?, inTotalItems: Int = 0)
+    internal fun SetItems(inDataItems: MutableList<TData>?, inTotalItems: Int = 0)
     {
         if (mDataItems === inDataItems)
             return
@@ -81,7 +81,7 @@ abstract class RecyclerViewAdapter<TData : Any?, TRecyclerViewHolder : RecyclerV
     }
 
 
-    fun AddItems(inDataItems: List<TData>, inTotalItems: Int = 0) {
+    internal fun AddItems(inDataItems: List<TData>, inTotalItems: Int = 0) {
         if (mDataItems == null)
             mDataItems = ArrayList()
 
@@ -90,7 +90,7 @@ abstract class RecyclerViewAdapter<TData : Any?, TRecyclerViewHolder : RecyclerV
         notifyDataSetChanged()
     }
 
-    fun ClearItems() {
+    internal fun ClearItems() {
         if (mDataItems != null) {
             mDataItems!!.clear()
             mUsePagination = false
@@ -99,7 +99,7 @@ abstract class RecyclerViewAdapter<TData : Any?, TRecyclerViewHolder : RecyclerV
     }
 
 
-    fun GetItemCount(): Int {
+    internal fun GetItemCount(): Int {
         var count = itemCount
 
         if (mUsePagination)
@@ -109,21 +109,21 @@ abstract class RecyclerViewAdapter<TData : Any?, TRecyclerViewHolder : RecyclerV
     }
 
 
-    fun AddScrolledToEndListener(inScrolledToEndListener: ScrolledToEndListener) {
+    internal fun AddScrolledToEndListener(inScrolledToEndListener: ScrolledToEndListener) {
         mScrolledToEndListeners!!.add(inScrolledToEndListener)
     }
 
 
-    fun RemoveScrolledToEndListener(inScrolledToEndListener: ScrolledToEndListener) {
+    internal fun RemoveScrolledToEndListener(inScrolledToEndListener: ScrolledToEndListener) {
         mScrolledToEndListeners!!.remove(inScrolledToEndListener)
     }
 
 
-    fun AddViewHolder(inTRecyclerViewHolder: TRecyclerViewHolder) {
+    internal fun AddViewHolder(inTRecyclerViewHolder: TRecyclerViewHolder) {
         mRecyclerViewHolders.add(inTRecyclerViewHolder)
     }
 
-    fun GetViewHolders(): List<TRecyclerViewHolder> {
+    internal fun GetViewHolders(): List<TRecyclerViewHolder> {
         return mRecyclerViewHolders
     }
 

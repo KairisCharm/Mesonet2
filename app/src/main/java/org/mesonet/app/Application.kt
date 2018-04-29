@@ -10,12 +10,17 @@ import javax.inject.Singleton
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
+import android.content.ComponentName
+import android.content.Context.ACTIVITY_SERVICE
+import android.app.ActivityManager
+import android.content.Context
+
 
 @Singleton
 class Application @Inject
 constructor() : android.app.Application(), HasActivityInjector {
     @Inject
-    lateinit var mActivityInjector: DispatchingAndroidInjector<Activity>
+    internal lateinit var mActivityInjector: DispatchingAndroidInjector<Activity>
 
 
     override fun onCreate() {

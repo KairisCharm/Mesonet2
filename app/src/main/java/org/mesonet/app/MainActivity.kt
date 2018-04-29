@@ -6,22 +6,16 @@ import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.annotation.AnimRes
 import android.support.design.internal.BottomNavigationMenuView
-import android.support.design.widget.BottomNavigationView
 import android.support.design.widget.NavigationView
 import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentTransaction
-import android.support.v7.app.ActionBar
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.Toolbar
-import android.util.DisplayMetrics
 import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 
-import org.mesonet.app.advisories.AdvisoryDataProvider
 import org.mesonet.app.databinding.MainActivityBinding
 import org.mesonet.app.baseclasses.BaseActivity
 
@@ -35,6 +29,9 @@ import org.mesonet.app.maps.MapListFragment
 import org.mesonet.app.radar.RadarFragment
 import org.mesonet.app.site.SiteOverviewFragment
 import org.mesonet.app.webview.WebViewActivity
+import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
+import org.mesonet.dataprocessing.maps.MapsDataProvider
+import org.mesonet.dataprocessing.site.MesonetSiteDataController
 
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer {
@@ -47,7 +44,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
 
     @Inject
-    lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
+    internal lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
+
+    @Inject
+    internal lateinit var mMapsDataProvider: MapsDataProvider
+
+    @Inject
+    internal lateinit var mMesonetSiteDataProvider: MesonetSiteDataController
 
 
     public override fun onCreate(inSavedInstanceState: Bundle?) {
@@ -145,6 +148,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
 
+
     override fun onSaveInstanceState(outState: Bundle)
     {
         outState.putInt(kSelectedTabId, mBinding?.bottomNav?.selectedItemId!!)
@@ -154,7 +158,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     fun CloseKeyboard()
     {
-        var imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow(mBinding?.root?.windowToken, 0)
     }
 
@@ -179,6 +183,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         mBinding!!.drawer.removeDrawerListener(mActionBarDrawerToggle!!)
 
         mActionBarDrawerToggle = null
+
+        mAdvisoryDataProvider.StopUpdates()
+        mMapsDataProvider.StopUpdates()
+        mMesonetSiteDataProvider.StopUpdates()
 
         super.onDestroy()
     }
@@ -207,7 +215,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
 
-    override fun NavigateToPage(inFragment: Fragment, inPushBackStack: Boolean, @AnimRes inAnimationIn: Int, @AnimRes inAnimationOut: Int) {
+    override fun NavigateToPage(inFragment: Fragment, inPushToBackStack: Boolean, @AnimRes inAnimationIn: Int, @AnimRes inAnimationOut: Int) {
         val fragmentTransaction = supportFragmentManager.beginTransaction()
 
         if (inAnimationIn != 0 || inAnimationOut != 0)
@@ -215,16 +223,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         fragmentTransaction.replace(R.id.fragmentLayout, inFragment)
 
-        if (inPushBackStack)
+        if (inPushToBackStack)
             fragmentTransaction.addToBackStack(inFragment.javaClass.name)
         fragmentTransaction.commit()
     }
 
 
     override fun update(o: java.util.Observable, arg: Any?) {
-        if (mAdvisoryDataProvider.GetCount()!! > 0)
-            mBinding!!.bottomNav.menu.getItem(3).icon = resources.getDrawable(R.drawable.advisory_badge, theme)
-        else
-            mBinding!!.bottomNav.menu.getItem(3).setIcon(R.drawable.advisories_image)
+        runOnUiThread({
+            if (mAdvisoryDataProvider.GetCount() > 0)
+                mBinding!!.bottomNav.menu.getItem(3).icon = resources.getDrawable(R.drawable.advisory_badge, theme)
+            else
+                mBinding!!.bottomNav.menu.getItem(3).setIcon(R.drawable.advisories_image)
+        })
     }
 }

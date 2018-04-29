@@ -57,8 +57,6 @@ class WebViewActivity : AppCompatActivity() {
             }
         }
 
-        val webInfoUrl = url
-
         val initialScale = intent.getIntExtra(kInitialZoom, -1)
 
         if (initialScale != -1) {
@@ -68,70 +66,6 @@ class WebViewActivity : AppCompatActivity() {
             binding.webView.settings.useWideViewPort = true
         }
 
-        //        if(webInfoUrl.endsWith(".txt"))
-        //        {
-        //            new Thread(new Runnable() {
-        //                @Override
-        //                public void run() {
-        //                    try {
-        //
-        //                        String text = "";
-        //                        URL url = new URL(webInfoUrl);
-        //                        HttpURLConnection con=(HttpURLConnection)url.openConnection();
-        //                        //get InputStream instance
-        //                        InputStream is=con.getInputStream();
-        //                        //create BufferedReader object
-        //                        BufferedReader br=new BufferedReader(new InputStreamReader(is));
-        //                        String line;
-        //                        //read content of the file line by line
-        //                        while((line=br.readLine())!=null){
-        //                            text+=line;
-        //
-        //                        }
-        //
-        //                        br.close();
-        //
-        //                        final StringBuilder sb = new StringBuilder();
-        //                        String[] words = text.toString().split("\\s");  // assume no spaces in links
-        //
-        //                        for (String word : words) {
-        //                            try {
-        //                                // Attempt to add the string as a link
-        //                                url = new URL(word);
-        //                                sb.append("<p>");
-        //                                sb.append("<a href=\"");
-        //                                sb.append(url.toString());
-        //                                sb.append("\">");
-        //                                sb.append(url);
-        //                                sb.append("</a> ");
-        //                                sb.append("</p>");
-        //                            } catch (MalformedURLException e) {
-        //                                // This was not a valid URL, just add it to the string
-        //                                sb.append(word);
-        //                                sb.append(" ");
-        //                            }
-        //                        }
-        //
-        //                        runOnUiThread(new Runnable() {
-        //                            @Override
-        //                            public void run() {
-        //                                binding.webView.loadData(sb.toString(), "text/html", "UTF-8");
-        //                            }
-        //                        });
-        //                    }
-        //                    catch (Exception e)
-        //                    {
-        //                        runOnUiThread(new Runnable() {
-        //                            @Override
-        //                            public void run() {
-        //                                binding.webView.loadUrl(finalUrl);
-        //                            }
-        //                        });
-        //                    }
-        //                }
-        //            }).start();
-        //        }
-        //        else
         binding.webView.loadUrl(url)
 
         setContentView(binding.root)

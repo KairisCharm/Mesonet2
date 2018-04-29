@@ -18,7 +18,6 @@ class MapsGroupViewHolder(private val mBaseActivity: BaseActivity, inBinding: Ma
 
 
     init {
-
         inBinding.groupRecyclerView.setAdapter(MapGroupRecyclerViewAdapter(mBaseActivity))
     }
 
@@ -46,7 +45,6 @@ class MapsGroupViewHolder(private val mBaseActivity: BaseActivity, inBinding: Ma
     }
 
     companion object {
-
         fun NewInstance(inActivity: BaseActivity, inParent: ViewGroup): MapsGroupViewHolder {
             return MapsGroupViewHolder(inActivity, DataBindingUtil.inflate<ViewDataBinding>(LayoutInflater.from(inParent.context), R.layout.maps_group_view_holder, inParent, false) as MapsGroupViewHolderBinding)
         }

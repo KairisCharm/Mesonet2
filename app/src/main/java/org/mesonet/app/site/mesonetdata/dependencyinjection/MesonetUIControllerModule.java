@@ -1,9 +1,8 @@
 package org.mesonet.app.site.mesonetdata.dependencyinjection;
 
-import org.mesonet.app.dependencyinjection.PerChildFragment;
-import org.mesonet.app.site.mesonetdata.BaseMesonetDataController;
-import org.mesonet.app.site.mesonetdata.MesonetDataController;
-import org.mesonet.app.site.mesonetdata.MesonetUIController;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetDataController;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController;
+import org.mesonet.core.PerChildFragment;
 
 import dagger.Binds;
 import dagger.Module;
@@ -18,5 +17,5 @@ public abstract class MesonetUIControllerModule
 
     @Binds
     @PerChildFragment
-    abstract BaseMesonetDataController BaseMesonetDataController(MesonetDataController inMesonetDataController);
+    abstract MesonetDataController BaseMesonetDataController(MesonetDataController inMesonetDataController);
 }

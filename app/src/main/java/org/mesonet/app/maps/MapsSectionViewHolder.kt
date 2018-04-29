@@ -13,13 +13,14 @@ import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.MapsSectionViewHolderBinding
+import org.mesonet.dataprocessing.maps.MapsModel
 
 class MapsSectionViewHolder(inBinding: MapsSectionViewHolderBinding) : RecyclerViewHolder<Pair<Int, MapsModel.SectionModel>, MapsSectionViewHolderBinding>(inBinding) {
     private var mBaseActivity: BaseActivity? = null
 
     override fun SetData(inData: Any?) {
         if (inData != null && inData is Pair<*, *> && inData.first is Int && inData.second is MapsModel.SectionModel) {
-            GetBinding()?.sectionTitle?.text = (inData.second as MapsModel.SectionModel).mTitle
+            GetBinding()?.sectionTitle?.text = (inData.second as MapsModel.SectionModel).GetTitle()
             GetBinding()?.layout?.setOnClickListener(View.OnClickListener {
                 val args = Bundle()
                 args.putInt(MapListFragment.kSelectedGroup, inData.first as Int)

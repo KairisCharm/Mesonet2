@@ -1,7 +1,7 @@
 package org.mesonet.app.maps.dependencyinjection;
 
-import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.maps.MapListFragment;
+import org.mesonet.core.PerFragment;
 
 import dagger.Subcomponent;
 import dagger.android.AndroidInjector;

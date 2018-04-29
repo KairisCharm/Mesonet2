@@ -1,7 +1,7 @@
 package org.mesonet.app.radar.dependencyinjection;
 
-import org.mesonet.app.dependencyinjection.PerFragment;
 import org.mesonet.app.radar.RadarFragment;
+import org.mesonet.core.PerFragment;
 
 import dagger.Subcomponent;
 import dagger.android.AndroidInjector;

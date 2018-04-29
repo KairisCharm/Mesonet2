@@ -4,7 +4,7 @@ package org.mesonet.app.advisories.dependencyinjection;
 import android.support.v4.app.Fragment;
 
 import org.mesonet.app.advisories.AdvisoriesFragment;
-import org.mesonet.app.dependencyinjection.PerFragment;
+import org.mesonet.core.PerFragment;
 
 import dagger.Binds;
 import dagger.Module;

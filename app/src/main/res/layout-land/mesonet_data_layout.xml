@@ -6,7 +6,7 @@
     <data>
         <variable
             name="uiController"
-            type="org.mesonet.app.site.mesonetdata.MesonetUIController"/>
+            type="org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController"/>
     </data>
 
     <RelativeLayout

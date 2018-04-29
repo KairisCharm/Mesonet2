@@ -1,6 +1,7 @@
 package org.mesonet.app.reflection;
 
 import org.junit.Test;
+import org.mesonet.dataprocessing.reflection.MesonetModelParser;
 
 import java.lang.reflect.Field;
 
