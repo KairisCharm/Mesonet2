@@ -2,6 +2,7 @@ package org.mesonet.network
 
 
 import android.os.Handler
+import android.util.Log
 import org.mesonet.core.ThreadHandler
 
 import java.io.IOException
@@ -72,6 +73,7 @@ internal constructor(internal var mThreadHandler: ThreadHandler)
 
     internal fun Download(inTaskId: UUID, inDownloadInfo: DownloadInfo, inDownloadCallback: DownloadCallback): ResponseInfo
     {
+        Log.e("Downloading", inDownloadInfo.mUrl)
         var failed = false
         var responseCode = -1
         var result = ""
@@ -116,6 +118,7 @@ internal constructor(internal var mThreadHandler: ThreadHandler)
             }, inDownloadInfo.mUpdateInterval)
         }
 
+        Log.e("Download complete", inDownloadInfo.mUrl)
         return ResponseInfo(result, responseCode, failed)
     }
 

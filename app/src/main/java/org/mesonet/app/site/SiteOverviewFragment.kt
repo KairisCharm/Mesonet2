@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewAnimationUtils
 import android.view.ViewGroup
 import android.support.v7.widget.Toolbar
+import android.util.Log
 
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseFragment
@@ -274,6 +275,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
 
 
     private fun SetMesonetBinding(inContainerBinding: MesonetDataContainerBinding) {
+        Log.e("Race", "SetMesonetBinding")
         mMesonetDataBinding = inContainerBinding
 
         if (!mMesonetDataBinding!!.siteToolbar.menu.hasVisibleItems()) {

@@ -203,6 +203,13 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
     }
 
 
+    override fun addObserver(o: Observer?) {
+        super.addObserver(o)
+        setChanged()
+        notifyObservers()
+    }
+
+
     fun ToggleFavorite(inStid: String)
     {
         mThreadHandler.Run("MesonetData", Runnable {

@@ -17,18 +17,16 @@ import javax.inject.Singleton
 import kotlin.collections.ArrayList
 
 @PerActivity
-class FiveDayForecastDataController @Inject constructor(internal var mMesonetSiteDataController: MesonetSiteDataController, internal var mDataDownloader: DataDownloader, internal var mThreadHandler: ThreadHandler) : Observable(), Observer {
-    @Inject
-    internal lateinit var mModelParser: ForecastModelParser
+class FiveDayForecastDataController @Inject constructor(internal var mMesonetSiteDataController: MesonetSiteDataController,
+                                                        internal var mDataDownloader: DataDownloader,
+                                                        internal var mThreadHandler: ThreadHandler,
+                                                        internal var mModelParser: ForecastModelParser,
+                                                        internal var mPreferences: Preferences,
+                                                        internal var mUnitConverter: UnitConverter,
+                                                        internal var mActivity: Activity) : Observable(), Observer {
 
-    @Inject
-    internal lateinit var mPreferences: Preferences
 
-    @Inject
-    internal lateinit var mUnitConverter: UnitConverter
 
-    @Inject
-    internal lateinit var mActivity: Activity
 
     private var mSemiDayForecasts: MutableList<SemiDayForecastDataController> = ArrayList()
 
@@ -38,6 +36,7 @@ class FiveDayForecastDataController @Inject constructor(internal var mMesonetSit
 
     init {
         mThreadHandler.Run("ForecastData", Runnable {
+            mMesonetSiteDataController.addObserver(this)
             Update2()
         })
     }
@@ -45,7 +44,6 @@ class FiveDayForecastDataController @Inject constructor(internal var mMesonetSit
 
     internal fun Update2() {
         if (!mMesonetSiteDataController.SiteDataFound()) {
-            mMesonetSiteDataController.addObserver(this)
             return
         }
         mTaskId = mDataDownloader.StartDownloads("http://www.mesonet.org/index.php/app/forecast/" + mMesonetSiteDataController.CurrentSelection(), object : DataDownloader.DownloadCallback {
@@ -124,5 +122,11 @@ class FiveDayForecastDataController @Inject constructor(internal var mMesonetSit
 
     fun GetObservable(): Observable {
         return this
+    }
+
+    override fun addObserver(o: Observer?) {
+        super.addObserver(o)
+        setChanged()
+        notifyObservers()
     }
 }

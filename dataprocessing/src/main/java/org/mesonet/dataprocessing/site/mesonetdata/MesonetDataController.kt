@@ -15,21 +15,15 @@ import javax.inject.Singleton
 
 
 @PerActivity
-class MesonetDataController @Inject constructor(internal var mSiteDataController: MesonetSiteDataController, internal var mPreferences: Preferences) : Observable(), Observer {
-    @Inject
-    internal lateinit var mDerivedValues: DerivedValues
+class MesonetDataController @Inject constructor(internal var mSiteDataController: MesonetSiteDataController,
+                                                internal var mPreferences: Preferences,
+                                                internal var mThreadHandler: ThreadHandler,
+                                                internal var mDataDownloader: DataDownloader,
+                                                internal var mDerivedValues: DerivedValues,
+                                                internal var mUnitConverter: UnitConverter,
+                                                internal var mModelParser: MesonetModelParser) : Observable(), Observer {
 
-    @Inject
-    internal lateinit var mUnitConverter: UnitConverter
 
-    @Inject
-    internal lateinit var mModelParser: MesonetModelParser
-
-    @Inject
-    internal lateinit var mThreadHandler: ThreadHandler
-
-    @Inject
-    internal lateinit var mDataDownloader: DataDownloader
 
     private var mMesonetModel: MesonetModel? = null
 
@@ -45,7 +39,7 @@ class MesonetDataController @Inject constructor(internal var mSiteDataController
 
 
     protected fun Update2() {
-        if (!mSiteDataController.SiteDataFound()) {
+        if (!mSiteDataController.SiteDataFound() || mSiteDataController.CurrentSelection().isEmpty()) {
             StopUpdates()
             return
         }
@@ -277,5 +271,11 @@ class MesonetDataController @Inject constructor(internal var mSiteDataController
                 }
             })
         })
+    }
+
+    override fun addObserver(o: Observer?) {
+        super.addObserver(o)
+        setChanged()
+        notifyObservers()
     }
 }

@@ -32,6 +32,9 @@ import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
 import org.mesonet.dataprocessing.maps.MapsDataProvider
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
+import android.widget.Toast
+import android.R.attr.orientation
+import android.content.res.Configuration
 
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer {
@@ -56,6 +59,38 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     public override fun onCreate(inSavedInstanceState: Bundle?) {
         AndroidInjection.inject(this)
         super.onCreate(inSavedInstanceState)
+
+        var selectedTab = R.id.mesonetOption
+
+        if(inSavedInstanceState != null)
+            selectedTab = inSavedInstanceState.getInt(kSelectedTabId)
+
+        LoadBinding(selectedTab)
+
+        mAdvisoryDataProvider.addObserver(this)
+    }
+
+
+
+    private fun LoadBinding(inSelectedTab: Int)
+    {
+        var fragment: Fragment? = null
+
+        when (inSelectedTab) {
+            R.id.mesonetOption -> fragment = SiteOverviewFragment()
+
+            R.id.mapsOption -> fragment = MapListFragment()
+
+            R.id.radarOption -> fragment = RadarFragment()
+
+            R.id.advisoriesOption -> fragment = AdvisoriesFragment()
+        }
+
+        if(fragment != null) {
+            val fragmentTransaction = supportFragmentManager.beginTransaction()
+            fragmentTransaction.replace(R.id.fragmentLayout, fragment)
+            fragmentTransaction.commit()
+        }
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity)
 
@@ -121,30 +156,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             layoutParams.width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f, displayMetrics).toInt()
             iconView.layoutParams = layoutParams
         }
+    }
 
-        var fragment: Fragment? = null
-        var selectedTab = R.id.mesonetOption
 
-        if(inSavedInstanceState != null)
-            selectedTab = inSavedInstanceState.getInt(kSelectedTabId)
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
 
-        when (selectedTab) {
-            R.id.mesonetOption -> fragment = SiteOverviewFragment()
+        var selectedTab: Int = R.id.mesonetOption
 
-            R.id.mapsOption -> fragment = MapListFragment()
+        if(mBinding != null)
+            selectedTab = mBinding?.bottomNav?.selectedItemId!!
 
-            R.id.radarOption -> fragment = RadarFragment()
-
-            R.id.advisoriesOption -> fragment = AdvisoriesFragment()
-        }
-
-        if(fragment != null) {
-            val fragmentTransaction = supportFragmentManager.beginTransaction()
-            fragmentTransaction.replace(R.id.fragmentLayout, fragment)
-            fragmentTransaction.commit()
-        }
-
-        mAdvisoryDataProvider.addObserver(this)
+        LoadBinding(selectedTab)
     }
 
 

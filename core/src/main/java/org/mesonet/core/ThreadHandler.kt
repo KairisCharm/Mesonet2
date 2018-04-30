@@ -3,6 +3,7 @@ package org.mesonet.core
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import android.util.Log
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -76,6 +77,7 @@ class ThreadHandler @Inject constructor()
 
     fun CloseThreads()
     {
+        Log.e("Threads", "CloseThreads")
         for (threadPair in mThreads.values)
             threadPair.first.quit()
     }
