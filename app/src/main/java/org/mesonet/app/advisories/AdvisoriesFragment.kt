@@ -43,8 +43,14 @@ class AdvisoriesFragment : BaseFragment(), Observer {
             activity!!.runOnUiThread({
                 mAdvisoryListBuilder.BuildList(mAdvisoryDataProvider.GetAdvisories(), object : AdvisoryListBuilder.AdvisoryListListener {
                     override fun ListComplete(inResult: MutableList<Pair<AdvisoryListBuilder.AdvisoryDataType, AdvisoryListBuilder.AdvisoryData>>) {
-                        if (mBinding != null)
-                            mBinding?.advisoriesRecyclerView?.SetItems(inResult)
+                        if(activity != null) {
+                            activity?.runOnUiThread({
+                                if (mBinding != null) {
+                                    mBinding?.progressBar?.visibility = View.GONE
+                                    mBinding?.advisoriesRecyclerView?.SetItems(inResult)
+                                }
+                            })
+                        }
                     }
                 })
             })

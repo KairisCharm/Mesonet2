@@ -28,6 +28,8 @@ constructor(private var mDataController: MesonetDataController, private var mThr
     private var mWindGustsString: String = "-"
     private var mPressureString: String = "-"
 
+    private var mDoingInitialUpdate = true
+
     init {
         mThreadHandler.Run("MesonetData", Runnable {
             mDataController.addObserver(this)
@@ -174,6 +176,10 @@ constructor(private var mDataController: MesonetDataController, private var mThr
                     mPressureString = String.format(Locale.getDefault(), format, pressure) + " " + unit
                 }
 
+
+                mDoingInitialUpdate = time == null && temp == null && apparentTemp == null &&
+                                      dewPoint == null && windSpd == null && direction == null &&
+                                      rain24h == null && humidity == null && windGusts == null
                 setChanged()
                 notifyObservers()
             }
@@ -189,6 +195,13 @@ constructor(private var mDataController: MesonetDataController, private var mThr
             notifyObservers()
         })
     }
+
+
+    fun DoingInitialUpdate(): Boolean
+    {
+        return mDoingInitialUpdate
+    }
+
 
 
     fun GetAirTempString(): String {

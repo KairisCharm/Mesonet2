@@ -31,7 +31,8 @@ internal constructor(internal var mThreadHandler: ThreadHandler)
         var downloadResponseInfo: ResponseInfo? = null
 
         mThreadHandler.Run("Download", Runnable {
-            downloadResponseInfo = Download(uuid, mIdsToDownloadInfo[uuid]!!, inDownloadCallback)
+            if(mIdsToDownloadInfo[uuid] != null)
+                downloadResponseInfo = Download(uuid, mIdsToDownloadInfo[uuid]!!, inDownloadCallback)
         }, Runnable {
             if(downloadResponseInfo != null)
             {

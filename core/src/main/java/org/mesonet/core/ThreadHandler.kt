@@ -41,7 +41,7 @@ class ThreadHandler @Inject constructor()
         {
             val callingLooper = Looper.myLooper()
 
-            if (!mThreads.containsKey(inThreadName))
+            if (!mThreads.containsKey(inThreadName) || mThreads[inThreadName]?.first == null || mThreads[inThreadName]?.first?.state == Thread.State.TERMINATED)
                 mThreads.put(inThreadName, Pair(HandlerThread(inThreadName), false))
 
             mThreads[inThreadName] = mThreads[inThreadName]?.copy(second = true)!!
@@ -49,23 +49,26 @@ class ThreadHandler @Inject constructor()
             if (mThreads[inThreadName] != null && mThreads[inThreadName]?.first != null && mThreads[inThreadName]?.first?.isAlive != null && !mThreads[inThreadName]?.first?.isAlive!!)
                 mThreads[inThreadName]?.first?.start()
 
-            Handler(mThreads[inThreadName]?.first?.looper).post({
-                inRunnable.run()
+            if(mThreads[inThreadName] != null && mThreads[inThreadName]?.first != null && mThreads[inThreadName]?.first?.looper != null) {
+                Handler(mThreads[inThreadName]?.first?.looper).post({
+                    inRunnable.run()
 
-                if (inCallback != null) {
-                    Handler(callingLooper).post({
-                        inCallback.run()
+                    if (inCallback != null) {
+                        Handler(callingLooper).post({
+                            inCallback.run()
+                            synchronized(this@ThreadHandler)
+                            {
+                                mThreads[inThreadName] = mThreads[inThreadName]?.copy(second = false)!!
+                            }
+                        })
+                    } else
                         synchronized(this@ThreadHandler)
                         {
-                            mThreads[inThreadName] = mThreads[inThreadName]?.copy(second = false)!!
+                            if(mThreads[inThreadName] != null)
+                                mThreads[inThreadName] = mThreads[inThreadName]?.copy(second = false)!!
                         }
-                    })
-                } else
-                    synchronized(this@ThreadHandler)
-                    {
-                        mThreads[inThreadName] = mThreads[inThreadName]?.copy(second = false)!!
-                    }
-            })
+                })
+            }
         }
     }
 

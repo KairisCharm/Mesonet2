@@ -17,25 +17,42 @@
             android:background="@color/siteBackground"
             android:padding="2dp">
 
-            <include layout="@layout/mesonet_data_container"
-                android:id="@+id/mesonetDataContainer"
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="7"/>
+                android:layout_weight="7">
+                <include layout="@layout/mesonet_data_container"
+                    android:id="@+id/mesonetDataContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+                <ProgressBar
+                    android:id="@+id/mesonetProgressBar"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_centerInParent="true"
+                    android:indeterminateTint="@color/lightTextColor"/>
+            </RelativeLayout>
 
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="5">
-            <View
-                android:id="@+id/fabAnchor"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"/>
+                <View
+                    android:id="@+id/fabAnchor"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"/>
 
-            <android.support.v4.view.ViewPager
-                android:id="@+id/forecastViewPager"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                <android.support.v4.view.ViewPager
+                    android:id="@+id/forecastViewPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+
+                <ProgressBar
+                    android:id="@+id/forecastProgressBar"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_centerInParent="true"
+                    android:indeterminateTint="@color/lightTextColor"/>
 
                 <ImageButton
                     android:id="@+id/previousFab"

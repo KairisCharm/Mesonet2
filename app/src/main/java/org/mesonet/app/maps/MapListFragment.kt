@@ -41,6 +41,7 @@ class MapListFragment : BaseFragment() {
             override fun ListLoaded(inMapsList: MutableList<Any>?, inGroupName: String?) {
                 if(activity != null && isAdded()) {
                     activity?.runOnUiThread({
+                        mBinding.progressBar.visibility = View.GONE
                         if (inMapsList != null) {
                             if (inGroupName != null && !inGroupName.isEmpty()) {
                                 mBinding.groupNameToolbar.title = inGroupName

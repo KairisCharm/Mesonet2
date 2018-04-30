@@ -240,6 +240,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                     }
 
                     override fun instantiateItem(inViewGroup: ViewGroup, inPosition: Int): View {
+                        mBinding!!.forecastProgressBar?.visibility = View.GONE
                         var forecastPostion = inPosition
                         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                             if (inPosition == 0) {
@@ -298,5 +299,16 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         }
         mMesonetDataBinding!!.mesonetSiteDataController = mMesonetSiteDataController
         mMesonetDataBinding!!.mesonetData?.setUiController(mMesonetUIController)
+
+        if(mMesonetUIController.DoingInitialUpdate())
+        {
+            mMesonetDataBinding!!.mesonetData!!.mesonetLayout?.visibility = View.GONE
+            mBinding!!.mesonetProgressBar?.visibility = View.VISIBLE
+        }
+        else
+        {
+            mMesonetDataBinding!!.mesonetData!!.mesonetLayout?.visibility = View.VISIBLE
+            mBinding!!.mesonetProgressBar?.visibility = View.GONE
+        }
     }
 }

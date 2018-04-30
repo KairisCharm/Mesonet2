@@ -1,39 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
-    <android.support.v4.widget.NestedScrollView
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <FrameLayout
-            android:orientation="vertical"
+        <android.support.v4.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/listBackgroundColor">
-
-            <LinearLayout
+            android:layout_height="match_parent">
+            <FrameLayout
                 android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="match_parent"
+                android:background="@color/listBackgroundColor">
 
-                <android.support.v7.widget.Toolbar
-                    android:id="@+id/groupNameToolbar"
+                <LinearLayout
+                    android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:visibility="gone"/>
+                    android:layout_height="wrap_content">
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:background="@color/dividerColor"/>
+                    <android.support.v7.widget.Toolbar
+                        android:id="@+id/groupNameToolbar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@android:color/transparent"
+                        android:visibility="gone"/>
 
-                <org.mesonet.app.baseclasses.RecyclerView
-                    android:id="@+id/mapList"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:nestedScrollingEnabled="false"/>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="@color/dividerColor"/>
 
-            </LinearLayout>
+                    <org.mesonet.app.baseclasses.RecyclerView
+                        android:id="@+id/mapList"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:nestedScrollingEnabled="false"/>
 
-        </FrameLayout>
-    </android.support.v4.widget.NestedScrollView>
+                </LinearLayout>
+            </FrameLayout>
+        </android.support.v4.widget.NestedScrollView>
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_centerInParent="true"
+            android:indeterminateTint="@color/lightTextColor"/>
+    </RelativeLayout>
 </layout>
