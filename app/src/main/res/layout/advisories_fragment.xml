@@ -17,5 +17,15 @@
             android:indeterminateTint="@color/lightTextColor"
             android:layout_centerInParent="true"/>
 
+        <TextView
+            android:id="@+id/emptyListText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:textColor="@color/lightTextColor"
+            android:textSize="20sp"
+            android:text="No Advisories"
+            android:visibility="gone"/>
+
     </RelativeLayout>
 </layout>

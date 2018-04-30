@@ -48,6 +48,9 @@ class AdvisoriesFragment : BaseFragment(), Observer {
                                 if (mBinding != null) {
                                     mBinding?.progressBar?.visibility = View.GONE
                                     mBinding?.advisoriesRecyclerView?.SetItems(inResult)
+
+                                    if(inResult.size == 0)
+                                        mBinding?.emptyListText?.visibility = View.VISIBLE
                                 }
                             })
                         }

@@ -49,6 +49,8 @@ class MapListFragment : BaseFragment() {
                             }
                             mBinding.mapList.SetItems(inMapsList)
                         }
+                        if(inMapsList == null || inMapsList.size == 0)
+                            mBinding.emptyListText.visibility = View.VISIBLE
                     })
                 }
             }
