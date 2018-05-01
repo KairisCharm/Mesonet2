@@ -32,9 +32,9 @@ import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
 import org.mesonet.dataprocessing.maps.MapsDataProvider
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
-import android.widget.Toast
-import android.R.attr.orientation
 import android.content.res.Configuration
+import android.view.Gravity
+import org.mesonet.app.usersettings.UserSettingsActivity
 
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer {
@@ -57,7 +57,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
 
     public override fun onCreate(inSavedInstanceState: Bundle?) {
-        AndroidInjection.inject(this)
+
         super.onCreate(inSavedInstanceState)
 
         var selectedTab = R.id.mesonetOption
@@ -217,7 +217,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     override fun onNavigationItemSelected(inMenuItem: MenuItem): Boolean {
         when (inMenuItem.itemId) {
+            R.id.userSettings -> {
+                val userSettingsIntent = Intent(baseContext, UserSettingsActivity::class.java)
 
+                startActivity(userSettingsIntent)
+            }
         }//            case R.id.metricUnits:
         //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kMetric.name());
         //                mPreferencesObservable.notifyObservers();
@@ -226,6 +230,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kImperial.name());
         //                mPreferencesObservable.notifyObservers();
         //                break;
+
+        mBinding?.drawer?.closeDrawer(Gravity.START)
         return false
     }
 

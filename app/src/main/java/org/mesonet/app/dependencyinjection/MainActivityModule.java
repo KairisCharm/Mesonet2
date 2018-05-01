@@ -28,13 +28,16 @@ import javax.inject.Singleton;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
+import dagger.android.AndroidInjectionModule;
 import dagger.android.AndroidInjector;
+import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.android.support.FragmentKey;
 import dagger.multibindings.IntoMap;
 
 
 
-@Module(subcomponents = {SiteOverviewFragmentSubcomponent.class,
+@Module(includes = AndroidSupportInjectionModule.class,
+        subcomponents = {SiteOverviewFragmentSubcomponent.class,
         MesonetSiteDataControllerSubcomponent.class,
         MapListFragmentSubcomponent.class,
         RadarFragmentSubcomponent.class,

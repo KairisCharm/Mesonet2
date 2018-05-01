@@ -1,8 +1,11 @@
 package org.mesonet.app.baseclasses
 
+import android.os.Bundle
+import android.os.PersistableBundle
 import android.support.annotation.AnimRes
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
+import dagger.android.AndroidInjection
 
 import javax.inject.Inject
 
@@ -33,6 +36,13 @@ abstract class BaseActivity : AppCompatActivity(), HasSupportFragmentInjector {
                                             inPermissions: Array<String>,
                                             inGrantResults: IntArray) {
         mPermissions.ProcessPermissionResponse(inPermissions, inGrantResults)
+    }
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        AndroidInjection.inject(this)
     }
 
 
