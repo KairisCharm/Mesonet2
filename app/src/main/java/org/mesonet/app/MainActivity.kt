@@ -34,6 +34,7 @@ import org.mesonet.dataprocessing.maps.MapsDataProvider
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import android.content.res.Configuration
 import android.view.Gravity
+import org.mesonet.app.about.ContactActivity
 import org.mesonet.app.usersettings.UserSettingsActivity
 
 
@@ -221,6 +222,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 val userSettingsIntent = Intent(baseContext, UserSettingsActivity::class.java)
 
                 startActivity(userSettingsIntent)
+            }
+            R.id.contact -> {
+                val contactIntent = Intent(baseContext, ContactActivity::class.java)
+
+                startActivity(contactIntent)
             }
         }//            case R.id.metricUnits:
         //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kMetric.name());

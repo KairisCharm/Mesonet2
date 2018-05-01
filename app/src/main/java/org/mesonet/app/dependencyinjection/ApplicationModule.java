@@ -5,6 +5,7 @@ import android.content.Context;
 
 import org.mesonet.app.Application;
 import org.mesonet.app.MainActivity;
+import org.mesonet.app.about.ContactActivity;
 import org.mesonet.app.usersettings.UserSettingsActivity;
 
 import javax.inject.Singleton;
@@ -20,7 +21,8 @@ import dagger.multibindings.IntoMap;
 
 @Module(includes = AndroidSupportInjectionModule.class,
         subcomponents = {MainActivitySubcomponent.class,
-                         UserSettingsActivitySubcomponent.class})
+                         UserSettingsActivitySubcomponent.class,
+                         ContactActivitySubcomponent.class})
 abstract class ApplicationModule
 {
     @Binds
@@ -34,4 +36,10 @@ abstract class ApplicationModule
     @ActivityKey(UserSettingsActivity.class)
     abstract AndroidInjector.Factory<? extends Activity>
     UserSettingsInjectorFactory(UserSettingsActivitySubcomponent.Builder inBuilder);
+
+    @Binds
+    @IntoMap
+    @ActivityKey(ContactActivity.class)
+    abstract AndroidInjector.Factory<? extends Activity>
+    ContactInjectorFactory(ContactActivitySubcomponent.Builder inBuilder);
 }
