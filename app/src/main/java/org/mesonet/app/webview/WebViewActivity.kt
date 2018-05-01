@@ -27,9 +27,12 @@ class WebViewActivity : AppCompatActivity() {
         val binding = DataBindingUtil.inflate<WebViewActivityBinding>(LayoutInflater.from(this), R.layout.web_view_activity, null, false)
 
         val title = intent.getStringExtra(kTitle)
-        var url = intent.getStringExtra(kUrl)
+        var url: String? = null
 
-        if (intent.getBooleanExtra(kUseGoogleDocs, false))
+        if(intent.hasExtra(kUrl))
+            url = intent.getStringExtra(kUrl)
+
+        if (url != null && intent.getBooleanExtra(kUseGoogleDocs, false))
             url = "http://docs.google.com/gview?embedded=true&url=$url"
 
         if (intent.getBooleanExtra(kAllowUserZoom, false)) {
@@ -66,7 +69,10 @@ class WebViewActivity : AppCompatActivity() {
             binding.webView.settings.useWideViewPort = true
         }
 
-        binding.webView.loadUrl(url)
+        if(url != null)
+            binding.webView.loadUrl(url)
+        else if(intent.hasExtra(kRaw))
+            binding.webView.loadUrl(intent.getStringExtra(kRaw))
 
         setContentView(binding.root)
     }
@@ -74,6 +80,7 @@ class WebViewActivity : AppCompatActivity() {
     companion object {
         val kTitle = "title"
         val kUrl = "url"
+        val kRaw = "raw"
         val kInitialZoom = "initialZoom"
         val kAllowUserZoom = "allowUserZoom"
         val kUseGoogleDocs = "useGoogleDocs"

@@ -19,8 +19,6 @@ import android.view.inputmethod.InputMethodManager
 import org.mesonet.app.databinding.MainActivityBinding
 import org.mesonet.app.baseclasses.BaseActivity
 
-import java.util.Observer
-
 import javax.inject.Inject
 
 import dagger.android.AndroidInjection
@@ -36,6 +34,7 @@ import android.content.res.Configuration
 import android.view.Gravity
 import org.mesonet.app.about.ContactActivity
 import org.mesonet.app.usersettings.UserSettingsActivity
+import java.util.*
 
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer {
@@ -227,6 +226,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 val contactIntent = Intent(baseContext, ContactActivity::class.java)
 
                 startActivity(contactIntent)
+            }
+            R.id.about -> {
+                val intent = Intent(baseContext, WebViewActivity::class.java)
+                intent.putExtra(WebViewActivity.kTitle, getString(R.string.AboutAndTermsOfUse))
+                intent.putExtra(WebViewActivity.kRaw, "file:///android_res/raw/about.html")
+                startActivity(intent)
             }
         }//            case R.id.metricUnits:
         //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kMetric.name());
