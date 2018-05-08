@@ -74,28 +74,8 @@ public abstract class MainActivityModule
     @PerActivity
     abstract Activity Activity(MainActivity inMainActivity);
 
-    @Binds
-    @PerActivity
-    abstract Context Context(Activity inActivity);
-
 
     @Binds
     @PerActivity
     abstract BaseActivity BaseActivity(MainActivity inMainActivity);
-
-
-    @Provides
-    @PerActivity
-    static Preferences Preferences(UserSettings inSettings)
-    {
-        return inSettings;
-    }
-
-
-    @Provides
-    @PerActivity
-    static LocationProvider LocationProvider(DeviceLocation inDeviceLocation)
-    {
-        return inDeviceLocation;
-    }
 }

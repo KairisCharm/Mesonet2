@@ -22,9 +22,9 @@ import android.app.ActivityManager
 
 
 
-@PerActivity
+@Singleton
 class Cacher @Inject
-constructor(internal var mThreadHandler: ThreadHandler, inContext: Activity) {
+constructor(internal var mThreadHandler: ThreadHandler, inContext: Context) {
     private var mRealm: Realm? = null
 
 

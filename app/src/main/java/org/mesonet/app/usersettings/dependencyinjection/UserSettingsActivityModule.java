@@ -1,4 +1,4 @@
-package org.mesonet.app.dependencyinjection;
+package org.mesonet.app.usersettings.dependencyinjection;
 
 import android.app.Activity;
 import android.content.Context;
@@ -26,15 +26,4 @@ public abstract class UserSettingsActivityModule
     @Binds
     @PerActivity
     abstract BaseActivity BaseActivity(UserSettingsActivity inUserSettingsActivity);
-
-    @Binds
-    @PerActivity
-    abstract Context Context(Activity inActivity);
-
-    @Provides
-    @PerActivity
-    static Preferences Preferences(UserSettings inSettings)
-    {
-        return inSettings;
-    }
 }

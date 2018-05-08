@@ -1,11 +1,10 @@
-package org.mesonet.app.about
+package org.mesonet.app.contact
 
 import android.Manifest
 import android.app.Activity
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import android.support.v7.app.AppCompatActivity
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.databinding.ContactActivityBinding
@@ -15,7 +14,6 @@ import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.support.v4.content.ContextCompat
 import org.mesonet.androidsystem.Permissions
-import javax.inject.Inject
 
 
 class ContactActivity: BaseActivity()
@@ -52,7 +50,7 @@ class ContactActivity: BaseActivity()
 
         binding.phoneButton.setOnClickListener {
             mPermissions.RequestPermission(Manifest.permission.CALL_PHONE, object: Permissions.PermissionListener{
-                override fun GetActivity(): Activity {
+                override fun GetContext(): Activity {
                     return this@ContactActivity
                 }
 

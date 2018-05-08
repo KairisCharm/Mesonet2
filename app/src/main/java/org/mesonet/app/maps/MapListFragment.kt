@@ -37,7 +37,7 @@ class MapListFragment : BaseFragment() {
         if (args != null && args.containsKey(kSelectedGroup))
             selectedGroup = args.getInt(kSelectedGroup)
 
-        mDataProvider.StartUpdates(selectedGroup, object : MapsDataProvider.MapsListListener {
+        mDataProvider.Download(selectedGroup, object : MapsDataProvider.MapsListListener {
             override fun ListLoaded(inMapsList: MutableList<Any>?, inGroupName: String?) {
                 if(activity != null && isAdded()) {
                     activity?.runOnUiThread({

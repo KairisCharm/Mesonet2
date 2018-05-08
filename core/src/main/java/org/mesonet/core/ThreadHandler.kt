@@ -8,7 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-@PerActivity
+@Singleton
 class ThreadHandler @Inject constructor()
 {
     private val mThreads = HashMap<String, Pair<HandlerThread, Boolean>>()
@@ -59,7 +59,8 @@ class ThreadHandler @Inject constructor()
                             inCallback.run()
                             synchronized(this@ThreadHandler)
                             {
-                                mThreads[inThreadName] = mThreads[inThreadName]?.copy(second = false)!!
+                                if(mThreads[inThreadName] != null)
+                                    mThreads[inThreadName] = mThreads[inThreadName]?.copy(second = false)!!
                             }
                         })
                     } else
@@ -77,7 +78,6 @@ class ThreadHandler @Inject constructor()
 
     fun CloseThreads()
     {
-        Log.e("Threads", "CloseThreads")
         for (threadPair in mThreads.values)
             threadPair.first.quit()
     }

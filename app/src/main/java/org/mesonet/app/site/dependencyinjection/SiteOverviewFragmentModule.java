@@ -22,8 +22,7 @@ import dagger.multibindings.IntoMap;
 
 
 
-@Module(subcomponents = {MesonetUIControllerSubcomponent.class,
-                         FilterListFragmentSubcomponent.class})
+@Module(subcomponents = {FilterListFragmentSubcomponent.class})
 abstract class SiteOverviewFragmentModule {
 
     // TODO (ContributesAndroidInjector) remove this in favor of @ContributesAndroidInjector

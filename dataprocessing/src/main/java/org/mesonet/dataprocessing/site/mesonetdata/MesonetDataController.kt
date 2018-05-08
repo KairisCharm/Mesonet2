@@ -2,7 +2,6 @@ package org.mesonet.dataprocessing.site.mesonetdata
 
 import org.mesonet.dataprocessing.formulas.UnitConverter
 import org.mesonet.dataprocessing.reflection.MesonetModelParser
-import org.mesonet.core.PerActivity
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.core.ThreadHandler
@@ -14,58 +13,77 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-@PerActivity
-class MesonetDataController @Inject constructor(internal var mSiteDataController: MesonetSiteDataController,
-                                                internal var mPreferences: Preferences,
-                                                internal var mThreadHandler: ThreadHandler,
-                                                internal var mDataDownloader: DataDownloader,
-                                                internal var mDerivedValues: DerivedValues,
-                                                internal var mUnitConverter: UnitConverter,
-                                                internal var mModelParser: MesonetModelParser) : Observable(), Observer {
+@Singleton
+class MesonetDataController @Inject constructor(private var mSiteDataController: MesonetSiteDataController,
+                                                private var mPreferences: Preferences,
+                                                private var mThreadHandler: ThreadHandler,
+                                                private var mDerivedValues: DerivedValues,
+                                                private var mUnitConverter: UnitConverter,
+                                                private var mModelParser: MesonetModelParser) : Observable(), Observer {
 
 
 
+    private var mDataDownloader: DataDownloader
     private var mMesonetModel: MesonetModel? = null
-
-    private var mTaskId: UUID? = null
-
-
-
-    fun StartUpdates() {
-        mThreadHandler.Run("MesonetData", Runnable {
-            Update2()
-        })
-    }
-
-
-    protected fun Update2() {
-        if (!mSiteDataController.SiteDataFound() || mSiteDataController.CurrentSelection().isEmpty()) {
-            StopUpdates()
-            return
-        }
-
-        mTaskId = mDataDownloader.StartDownloads("http://www.mesonet.org/index.php/app/latest_iphone/" + mSiteDataController.CurrentSelection(),
-                object : DataDownloader.DownloadCallback {
-                    override fun DownloadComplete(inResponseCode: Int,
-                                                  inResult: String?) {
-                        if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
-                            SetData(inResult!!)
-                        }
-                    }
-
-
-                    override fun DownloadFailed() {
-
-                    }
-                }, 60000)
-    }
 
 
     init {
+        mDataDownloader = DataDownloader(mThreadHandler)
         mSiteDataController.GetDataObservable().addObserver(this)
         mPreferences.GetPreferencesObservable().addObserver(this)
         mSiteDataController.addObserver(this)
     }
+
+
+
+    fun SingleUpdate(inUpdateListener: SingleUpdateListener)
+    {
+        mThreadHandler.Run("MesonetData", Runnable {
+            mDataDownloader.SingleUpdate(GetUrl(), object : DataDownloader.DownloadCallback{
+                override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
+                    if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
+                        SetData(inResult!!)
+                        inUpdateListener.UpdateComplete()
+                    }
+                    else
+                        inUpdateListener.UpdateFailed()
+                }
+
+                override fun DownloadFailed() {
+                    inUpdateListener.UpdateFailed()
+                }
+
+            })
+        })
+    }
+
+
+    fun StartUpdates() {
+        if(!mDataDownloader.IsUpdating()) {
+            mThreadHandler.Run("MesonetData", Runnable {
+                if (!mSiteDataController.SiteDataFound() || mSiteDataController.CurrentSelection().isEmpty()) {
+                    StopUpdates()
+                } else {
+
+                    mDataDownloader.StartDownloads(GetUrl(),
+                            object : DataDownloader.DownloadCallback {
+                                override fun DownloadComplete(inResponseCode: Int,
+                                                              inResult: String?) {
+                                    if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
+                                        SetData(inResult!!)
+                                    }
+                                }
+
+
+                                override fun DownloadFailed() {
+
+                                }
+                            }, 60000)
+                }
+            })
+        }
+    }
+
 
 
     internal fun SetData(inMesonetDataString: String) {
@@ -87,9 +105,14 @@ class MesonetDataController @Inject constructor(internal var mSiteDataController
 
     fun StopUpdates() {
         mThreadHandler.Run("MesonetData", Runnable {
-            if(mTaskId != null)
-                mDataDownloader.StopDownloads(mTaskId!!)
+            mDataDownloader.StopDownloads()
         })
+    }
+
+
+
+    internal fun GetUrl(): String {
+        return "http://www.mesonet.org/index.php/app/latest_iphone/" + mSiteDataController.CurrentSelection()
     }
 
 
@@ -263,6 +286,7 @@ class MesonetDataController @Inject constructor(internal var mSiteDataController
                     if (mMesonetModel == null || !mMesonetModel?.STID?.toLowerCase().equals(inStidPreference)) {
                         mMesonetModel = null
                         StopUpdates()
+                        while(mDataDownloader.IsUpdating());
                         StartUpdates()
                     }
 
@@ -278,4 +302,12 @@ class MesonetDataController @Inject constructor(internal var mSiteDataController
         setChanged()
         notifyObservers()
     }
+
+
+    interface SingleUpdateListener
+    {
+        fun UpdateComplete()
+        fun UpdateFailed()
+    }
 }
+

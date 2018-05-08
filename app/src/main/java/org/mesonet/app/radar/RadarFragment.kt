@@ -102,11 +102,13 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapSetup, Filter
         super.onResume()
 
         mBinding!!.map.onResume()
+        mMapController.StartUpdates()
     }
 
 
     override fun onPause() {
         mBinding!!.map.onPause()
+        mMapController.StopUpdates()
 
         super.onPause()
     }

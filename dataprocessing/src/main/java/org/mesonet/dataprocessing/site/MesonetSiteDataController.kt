@@ -23,25 +23,25 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-@PerActivity
+@Singleton
 class MesonetSiteDataController @Inject
-constructor(private var mLocationProvider: LocationProvider, private var mCache: SiteCache, private var mPreferences: Preferences, private var mThreadHandler: ThreadHandler, inDataDownloader: DataDownloader) : Observable(), FilterListDataProvider, SelectSiteListener{
+constructor(private var mLocationProvider: LocationProvider, private var mCache: SiteCache, private var mPreferences: Preferences, private var mThreadHandler: ThreadHandler) : Observable(), FilterListDataProvider, SelectSiteListener{
 
 
-    private val mDataDownloader = inDataDownloader
+    private val mDataDownloader: DataDownloader
 
     private var mMesonetSiteModel: MesonetSiteListModel? = null
 
     private var mFavorites: MutableList<String>? = ArrayList()
 
     private var mCurrentSelection = "nrmn"
-    private var mTaskId: UUID? = null
 
     private var mCurrentStationName = ""
     private var mCurrentIsFavorite = false
 
 
     init {
+        mDataDownloader = DataDownloader(mThreadHandler)
         mThreadHandler.Run("MesonetData", Runnable {
             mCache.GetSites(object : SiteCache.SitesCacheListener {
                 override fun SitesLoaded(inSiteResults: MesonetSiteListModel) {
@@ -49,7 +49,10 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
                     mCache.GetFavorites(object : SiteCache.FavoritesCacheListener {
                         override fun FavoritesLoaded(inResults: MutableList<String>) {
                             if (mMesonetSiteModel == null) {
-                                mMesonetSiteModel = inSiteResults
+                                synchronized(this@MesonetSiteDataController)
+                                {
+                                    mMesonetSiteModel = inSiteResults
+                                }
                             }
 
                             mFavorites = inResults
@@ -76,45 +79,48 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     internal fun SetData(inMesonetSiteModel: MesonetSiteListModel) {
-        mMesonetSiteModel = inMesonetSiteModel
+        synchronized(this@MesonetSiteDataController)
+        {
+            mMesonetSiteModel = inMesonetSiteModel
 
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss z")
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss z")
 
-        val keys = ArrayList(mMesonetSiteModel!!.keys)
-        var i = 0
-        while (i < keys.size) {
-            var date: Date? = null
+            val keys = ArrayList(mMesonetSiteModel!!.keys)
+            var i = 0
+            while (i < keys.size) {
+                var date: Date? = null
 
-            try {
-                date = dateFormat.parse(mMesonetSiteModel!![keys[i]]?.GetDatd())
-            } catch (e: ParseException) {
-                e.printStackTrace()
-            } catch (e: NullPointerException) {
-                e.printStackTrace()
+                try {
+                    date = dateFormat.parse(mMesonetSiteModel!![keys[i]]?.GetDatd())
+                } catch (e: ParseException) {
+                    e.printStackTrace()
+                } catch (e: NullPointerException) {
+                    e.printStackTrace()
+                }
+
+                if (date == null || date.before(Date())) {
+                    mMesonetSiteModel!!.remove(keys[i])
+                    keys.removeAt(i)
+                    i--
+                }
+                i++
             }
 
-            if (date == null || date.before(Date())) {
-                mMesonetSiteModel!!.remove(keys[i])
-                keys.removeAt(i)
-                i--
-            }
-            i++
+            mCache.SaveSites(mMesonetSiteModel!!)
+
+            mLocationProvider.GetLocation(object : LocationProvider.LocationListener {
+                override fun LastLocationFound(inLocation: Location?) {
+                    mCurrentSelection = GetNearestSite(inLocation)
+                    mPreferences.SetSelectedStid(mCurrentSelection)
+
+                    FinalizeSelection()
+                }
+
+                override fun LocationUnavailable() {
+                    FinalizeSelection()
+                }
+            })
         }
-
-        mCache.SaveSites(mMesonetSiteModel!!)
-
-        mLocationProvider.GetLocation(object : LocationProvider.LocationListener {
-            override fun LastLocationFound(inLocation: Location?) {
-                mCurrentSelection = GetNearestSite(inLocation)
-                mPreferences.SetSelectedStid(mCurrentSelection)
-
-                FinalizeSelection()
-            }
-
-            override fun LocationUnavailable() {
-                FinalizeSelection()
-            }
-        })
     }
 
 
@@ -282,7 +288,7 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
                             SetData(inSiteResults)
                     }
                 })
-                mTaskId = mDataDownloader.StartDownloads("http://www.mesonet.org/find/siteinfo-json", object : DataDownloader.DownloadCallback {
+                mDataDownloader.SingleUpdate("http://www.mesonet.org/find/siteinfo-json", object : DataDownloader.DownloadCallback {
                     override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                         if (inResponseCode == HttpURLConnection.HTTP_OK)
                             SetData(inResult)
@@ -291,7 +297,7 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
                     override fun DownloadFailed() {
 
                     }
-                }, 86400000)
+                })
             }
 
         })
@@ -325,15 +331,5 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
                 })
 
         return result
-    }
-
-
-
-    fun StopUpdates()
-    {
-        mThreadHandler.Run("MesonetData", Runnable {
-            if(mTaskId != null)
-                mDataDownloader.StopDownloads(mTaskId!!)
-        })
     }
 }

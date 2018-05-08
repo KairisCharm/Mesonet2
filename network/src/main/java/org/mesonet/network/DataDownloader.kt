@@ -7,33 +7,34 @@ import org.mesonet.core.ThreadHandler
 
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.HttpURLConnection.HTTP_MULT_CHOICE
 import java.net.URL
 import java.util.*
 
-import javax.inject.Inject
-import kotlin.collections.HashMap
 
-
-class DataDownloader @Inject
-internal constructor(internal var mThreadHandler: ThreadHandler)
+class DataDownloader constructor(private var mThreadHandler: ThreadHandler)
 {
-    private val mIdsToDownloadInfo = HashMap<UUID, DownloadInfo>()
+    private var mIsUpdating = false
+    private var mUpdateInterval: Long = -1
+    private val mHandler = Handler()
 
-    fun StartDownloads(inUrl: String, inDownloadCallback: DownloadCallback, inUpdateInterval: Long = -1): UUID
+    fun StartDownloads(inUrl: String, inDownloadCallback: DownloadCallback, inUpdateInterval: Long = -1)
     {
-        val uuid = UUID.randomUUID()
-        val downloadInfo = DownloadInfo(inUrl, inDownloadCallback, inUpdateInterval)
+        mUpdateInterval = inUpdateInterval
+        mIsUpdating = true
 
-        synchronized(this@DataDownloader)
-        {
-            mIdsToDownloadInfo.put(uuid, downloadInfo)
-        }
+        SingleUpdate(inUrl, inDownloadCallback)
+    }
+
+
+    fun SingleUpdate(inUrl: String, inDownloadCallback: DownloadCallback)
+    {
+        val downloadInfo = DownloadInfo(inUrl, inDownloadCallback, mUpdateInterval)
 
         var downloadResponseInfo: ResponseInfo? = null
 
         mThreadHandler.Run("Download", Runnable {
-            if(mIdsToDownloadInfo[uuid] != null)
-                downloadResponseInfo = Download(uuid, mIdsToDownloadInfo[uuid]!!, inDownloadCallback)
+            downloadResponseInfo = Download(downloadInfo, inDownloadCallback)
         }, Runnable {
             if(downloadResponseInfo != null)
             {
@@ -43,35 +44,16 @@ internal constructor(internal var mThreadHandler: ThreadHandler)
                     inDownloadCallback.DownloadComplete(downloadResponseInfo?.mResponseCode!!, downloadResponseInfo?.mResponse!!)
             }
         })
-
-        return uuid
     }
 
 
-    fun StopDownloads(inTaskId: UUID)
+    fun StopDownloads()
     {
-        synchronized(this@DataDownloader)
-        {
-            if (mIdsToDownloadInfo.containsKey(inTaskId))
-                mIdsToDownloadInfo.remove(inTaskId)
-        }
+        mIsUpdating = false
     }
 
 
-
-    fun ForceUpdate(inTaskId: UUID)
-    {
-        if(mIdsToDownloadInfo.containsKey(inTaskId)) {
-            val downloadInfo = mIdsToDownloadInfo[inTaskId]
-            StopDownloads(inTaskId)
-            if(downloadInfo != null)
-                StartDownloads(downloadInfo.mUrl, downloadInfo.mDownloadCallback, downloadInfo.mUpdateInterval)
-        }
-    }
-
-
-
-    internal fun Download(inTaskId: UUID, inDownloadInfo: DownloadInfo, inDownloadCallback: DownloadCallback): ResponseInfo
+    internal fun Download(inDownloadInfo: DownloadInfo, inDownloadCallback: DownloadCallback): ResponseInfo
     {
         Log.e("Downloading", inDownloadInfo.mUrl)
         var failed = false
@@ -90,7 +72,7 @@ internal constructor(internal var mThreadHandler: ThreadHandler)
 
             conn.connect()
 
-            if (conn.responseCode == HttpURLConnection.HTTP_OK) {
+            if (conn.responseCode >= HttpURLConnection.HTTP_OK && conn.responseCode < HTTP_MULT_CHOICE) {
                 val resultString = StringBuilder()
 
                 val scanner = Scanner(conn.inputStream)
@@ -111,15 +93,28 @@ internal constructor(internal var mThreadHandler: ThreadHandler)
             failed = true
         }
 
-        if(mIdsToDownloadInfo.containsKey(inTaskId) && inDownloadInfo.mUpdateInterval >= 0)
+        if(mIsUpdating && inDownloadInfo.mUpdateInterval > -1)
         {
-            Handler().postDelayed({
-                Download(inTaskId, inDownloadInfo, inDownloadCallback)
+            mHandler.postDelayed({
+                mThreadHandler.Run("DataDownloader", Runnable {
+                    if(mIsUpdating)
+                        Download(inDownloadInfo, inDownloadCallback)
+                })
             }, inDownloadInfo.mUpdateInterval)
         }
 
-        Log.e("Download complete", inDownloadInfo.mUrl)
+        if(failed)
+            inDownloadCallback.DownloadFailed()
+        else
+            inDownloadCallback.DownloadComplete(responseCode, result)
+
         return ResponseInfo(result, responseCode, failed)
+    }
+
+
+    fun IsUpdating(): Boolean
+    {
+        return mIsUpdating
     }
 
     interface DownloadCallback {

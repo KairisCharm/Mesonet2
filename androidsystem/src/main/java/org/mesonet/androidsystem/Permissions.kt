@@ -2,6 +2,7 @@ package org.mesonet.androidsystem
 
 
 import android.app.Activity
+import android.content.Context
 import android.content.pm.PackageManager
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -14,7 +15,7 @@ import java.util.HashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
-@PerActivity
+@Singleton
 class Permissions @Inject
 constructor(private var mThreadHandler: ThreadHandler) {
     private val mPermissionsListeners = HashMap<String, MutableList<PermissionListener>>()
@@ -28,10 +29,18 @@ constructor(private var mThreadHandler: ThreadHandler) {
             if (!mPermissionsListeners[inPermission]?.contains(inListener)!!)
                 mPermissionsListeners[inPermission]?.add(inListener)
 
-            if (ContextCompat.checkSelfPermission(inListener.GetActivity(), inPermission) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(inListener.GetActivity(),
-                        arrayOf(inPermission),
-                        0)
+            val context = inListener.GetContext()
+            if (ContextCompat.checkSelfPermission(context, inPermission) != PackageManager.PERMISSION_GRANTED)
+            {
+                if(context is Activity) {
+                    ActivityCompat.requestPermissions(context,
+                            arrayOf(inPermission),
+                            0)
+                }
+                else
+                {
+                    inListener.PermissionDenied()
+                }
             } else {
                 inListener.PermissionGranted()
             }
@@ -63,7 +72,7 @@ constructor(private var mThreadHandler: ThreadHandler) {
 
 
     interface PermissionListener {
-        fun GetActivity(): Activity
+        fun GetContext(): Context
         fun PermissionGranted()
         fun PermissionDenied()
     }

@@ -9,7 +9,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-@PerActivity
+@Singleton
 class SiteCache @Inject
 constructor() {
     @Inject

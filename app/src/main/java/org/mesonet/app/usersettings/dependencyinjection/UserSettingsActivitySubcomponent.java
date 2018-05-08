@@ -1,4 +1,4 @@
-package org.mesonet.app.dependencyinjection;
+package org.mesonet.app.usersettings.dependencyinjection;
 
 import org.mesonet.app.usersettings.UserSettingsActivity;
 import org.mesonet.core.PerActivity;

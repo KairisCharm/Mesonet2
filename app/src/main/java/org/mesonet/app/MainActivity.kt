@@ -21,7 +21,6 @@ import org.mesonet.app.baseclasses.BaseActivity
 
 import javax.inject.Inject
 
-import dagger.android.AndroidInjection
 import org.mesonet.app.advisories.AdvisoriesFragment
 import org.mesonet.app.maps.MapListFragment
 import org.mesonet.app.radar.RadarFragment
@@ -32,7 +31,7 @@ import org.mesonet.dataprocessing.maps.MapsDataProvider
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import android.content.res.Configuration
 import android.view.Gravity
-import org.mesonet.app.about.ContactActivity
+import org.mesonet.app.contact.ContactActivity
 import org.mesonet.app.usersettings.UserSettingsActivity
 import java.util.*
 
@@ -68,6 +67,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         LoadBinding(selectedTab)
 
         mAdvisoryDataProvider.addObserver(this)
+    }
+
+
+    public override fun onResume() {
+        super.onResume()
+        mAdvisoryDataProvider.StartUpdates()
+    }
+
+
+    public override fun onPause() {
+        super.onPause()
+        mAdvisoryDataProvider.StopUpdates()
     }
 
 
@@ -208,8 +219,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         mActionBarDrawerToggle = null
 
         mAdvisoryDataProvider.StopUpdates()
-        mMapsDataProvider.StopUpdates()
-        mMesonetSiteDataProvider.StopUpdates()
 
         super.onDestroy()
     }

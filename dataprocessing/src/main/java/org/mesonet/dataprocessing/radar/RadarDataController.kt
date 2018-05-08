@@ -22,9 +22,8 @@ import java.util.*
 import javax.inject.Inject
 
 
-//@PerFragment
 class RadarDataController @Inject
-constructor(private var mDataDownloader: DataDownloader, private var mSiteDataProvider: RadarSiteDataProvider, private var mThreadHandler: ThreadHandler) : Observable(), Observer {
+constructor(private var mSiteDataProvider: RadarSiteDataProvider, private var mThreadHandler: ThreadHandler) : Observable(), Observer {
 
     companion object {
         val kRadarImageLimit = 6
@@ -32,29 +31,42 @@ constructor(private var mDataDownloader: DataDownloader, private var mSiteDataPr
 
     private var mRadarImages: List<RadarImageModel>? = null
     private var mCurrentRadar = ""
-    private var mTaskId: UUID? = null
+
+    private var mDataDownloader: DataDownloader
 
 
     init {
+        mDataDownloader = DataDownloader(mThreadHandler)
         mThreadHandler.Run("RadarData", Runnable {
             mSiteDataProvider.addObserver(this)
-            StartUpdates()
         })
     }
 
-    internal fun StartUpdates()
+    fun StartUpdates()
     {
-        mCurrentRadar = mSiteDataProvider.CurrentSelection()
-        mTaskId = mDataDownloader.StartDownloads(String.format("http://www.mesonet.org/data/nids/maps/realtime/frames_%s_N0Q.xml", mSiteDataProvider.CurrentSelection()), object : DataDownloader.DownloadCallback {
-            override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
-                ProcessRadarXml(ByteArrayInputStream(inResult?.toByteArray(StandardCharsets.UTF_8)))
-            }
+        if(!mDataDownloader.IsUpdating()) {
+            mThreadHandler.Run("RadarData", Runnable {
+                mCurrentRadar = mSiteDataProvider.CurrentSelection()
+                mDataDownloader.StartDownloads(String.format("http://www.mesonet.org/data/nids/maps/realtime/frames_%s_N0Q.xml", mSiteDataProvider.CurrentSelection()), object : DataDownloader.DownloadCallback {
+                    override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
+                        ProcessRadarXml(ByteArrayInputStream(inResult?.toByteArray(StandardCharsets.UTF_8)))
+                    }
 
 
-            override fun DownloadFailed() {
+                    override fun DownloadFailed() {
 
-            }
-        }, 60000)
+                    }
+                }, 60000)
+            })
+        }
+    }
+
+
+    fun StopUpdates()
+    {
+        mThreadHandler.Run("RadarData", Runnable {
+            mDataDownloader.StopDownloads()
+        })
     }
 
 
@@ -133,20 +145,12 @@ constructor(private var mDataDownloader: DataDownloader, private var mSiteDataPr
     }
 
 
-    fun StopUpdates()
-    {
-        mThreadHandler.Run("RadarData", Runnable {
-            if(mTaskId != null)
-                mDataDownloader.StopDownloads(mTaskId!!)
-        })
-    }
-
 
     override fun update(o: Observable, arg: Any?) {
         mThreadHandler.Run("RadarData", Runnable {
             if(mCurrentRadar.equals(mSiteDataProvider.CurrentSelection())) {
-                if(mTaskId != null)
-                    mDataDownloader.StopDownloads(mTaskId!!)
+                StopUpdates()
+                while (mDataDownloader.IsUpdating());
                 StartUpdates()
             }
         })

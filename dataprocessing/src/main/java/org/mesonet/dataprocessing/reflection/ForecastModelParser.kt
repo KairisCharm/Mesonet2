@@ -38,29 +38,21 @@ internal constructor() {
                     }
                 } else
                     forecastModel.mTime = strForecast[fieldOffset]
-                forecastModel.mIconUrl = strForecast[fieldOffset + 1]
-                forecastModel.mStatus = strForecast[fieldOffset + 2]
-                forecastModel.mHighOrLow = ForecastModel.HighOrLow.valueOf(strForecast[fieldOffset + 3])
-                forecastModel.mTemp = java.lang.Double.parseDouble(strForecast[fieldOffset + 4])
-                //                forecastModel.mWindDirection = UnitConverter.CompassDirections.valueOf(strForecast[fieldOffset + 5]);
-                //                forecastModel.mWindGustsDirection = UnitConverter.CompassDirections.valueOf(strForecast[fieldOffset + 6]);
-                //                forecastModel.mWindSpd = Double.parseDouble(strForecast[fieldOffset + 7]);
-                //
-                //                if( Character.isDigit(strForecast[fieldOffset + 8].charAt(0))) {
-                //                    boolean found = false;
-                //
-                //                    for(int j = 0; j < strForecast[fieldOffset + 8].length() && !found; j++) {
-                //                        if(!Character.isDigit(strForecast[fieldOffset + 8].charAt(j)) && strForecast[fieldOffset + 8].charAt(j) != ' ') {
-                //                            found = true;
-                //                            forecastModel.mWindGusts = Double.parseDouble(strForecast[fieldOffset + 8].substring(0, j));
-                //                        }
-                //                    }
-                //                }
-                //                else
-                //                    forecastModel.mWindGusts = Double.parseDouble(strForecast[fieldOffset + 8]);
+                    forecastModel.mIconUrl = strForecast[fieldOffset + 1]
+                    forecastModel.mStatus = strForecast[fieldOffset + 2]
+                    forecastModel.mHighOrLow = ForecastModel.HighOrLow.valueOf(strForecast[fieldOffset + 3])
+                    forecastModel.mTemp = java.lang.Double.parseDouble(strForecast[fieldOffset + 4])
 
                 result.add(forecastModel)
             } catch (e: ArrayIndexOutOfBoundsException) {
+                e.printStackTrace()
+            }
+            catch (e: NumberFormatException)
+            {
+                e.printStackTrace()
+            }
+            catch (e: IllegalArgumentException)
+            {
                 e.printStackTrace()
             }
 

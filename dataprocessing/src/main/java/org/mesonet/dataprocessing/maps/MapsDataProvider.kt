@@ -11,26 +11,26 @@ import java.util.*
 import javax.inject.Inject
 
 
-class MapsDataProvider @Inject constructor() {
+class MapsDataProvider @Inject constructor(private var mThreadHandler: ThreadHandler) {
     enum class MapViewHolderTypes {
         kHeader, kProduct, kGroup
     }
 
-    @Inject
-    internal lateinit var mDataDownloader: DataDownloader
-
-    @Inject
-    internal lateinit var mThreadHandler: ThreadHandler
+    internal var mDataDownloader: DataDownloader
 
     private var mMapsModel: MapsModel? = null
-    private var mTaskId: UUID? = null
 
 
-    fun StartUpdates(inGroup: Int? = null, inListListener: MapsDataProvider.MapsListListener) {
+    init {
+        mDataDownloader = DataDownloader(mThreadHandler)
+    }
+
+
+    fun Download(inGroup: Int? = null, inListListener: MapsDataProvider.MapsListListener) {
         var result: Pair<MutableList<Any>?, String?>? = null
 
         mThreadHandler.Run("MapsData", Runnable {
-            mDataDownloader.StartDownloads("http://content.mesonet.org/mesonet/mobile-app/products.json", object : DataDownloader.DownloadCallback {
+            mDataDownloader.SingleUpdate("http://content.mesonet.org/mesonet/mobile-app/products.json", object : DataDownloader.DownloadCallback {
                 override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                     if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode <= HttpURLConnection.HTTP_PARTIAL) {
                         val newMapModel = Gson().fromJson(inResult, MapsModel::class.java)
@@ -51,7 +51,7 @@ class MapsDataProvider @Inject constructor() {
                 override fun DownloadFailed() {
 
                 }
-            }, 3600000)
+            })
 
             result = LoadMapsList(inGroup)
 
@@ -139,14 +139,6 @@ class MapsDataProvider @Inject constructor() {
         }
 
         return Pair(result, groupName)
-    }
-
-
-
-    fun StopUpdates()
-    {
-        if(mTaskId != null)
-            mDataDownloader.StopDownloads(mTaskId!!)
     }
 
 

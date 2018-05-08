@@ -10,7 +10,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-@PerActivity
+@Singleton
 class SiteListConverter @Inject
 constructor() {
 

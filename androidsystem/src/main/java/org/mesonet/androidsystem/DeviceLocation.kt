@@ -15,15 +15,17 @@ import org.mesonet.core.PerActivity
 import org.mesonet.core.ThreadHandler
 
 import org.mesonet.dataprocessing.LocationProvider
+import android.content.Context
 
 import java.util.ArrayList
 
 import javax.inject.Inject
+import javax.inject.Singleton
 
 
-@PerActivity
+@Singleton
 class DeviceLocation @Inject
-constructor(internal var mActivity: Activity, internal var mThreadHandler: ThreadHandler) : LocationProvider {
+constructor(internal var mContext: Context, internal var mThreadHandler: ThreadHandler) : LocationProvider {
 
     @Inject
     internal lateinit var mPermissions: Permissions
@@ -39,13 +41,13 @@ constructor(internal var mActivity: Activity, internal var mThreadHandler: Threa
             }
 
             mPermissions.RequestPermission(Manifest.permission.ACCESS_FINE_LOCATION, object : Permissions.PermissionListener {
-                override fun GetActivity(): Activity {
-                    return mActivity
+                override fun GetContext(): Context {
+                    return mContext
                 }
 
                 override fun PermissionGranted() {
-                    if (ContextCompat.checkSelfPermission(mActivity, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        LocationServices.getFusedLocationProviderClient(mActivity).requestLocationUpdates(LocationRequest.create(), object : LocationCallback() {
+                    if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        LocationServices.getFusedLocationProviderClient(mContext).requestLocationUpdates(LocationRequest.create(), object : LocationCallback() {
                             override fun onLocationResult(inResult: LocationResult?) {
                                 val result = inResult!!.lastLocation
 
@@ -54,7 +56,7 @@ constructor(internal var mActivity: Activity, internal var mThreadHandler: Threa
                                 else
                                     LocationFound(result)
 
-                                LocationServices.getFusedLocationProviderClient(mActivity).removeLocationUpdates(this)
+                                LocationServices.getFusedLocationProviderClient(mContext).removeLocationUpdates(this)
                             }
                         }, null)
                     }

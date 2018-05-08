@@ -206,6 +206,13 @@ constructor(internal var mRadarDataController: RadarDataController) : RadarImage
         })
     }
 
+    fun StartUpdates()
+    {
+        mThreadHandler.Run("RadarData", Runnable {
+            mRadarDataController.StartUpdates()
+        })
+    }
+
 
     fun StopUpdates()
     {

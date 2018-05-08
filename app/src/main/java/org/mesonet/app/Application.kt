@@ -7,29 +7,33 @@ import org.mesonet.app.dependencyinjection.DaggerApplicationComponent
 import javax.inject.Inject
 import javax.inject.Singleton
 
-import dagger.android.AndroidInjector
-import dagger.android.DispatchingAndroidInjector
-import dagger.android.HasActivityInjector
-import android.content.ComponentName
-import android.content.Context.ACTIVITY_SERVICE
-import android.app.ActivityManager
-import android.content.Context
+import android.content.BroadcastReceiver
+import dagger.android.*
+import org.mesonet.app.dependencyinjection.ApplicationContextModule
 
 
 @Singleton
 class Application @Inject
-constructor() : android.app.Application(), HasActivityInjector {
+constructor() : android.app.Application(), HasActivityInjector, HasBroadcastReceiverInjector {
     @Inject
     internal lateinit var mActivityInjector: DispatchingAndroidInjector<Activity>
+
+    @Inject
+    internal lateinit var mBroadcastReceiverInjector: DispatchingAndroidInjector<BroadcastReceiver>
 
 
     override fun onCreate() {
         super.onCreate()
-        DaggerApplicationComponent.create().Inject(this)
+        DaggerApplicationComponent.builder().applicationContextModule(ApplicationContextModule(this)).build().Inject(this)
     }
 
 
     override fun activityInjector(): AndroidInjector<Activity>? {
         return mActivityInjector
+    }
+
+
+    override fun broadcastReceiverInjector(): AndroidInjector<BroadcastReceiver> {
+        return mBroadcastReceiverInjector
     }
 }

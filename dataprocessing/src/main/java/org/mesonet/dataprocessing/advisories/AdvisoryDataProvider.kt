@@ -7,19 +7,18 @@ import java.util.*
 
 import javax.inject.Inject
 
-class AdvisoryDataProvider @Inject constructor(internal var mDataDownloader: DataDownloader, internal var mThreadHandler: ThreadHandler) : Observable() {
+class AdvisoryDataProvider @Inject constructor(private var mThreadHandler: ThreadHandler) : Observable() {
 
     @Inject
     internal lateinit var mAdvisoryParser: AdvisoryParser
 
+    internal var mDataDownloader: DataDownloader
+
     private var mCurrentAdvisories: ArrayList<AdvisoryModel>? = null
-    private var mTaskId: UUID? = null
 
 
     init{
-        mThreadHandler.Run("AdvisoryData", Runnable {
-            StartUpdates()
-        })
+        mDataDownloader = DataDownloader(mThreadHandler)
     }
 
 
@@ -40,27 +39,28 @@ class AdvisoryDataProvider @Inject constructor(internal var mDataDownloader: Dat
     }
 
 
-    internal fun StartUpdates() {
-        mThreadHandler.Run("AdvisoryData", Runnable {
-            mTaskId = mDataDownloader.StartDownloads("https://www.mesonet.org/data/public/noaa/wwa/mobile-ok.txt", object : DataDownloader.DownloadCallback {
-                override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
-                    if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
-                        SetData(inResult!!)
+    fun StartUpdates() {
+        if(!mDataDownloader.IsUpdating()) {
+            mThreadHandler.Run("AdvisoryData", Runnable {
+                mDataDownloader.StartDownloads("https://www.mesonet.org/data/public/noaa/wwa/mobile-ok.txt", object : DataDownloader.DownloadCallback {
+                    override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
+                        if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
+                            SetData(inResult!!)
+                        }
                     }
-                }
 
-                override fun DownloadFailed() {
+                    override fun DownloadFailed() {
 
-                }
-            }, 60000)
-        })
+                    }
+                }, 60000)
+            })
+        }
     }
 
 
 
     fun StopUpdates()
     {
-        if(mTaskId != null)
-            mDataDownloader.StopDownloads(mTaskId!!)
+        mDataDownloader.StopDownloads()
     }
 }

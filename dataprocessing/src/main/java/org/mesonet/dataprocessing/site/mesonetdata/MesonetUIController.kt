@@ -1,6 +1,8 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
-import org.mesonet.core.PerActivity
+import android.appwidget.AppWidgetManager
+import android.content.Context
+import android.widget.RemoteViews
 import org.mesonet.core.ThreadHandler
 import org.mesonet.dataprocessing.userdata.Preferences
 
@@ -14,8 +16,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-//TODO TESTS!!!!!
-@PerActivity
+@Singleton
 class MesonetUIController @Inject
 constructor(private var mDataController: MesonetDataController, private var mThreadHandler: ThreadHandler, private var mPreferences: Preferences) : Observable(), Observer {
     private var mTimeString: String = "Observed at -:-"
@@ -45,15 +46,14 @@ constructor(private var mDataController: MesonetDataController, private var mThr
     }
 
 
-    internal fun Update2()
-    {
-        mPreferences.GetUnitPreference(object: Preferences.UnitPreferenceListener{
+    internal fun Update2() {
+        mPreferences.GetUnitPreference(object : Preferences.UnitPreferenceListener {
             override fun UnitPreferenceFound(inUnitPreference: Preferences.UnitPreference) {
                 val formattedString = "Observed at %s"
 
                 val time = mDataController.ProcessTime()
 
-                if(time == null)
+                if (time == null)
                     mTimeString = String.format(formattedString, "-:-")
                 else {
                     val dateFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
@@ -64,16 +64,15 @@ constructor(private var mDataController: MesonetDataController, private var mThr
 
                 val temp = mDataController.ProcessTemp(inUnitPreference)
 
-                if(temp == null)
+                if (temp == null)
                     mAirTempString = "-"
                 else
                     mAirTempString = String.format(Locale.getDefault(), "%.0f", temp) + "°"
 
                 val apparentTemp = mDataController.ProcessApparentTemp(inUnitPreference)
 
-                if(apparentTemp == null)
+                if (apparentTemp == null)
                     mApparentTempString = "-"
-
                 else {
                     var unit = ""
 
@@ -87,7 +86,7 @@ constructor(private var mDataController: MesonetDataController, private var mThr
 
                 val dewPoint = mDataController.ProcessDewpoint(inUnitPreference)
 
-                if(dewPoint == null)
+                if (dewPoint == null)
                     mDewpointString = "-"
                 else {
                     var unit = ""
@@ -105,7 +104,6 @@ constructor(private var mDataController: MesonetDataController, private var mThr
 
                 if (windSpd == null || direction == null)
                     mWindString = "-"
-
                 else {
                     var unit = ""
 
@@ -119,7 +117,7 @@ constructor(private var mDataController: MesonetDataController, private var mThr
 
                 val rain24h = mDataController.Process24HrRain(inUnitPreference)
 
-                if(rain24h == null)
+                if (rain24h == null)
                     m24HrRainfallString = "-"
                 else {
                     var unit = ""
@@ -134,14 +132,14 @@ constructor(private var mDataController: MesonetDataController, private var mThr
 
                 val humidity = mDataController.ProcessHumidity()
 
-                if(humidity == null)
+                if (humidity == null)
                     mHumidityString = "-"
                 else
                     mHumidityString = humidity.toString() + "%"
 
                 val windGusts = mDataController.ProcessMaxWind(inUnitPreference)
 
-                if(windGusts == null)
+                if (windGusts == null)
                     mWindGustsString = "-"
                 else {
                     var unit = ""
@@ -156,7 +154,7 @@ constructor(private var mDataController: MesonetDataController, private var mThr
 
                 val pressure = mDataController.ProcessPressure(inUnitPreference)
 
-                if(pressure == null)
+                if (pressure == null)
                     mPressureString = "-"
                 else {
                     var unit = ""
@@ -178,8 +176,8 @@ constructor(private var mDataController: MesonetDataController, private var mThr
 
 
                 mDoingInitialUpdate = time == null && temp == null && apparentTemp == null &&
-                                      dewPoint == null && windSpd == null && direction == null &&
-                                      rain24h == null && humidity == null && windGusts == null
+                        dewPoint == null && windSpd == null && direction == null &&
+                        rain24h == null && humidity == null && windGusts == null
                 setChanged()
                 notifyObservers()
             }
@@ -187,14 +185,29 @@ constructor(private var mDataController: MesonetDataController, private var mThr
     }
 
     @Override
-    override fun addObserver(inObserver: Observer)
-    {
+    override fun addObserver(inObserver: Observer) {
         mThreadHandler.Run("MesonetData", Runnable {
             super.addObserver(inObserver)
             setChanged()
             notifyObservers()
         })
     }
+
+
+    fun SingleUpdate(inSingleUpdateListener: MesonetDataController.SingleUpdateListener) {
+        mDataController.SingleUpdate(object : MesonetDataController.SingleUpdateListener {
+            override fun UpdateComplete() {
+                Update2()
+                inSingleUpdateListener.UpdateComplete()
+            }
+
+            override fun UpdateFailed() {
+                inSingleUpdateListener.UpdateFailed()
+            }
+
+        })
+    }
+
 
 
     fun DoingInitialUpdate(): Boolean

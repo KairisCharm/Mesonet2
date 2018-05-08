@@ -130,6 +130,8 @@ constructor(inContext: Activity, private var mThreadHandler: ThreadHandler) : Ob
 
 
     internal fun GetRadarName(): String {
+        if(mRadarDetail == null)
+            return ""
         return mSelectedRadar + " - " + mRadarDetail!![mSelectedRadar]!!.GetName()
     }
 

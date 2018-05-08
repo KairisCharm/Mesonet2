@@ -275,7 +275,6 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
 
 
     private fun SetMesonetBinding(inContainerBinding: MesonetDataContainerBinding) {
-        Log.e("Race", "SetMesonetBinding")
         mMesonetDataBinding = inContainerBinding
 
         if (!mMesonetDataBinding!!.siteToolbar.menu.hasVisibleItems()) {

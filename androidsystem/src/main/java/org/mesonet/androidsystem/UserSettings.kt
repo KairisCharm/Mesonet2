@@ -8,10 +8,11 @@ import org.mesonet.dataprocessing.userdata.PreferencesObservable
 import java.util.*
 
 import javax.inject.Inject
+import javax.inject.Singleton
 
 
-@PerActivity
-class UserSettings @Inject constructor(private var mThreadHandler: ThreadHandler, private var mContext: Context) : PreferencesObservable(), Preferences {
+@Singleton
+class UserSettings @Inject constructor(var mThreadHandler: ThreadHandler, var mContext: Context) : PreferencesObservable(), Preferences {
 
     fun SetPreference(inName: String, inValue: String) {
         mThreadHandler.Run("AndroidSystem", Runnable {

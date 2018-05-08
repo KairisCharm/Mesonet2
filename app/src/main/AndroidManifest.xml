@@ -28,9 +28,33 @@
 
         <activity android:name=".webview.WebViewActivity"/>
         <activity android:name=".usersettings.UserSettingsActivity"/>
-        <activity android:name=".about.ContactActivity"/>
+        <activity android:name=".contact.ContactActivity"/>
 
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="@string/google_api_key"/>
+
+        <receiver
+            android:name=".WidgetProvider"
+            android:label="Mesonet Current" >
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_small_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.WidgetProviderLarge"
+            android:label="Mesonet Current + Forecast" >
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_large_info" />
+        </receiver>
 
     </application>
 </manifest>
