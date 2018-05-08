@@ -55,7 +55,6 @@ class DataDownloader constructor(private var mThreadHandler: ThreadHandler)
 
     internal fun Download(inDownloadInfo: DownloadInfo, inDownloadCallback: DownloadCallback): ResponseInfo
     {
-        Log.e("Downloading", inDownloadInfo.mUrl)
         var failed = false
         var responseCode = -1
         var result = ""

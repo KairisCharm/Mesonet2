@@ -2,6 +2,7 @@ package org.mesonet.dataprocessing.site
 
 
 import android.location.Location
+import android.util.Log
 import com.google.gson.Gson
 import org.mesonet.cache.site.SiteCache
 import org.mesonet.core.PerActivity
@@ -46,19 +47,23 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
             mCache.GetSites(object : SiteCache.SitesCacheListener {
                 override fun SitesLoaded(inSiteResults: MesonetSiteListModel) {
 
+                    if (mMesonetSiteModel == null) {
+                        synchronized(this@MesonetSiteDataController)
+                        {
+                            mMesonetSiteModel = inSiteResults
+                        }
+                    }
+
                     mCache.GetFavorites(object : SiteCache.FavoritesCacheListener {
                         override fun FavoritesLoaded(inResults: MutableList<String>) {
-                            if (mMesonetSiteModel == null) {
-                                synchronized(this@MesonetSiteDataController)
-                                {
-                                    mMesonetSiteModel = inSiteResults
-                                }
-                            }
+                            Log.e("Site", "FavoritesLoaded")
 
                             mFavorites = inResults
 
                             if (mFavorites == null)
                                 mFavorites = ArrayList()
+
+                            LoadData()
 
                             setChanged()
                             notifyObservers()
@@ -107,30 +112,20 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
             }
 
             mCache.SaveSites(mMesonetSiteModel!!)
-
-            mLocationProvider.GetLocation(object : LocationProvider.LocationListener {
-                override fun LastLocationFound(inLocation: Location?) {
-                    mCurrentSelection = GetNearestSite(inLocation)
-                    mPreferences.SetSelectedStid(mCurrentSelection)
-
-                    FinalizeSelection()
-                }
-
-                override fun LocationUnavailable() {
-                    FinalizeSelection()
-                }
-            })
         }
     }
 
 
     private fun FinalizeSelection()
     {
-        if(mMesonetSiteModel != null && mMesonetSiteModel!![mCurrentSelection] != null && mMesonetSiteModel!![mCurrentSelection]?.GetName() != null)
+        if(mMesonetSiteModel != null && mMesonetSiteModel!![mCurrentSelection] != null && mMesonetSiteModel!![mCurrentSelection]?.GetName() != null) {
             mCurrentStationName = mMesonetSiteModel!![mCurrentSelection]!!.GetName()!!
+            Log.e("StationName", mCurrentStationName)
+        }
 
         mCurrentIsFavorite = IsFavorite(mCurrentSelection)
 
+        Log.e("Site", "FinalizeSelection " + mCurrentStationName)
         setChanged()
         notifyObservers()
     }
@@ -210,6 +205,7 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     override fun addObserver(o: Observer?) {
+        Log.e("Site", "ObserverAdded")
         super.addObserver(o)
         setChanged()
         notifyObservers()
@@ -240,6 +236,7 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     internal fun AddFavorite(inStid: String) {
+        Log.e("Site", "FavoriteAdded")
         if (mFavorites != null) {
             mFavorites!!.add(inStid)
             if(inStid.equals(mCurrentSelection))
@@ -252,6 +249,7 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     internal fun RemoveFavorite(inStid: String) {
+        Log.e("Site", "FavoriteRemoved")
         if (mFavorites != null && mFavorites!!.contains(inStid)) {
             mFavorites!!.remove(inStid)
             mCache.SaveFavorites(mFavorites!!)
@@ -279,13 +277,33 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     internal fun LoadData() {
+        Log.e("Site", "LoadData")
         mPreferences.GetSelectedStid(object: Preferences.StidListener{
             override fun StidFound(inStidPreference: String) {
+                Log.e("Site", "StidFound " + inStidPreference)
                 mCurrentSelection = inStidPreference
                 mCache.GetSites(object : SiteCache.SitesCacheListener {
                     override fun SitesLoaded(inSiteResults: MesonetSiteListModel) {
                         if (mMesonetSiteModel == null || mMesonetSiteModel!!.size == 0)
                             SetData(inSiteResults)
+
+                        if(mCurrentSelection.isEmpty()) {
+                            mLocationProvider.GetLocation(object : LocationProvider.LocationListener {
+                                override fun LastLocationFound(inLocation: Location?) {
+                                    mCurrentSelection = GetNearestSite(inLocation)
+                                    mPreferences.SetSelectedStid(mCurrentSelection)
+
+                                    FinalizeSelection()
+                                }
+
+                                override fun LocationUnavailable() {
+                                    mCurrentSelection = "nrmn"
+                                    FinalizeSelection()
+                                }
+                            })
+                        }
+                        else
+                            FinalizeSelection()
                     }
                 })
                 mDataDownloader.SingleUpdate("http://www.mesonet.org/find/siteinfo-json", object : DataDownloader.DownloadCallback {

@@ -50,7 +50,7 @@ class UserSettings @Inject constructor(var mThreadHandler: ThreadHandler, var mC
     }
 
     override fun GetSelectedStid(inListener: Preferences.StidListener) {
-        var result = "nrmn"
+        var result = ""
 
         mThreadHandler.Run("AndroidSystem", Runnable {
             result = GetStringPreference(UserSettings.kSelectedStid, "nrmn")
