@@ -172,7 +172,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
 
 
     private fun ToggleFavorite() {
-        mMesonetSiteDataController.ToggleFavorite(mMesonetSiteDataController.CurrentStationName())
+        mMesonetSiteDataController.ToggleFavorite(mMesonetSiteDataController.CurrentSelection())
     }
 
 
