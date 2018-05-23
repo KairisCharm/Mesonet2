@@ -4,10 +4,10 @@ import android.view.ViewGroup
 
 import org.mesonet.app.baseclasses.RecyclerViewAdapter
 import org.mesonet.app.baseclasses.RecyclerViewHolder
-import org.mesonet.dataprocessiFilenamevisories.AdvisoryListBuilder
+import org.mesonet.dataprocessiFilenamevisories.AdvisoryDisplayListBuilder
 
 
-class AdvisoriesRecyclerViewAdapter : RecyclerViewAdapter<Pair<AdvisoryListBuilder.AdvisoryDataType, AdvisoryListBuilder.AdvisoryData>, RecyclerViewHolder<Any, *>>() {
+class AdvisoriesRecyclerViewAdapter : RecyclerViewAdapter<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>, RecyclerViewHolder<Any, *>>() {
 
 
     override fun getItemViewType(inPosition: Int): Int {
@@ -21,9 +21,9 @@ class AdvisoriesRecyclerViewAdapter : RecyclerViewAdapter<Pair<AdvisoryListBuild
 
 
     override fun onCreateViewHolder(inParent: ViewGroup, inViewType: Int): RecyclerViewHolder<Any, *> {
-        return when (AdvisoryListBuilder.AdvisoryDataType.values()[inViewType]) {
-            AdvisoryListBuilder.AdvisoryDataType.kHeader -> AdvisoryHeaderViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, *>
-            AdvisoryListBuilder.AdvisoryDataType.kContent -> AdvisoryViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, *>
+        return when (AdvisoryDisplayListBuilder.AdvisoryDataType.values()[inViewType]) {
+            AdvisoryDisplayListBuilder.AdvisoryDataType.kHeader -> AdvisoryHeaderViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, *>
+            AdvisoryDisplayListBuilder.AdvisoryDataType.kContent -> AdvisoryViewHolder.NewInstance(inParent) as RecyclerViewHolder<Any, *>
         }
     }
 }

@@ -11,17 +11,17 @@ import org.mesonet.app.R
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.AdvisoryViewHolderBinding
 import org.mesonet.app.webview.WebViewActivity
-import org.mesonet.dataprocessiFilenamevisories.AdvisoryListBuilder
+import org.mesonet.dataprocessiFilenamevisories.AdvisoryDisplayListBuilder
 
-class AdvisoryViewHolder(inBinding: AdvisoryViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryListBuilder.AdvisoryDataType, AdvisoryListBuilder.AdvisoryData>, AdvisoryViewHolderBinding>(inBinding) {
+class AdvisoryViewHolder(inBinding: AdvisoryViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>, AdvisoryViewHolderBinding>(inBinding) {
 
 
     override fun SetData(inData: Any?) {
-        if(inData != null && inData is Pair<*,*> && inData.first is AdvisoryListBuilder.AdvisoryDataType && inData.second is AdvisoryListBuilder.AdvisoryData) {
+        if(inData != null && inData is Pair<*,*> && inData.first is AdvisoryDisplayListBuilder.AdvisoryDataType && inData.second is AdvisoryDisplayListBuilder.AdvisoryData) {
             val binding = GetBinding()
 
             if(binding != null) {
-                val advisoryData = inData.second as AdvisoryListBuilder.AdvisoryData
+                val advisoryData = inData.second as AdvisoryDisplayListBuilder.AdvisoryData
                 binding.countyListTextView.text = advisoryData.Counties()
 
                 binding.root.setOnClickListener {

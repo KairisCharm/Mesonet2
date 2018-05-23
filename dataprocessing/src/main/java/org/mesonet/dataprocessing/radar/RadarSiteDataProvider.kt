@@ -8,6 +8,9 @@ import org.mesonet.core.ThreadHandler
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.SelectSiteListener
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
+import org.mesonet.models.radar.RadarDetailCreator
+import org.mesonet.models.radar.RadarDetails
+import org.mesonet.models.radar.RadarModel
 
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
@@ -24,9 +27,10 @@ import javax.inject.Inject
 
 @org.mesonet.core.PerFragment
 class RadarSiteDataProvider @Inject
-constructor(inContext: Activity, private var mThreadHandler: ThreadHandler) : Observable(), FilterListDataProvider, SelectSiteListener {
+constructor(inContext: Activity, private var mThreadHandler: ThreadHandler, private var mRadarDetailCreator: RadarDetailCreator) : Observable(), FilterListDataProvider, SelectSiteListener {
     private var mSelectedRadar = "KTLX"
-    private var mRadarDetail: Map<String, RadarModel.RadarDetailModel>? = null
+    private var mRadarDetail: Map<String, RadarDetails> = HashMap()
+
 
 
 
@@ -40,15 +44,15 @@ constructor(inContext: Activity, private var mThreadHandler: ThreadHandler) : Ob
     }
 
 
-    private fun ProcessRadarXml(inRadarXmlStream: InputStream): Map<String, RadarModel.RadarDetailModel>? {
+    private fun ProcessRadarXml(inRadarXmlStream: InputStream): Map<String, RadarDetails> {
         val xmlParser = Xml.newPullParser()
 
-        var result: Map<String, RadarModel.RadarDetailModel>? = null
+        var result: Map<String, RadarDetails> = HashMap()
 
         try {
             xmlParser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
             xmlParser.setInput(inRadarXmlStream, null)
-            result = ParseRadarXml(xmlParser)
+            result = mRadarDetailCreator.ParseRadarXml(xmlParser)
         } catch (e: XmlPullParserException) {
             e.printStackTrace()
         } catch (e: IOException) {
@@ -65,92 +69,32 @@ constructor(inContext: Activity, private var mThreadHandler: ThreadHandler) : Ob
     }
 
 
-    @Throws(XmlPullParserException::class, IOException::class)
-    private fun ParseRadarXml(inXmlParser: XmlPullParser): Map<String, RadarModel.RadarDetailModel> {
-        val result = HashMap<String, RadarModel.RadarDetailModel>()
 
-        while (inXmlParser.next() != XmlPullParser.END_TAG) {
-            if (inXmlParser.eventType != XmlPullParser.START_TAG)
-                continue
-
-            val name = inXmlParser.name
-            // Starts by looking for the entry tag
-            if (name == "key") {
-                if (inXmlParser.next() == XmlPullParser.TEXT) {
-                    val key = inXmlParser.text
-
-                    inXmlParser.next()
-                    inXmlParser.next()
-                    inXmlParser.next()
-
-                    if (inXmlParser.name == "dict")
-                        result[key] = ParseRadarDetail(inXmlParser)
-                }
-            }
-        }
-
-        return result
-    }
-
-
-    @Throws(XmlPullParserException::class, IOException::class)
-    private fun ParseRadarDetail(inXmlParser: XmlPullParser): RadarModel.RadarDetailModel {
-        val builder = RadarModel.RadarDetailModel.Builder()
-
-        while (inXmlParser.next() != XmlPullParser.END_TAG || inXmlParser.name == null || inXmlParser.name != "dict") {
-            if (inXmlParser.eventType != XmlPullParser.START_TAG)
-                continue
-
-            if (inXmlParser.name == "key") {
-                inXmlParser.next()
-
-                val key = inXmlParser.text
-
-                inXmlParser.next()
-                inXmlParser.next()
-                inXmlParser.next()
-
-                val type = inXmlParser.name
-
-                inXmlParser.next()
-
-                val value = inXmlParser.text
-
-                builder.SetValue(key, type, value)
-            }
-        }
-
-        return builder.Build()
-    }
-
-
-    internal fun GetRadarDetail(inKey: String = mSelectedRadar): RadarModel.RadarDetailModel {
+    internal fun GetRadarDetail(inKey: String = mSelectedRadar): RadarDetails {
         return mRadarDetail!![inKey]!!
     }
 
 
     internal fun GetRadarName(): String {
-        if(mRadarDetail == null)
-            return ""
-        return mSelectedRadar + " - " + mRadarDetail!![mSelectedRadar]!!.GetName()
+        return mSelectedRadar + " - " + mRadarDetail[mSelectedRadar]!!.GetName()
     }
 
     override fun AllViewHolderData(inListener: FilterListDataProvider.FilterListDataListener) {
         val data = LinkedHashMap<String, BasicListData>()
 
         mThreadHandler.Run("RadarData", Runnable {
-            val keys = ArrayList(mRadarDetail!!.keys)
+            val keys = ArrayList(mRadarDetail.keys)
 
             for (i in keys.indices) {
-                val radar = mRadarDetail!![keys[i]]
+                val radar = mRadarDetail[keys[i]]
 
                 val location = Location("none")
                 location.latitude = radar?.GetLatitude()!!.toDouble()
-                location.longitude = radar.GetLongitude().toDouble()
+                location.longitude = radar.GetLongitude()!!.toDouble()
 
                 data[keys[i]] = object: BasicListData{
                     override fun GetName(): String {
-                        return keys[i] + " - " + mRadarDetail!![keys[i]]!!.GetName()
+                        return keys[i] + " - " + mRadarDetail[keys[i]]!!.GetName()
                     }
 
                     override fun IsFavorite(): Boolean {

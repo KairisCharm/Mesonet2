@@ -5,14 +5,13 @@ import android.location.Location
 import android.util.Log
 import com.google.gson.Gson
 import org.mesonet.cache.site.SiteCache
-import org.mesonet.core.PerActivity
 import org.mesonet.core.ThreadHandler
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.LocationProvider
 import org.mesonet.dataprocessing.SelectSiteListener
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
 import org.mesonet.dataprocessing.userdata.Preferences
-import org.mesonet.models.MesonetSiteListModel
+import org.mesonet.models.site.MesonetSiteListModel
 import org.mesonet.network.DataDownloader
 
 import java.net.HttpURLConnection
@@ -56,7 +55,6 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
                     mCache.GetFavorites(object : SiteCache.FavoritesCacheListener {
                         override fun FavoritesLoaded(inResults: MutableList<String>) {
-                            Log.e("Site", "FavoritesLoaded")
 
                             mFavorites = inResults
 
@@ -120,12 +118,10 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
     {
         if(mMesonetSiteModel != null && mMesonetSiteModel!![mCurrentSelection] != null && mMesonetSiteModel!![mCurrentSelection]?.GetName() != null) {
             mCurrentStationName = mMesonetSiteModel!![mCurrentSelection]!!.GetName()!!
-            Log.e("StationName", mCurrentStationName)
         }
 
         mCurrentIsFavorite = IsFavorite(mCurrentSelection)
 
-        Log.e("Site", "FinalizeSelection " + mCurrentStationName)
         setChanged()
         notifyObservers()
     }
@@ -205,7 +201,6 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     override fun addObserver(o: Observer?) {
-        Log.e("Site", "ObserverAdded")
         super.addObserver(o)
         setChanged()
         notifyObservers()
@@ -236,7 +231,6 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     internal fun AddFavorite(inStid: String) {
-        Log.e("Site", "FavoriteAdded")
         if (mFavorites != null) {
             mFavorites!!.add(inStid)
             if(inStid.equals(mCurrentSelection))
@@ -249,7 +243,6 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     internal fun RemoveFavorite(inStid: String) {
-        Log.e("Site", "FavoriteRemoved")
         if (mFavorites != null && mFavorites!!.contains(inStid)) {
             mFavorites!!.remove(inStid)
             mCache.SaveFavorites(mFavorites!!)
@@ -277,10 +270,8 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     internal fun LoadData() {
-        Log.e("Site", "LoadData")
         mPreferences.GetSelectedStid(object: Preferences.StidListener{
             override fun StidFound(inStidPreference: String) {
-                Log.e("Site", "StidFound " + inStidPreference)
                 mCurrentSelection = inStidPreference
                 mCache.GetSites(object : SiteCache.SitesCacheListener {
                     override fun SitesLoaded(inSiteResults: MesonetSiteListModel) {

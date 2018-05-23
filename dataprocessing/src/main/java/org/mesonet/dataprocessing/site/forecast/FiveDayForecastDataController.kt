@@ -5,9 +5,11 @@ import android.content.Context
 import org.mesonet.core.ThreadHandler
 
 import org.mesonet.dataprocessing.formulas.UnitConverter
-import org.mesonet.dataprocessing.reflection.ForecastModelParser
+import org.mesonet.models.site.forecast.ForecastModelParser
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.userdata.Preferences
+import org.mesonet.models.site.forecast.Forecast
+import org.mesonet.models.site.forecast.ForecastParser
 import org.mesonet.network.DataDownloader
 import java.net.HttpURLConnection
 import java.util.*
@@ -19,7 +21,7 @@ import kotlin.collections.ArrayList
 @Singleton
 class FiveDayForecastDataController @Inject constructor(private var mMesonetSiteDataController: MesonetSiteDataController,
                                                         private var mThreadHandler: ThreadHandler,
-                                                        private var mModelParser: ForecastModelParser,
+                                                        private var mModelParser: ForecastParser,
                                                         private var mPreferences: Preferences,
                                                         private var mUnitConverter: UnitConverter,
                                                         private var mContext: Context) : Observable(), Observer {
@@ -101,11 +103,14 @@ class FiveDayForecastDataController @Inject constructor(private var mMesonetSite
 
 
     internal fun SetData(inForecast: String?) {
-        SetData(mModelParser.Parse(inForecast))
+        if(inForecast == null)
+            SetData(null as List<Forecast>?)
+        else
+            SetData(mModelParser.Parse(inForecast))
     }
 
 
-    internal fun SetData(inForecast: List<ForecastModel>?) {
+    internal fun SetData(inForecast: List<Forecast>?) {
         if (inForecast != null) {
 
             for (i in inForecast.indices) {

@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.AdvisoriesFragmentBinding
-import org.mesonet.dataprocessiFilenamevisories.AdvisoryListBuilder
+import org.mesonet.dataprocessiFilenamevisories.AdvisoryDisplayListBuilder
 import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
 
 import java.util.Observable
@@ -25,7 +25,7 @@ class AdvisoriesFragment : BaseFragment(), Observer {
     internal lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
 
     @Inject
-    internal lateinit var mAdvisoryListBuilder: AdvisoryListBuilder
+    internal lateinit var mAdvisoryListBuilder: AdvisoryDisplayListBuilder
 
 
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View? {
@@ -41,8 +41,8 @@ class AdvisoriesFragment : BaseFragment(), Observer {
     override fun update(o: Observable, arg: Any?) {
         if(activity != null && isAdded()) {
             activity!!.runOnUiThread({
-                mAdvisoryListBuilder.BuildList(mAdvisoryDataProvider.GetAdvisories(), object : AdvisoryListBuilder.AdvisoryListListener {
-                    override fun ListComplete(inResult: MutableList<Pair<AdvisoryListBuilder.AdvisoryDataType, AdvisoryListBuilder.AdvisoryData>>) {
+                mAdvisoryListBuilder.BuildList(mAdvisoryDataProvider.GetAdvisories(), object : AdvisoryDisplayListBuilder.AdvisoryListListener {
+                    override fun ListComplete(inResult: MutableList<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>>) {
                         if(activity != null) {
                             activity?.runOnUiThread({
                                 if (mBinding != null) {

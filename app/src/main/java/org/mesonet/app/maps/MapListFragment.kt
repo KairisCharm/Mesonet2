@@ -32,10 +32,9 @@ class MapListFragment : BaseFragment() {
         mBinding.mapList.setAdapter(MapsRecyclerViewAdapter(mActivity))
 
         var selectedGroup: Int? = null
-        val args = getArguments()
 
-        if (args != null && args.containsKey(kSelectedGroup))
-            selectedGroup = args.getInt(kSelectedGroup)
+        if (arguments != null && arguments!!.containsKey(kSelectedGroup))
+            selectedGroup = arguments!!.getInt(kSelectedGroup)
 
         mDataProvider.Download(selectedGroup, object : MapsDataProvider.MapsListListener {
             override fun ListLoaded(inMapsList: MutableList<Any>?, inGroupName: String?) {

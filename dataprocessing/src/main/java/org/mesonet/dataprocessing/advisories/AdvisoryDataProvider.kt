@@ -1,6 +1,9 @@
 package org.mesonet.dataprocessing.advisories
 
 import org.mesonet.core.ThreadHandler
+import org.mesonet.models.advisories.Advisory
+import org.mesonet.models.advisories.AdvisoryCreator
+import org.mesonet.models.advisories.AdvisoryModel
 import org.mesonet.network.DataDownloader
 import java.net.HttpURLConnection
 import java.util.*
@@ -10,11 +13,11 @@ import javax.inject.Inject
 class AdvisoryDataProvider @Inject constructor(private var mThreadHandler: ThreadHandler) : Observable() {
 
     @Inject
-    internal lateinit var mAdvisoryParser: AdvisoryParser
+    internal lateinit var mAdvisoryCreator: AdvisoryCreator
 
     internal var mDataDownloader: DataDownloader
 
-    private var mCurrentAdvisories: ArrayList<AdvisoryModel>? = null
+    private var mCurrentAdvisories: ArrayList<Advisory>? = null
 
 
     init{
@@ -23,14 +26,20 @@ class AdvisoryDataProvider @Inject constructor(private var mThreadHandler: Threa
 
 
     internal fun SetData(inData: String) {
-        mCurrentAdvisories = mAdvisoryParser.ParseAdvisoryFile(inData)
+        mCurrentAdvisories = mAdvisoryCreator.ParseAdvisoryFile(inData)
         setChanged()
         notifyObservers()
     }
 
 
-    fun GetAdvisories(): ArrayList<AdvisoryModel>? {
+    fun GetAdvisories(): ArrayList<Advisory>? {
         return mCurrentAdvisories
+    }
+
+    override fun addObserver(o: Observer?) {
+        super.addObserver(o)
+        setChanged()
+        notifyObservers()
     }
 
 

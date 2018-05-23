@@ -11,7 +11,7 @@ import javax.inject.Singleton
 @Singleton
 class ThreadHandler @Inject constructor()
 {
-    private val mThreads = HashMap<String, Pair<HandlerThread, Boolean>>()
+    public val mThreads = HashMap<String, Pair<HandlerThread, Boolean>>()
 
 
     fun Run(inThreadBaseName: String, inRunnable: Runnable, inCallback: Runnable? = null)

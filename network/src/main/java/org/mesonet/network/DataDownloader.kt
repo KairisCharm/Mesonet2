@@ -6,13 +6,16 @@ import android.util.Log
 import org.mesonet.core.ThreadHandler
 
 import java.io.IOException
+import java.lang.reflect.InvocationTargetException
 import java.net.HttpURLConnection
 import java.net.HttpURLConnection.HTTP_MULT_CHOICE
+import java.net.MalformedURLException
+import java.net.SocketTimeoutException
 import java.net.URL
 import java.util.*
 
 
-class DataDownloader constructor(private var mThreadHandler: ThreadHandler)
+class DataDownloader constructor(internal var mThreadHandler: ThreadHandler)
 {
     private var mIsUpdating = false
     private var mUpdateInterval: Long = -1
@@ -29,7 +32,7 @@ class DataDownloader constructor(private var mThreadHandler: ThreadHandler)
 
     fun SingleUpdate(inUrl: String, inDownloadCallback: DownloadCallback)
     {
-        val downloadInfo = DownloadInfo(inUrl, inDownloadCallback, mUpdateInterval)
+        val downloadInfo = DownloadInfo(inUrl, mUpdateInterval)
 
         var downloadResponseInfo: ResponseInfo? = null
 
@@ -57,11 +60,14 @@ class DataDownloader constructor(private var mThreadHandler: ThreadHandler)
     {
         var failed = false
         var responseCode = -1
-        var result = ""
+        var result: String? = null
 
+        var conn: HttpURLConnection? = null
+        var scanner: Scanner? = null
+        var resultString: StringBuilder? = null
         try {
             val url = URL(inDownloadInfo.mUrl)
-            val conn = url.openConnection() as HttpURLConnection
+            conn = url.openConnection() as HttpURLConnection
             conn.readTimeout = 10000
             conn.connectTimeout = 15000
             conn.requestMethod = "GET"
@@ -72,24 +78,51 @@ class DataDownloader constructor(private var mThreadHandler: ThreadHandler)
             conn.connect()
 
             if (conn.responseCode >= HttpURLConnection.HTTP_OK && conn.responseCode < HTTP_MULT_CHOICE) {
-                val resultString = StringBuilder()
+                resultString = StringBuilder()
 
-                val scanner = Scanner(conn.inputStream)
+                scanner = Scanner(conn.inputStream)
 
                 while (scanner.hasNextLine()) {
                     resultString.append(scanner.nextLine())
+                    if(scanner.hasNextLine())
+                        resultString.append("\n")
                 }
 
-                scanner.close()
-
-                conn.disconnect()
-
-                result = resultString.toString()
-                responseCode = conn.responseCode
             }
         } catch (e: IOException) {
             e.printStackTrace()
             failed = true
+        }
+        catch (e: MalformedURLException)
+        {
+            e.printStackTrace()
+            failed = true
+        }
+        catch (e: SocketTimeoutException)
+        {
+            e.printStackTrace()
+            failed = true
+        }
+        finally {
+            if(resultString != null)
+                result = resultString.toString()
+            if(conn != null) {
+                try {
+                    responseCode = conn.responseCode
+                }
+                catch (e: InvocationTargetException)
+                {
+                    e.printStackTrace()
+                    failed = true
+                }
+                catch (e: SocketTimeoutException)
+                {
+                    e.printStackTrace()
+                    failed = true
+                }
+                conn.disconnect()
+            }
+            scanner?.close()
         }
 
         if(mIsUpdating && inDownloadInfo.mUpdateInterval > -1)
@@ -123,7 +156,7 @@ class DataDownloader constructor(private var mThreadHandler: ThreadHandler)
 
 
 
-    internal class DownloadInfo(internal var mUrl: String, internal var mDownloadCallback: DownloadCallback, internal var mUpdateInterval: Long) {
+    internal class DownloadInfo(internal var mUrl: String, internal var mUpdateInterval: Long) {
         internal var mLastModified: Long = -1
     }
 

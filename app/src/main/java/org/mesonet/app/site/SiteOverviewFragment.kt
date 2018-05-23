@@ -61,7 +61,6 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.site_overview_fragment, inParent, false)
 
-        Log.e("SiteObserver", "adding")
         mMesonetSiteDataController.GetDataObservable().addObserver(this)
         mFiveDayForecastDataController.GetObservable().addObserver(this)
         mMesonetDataController.addObserver(this)
@@ -195,7 +194,6 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
 
     override fun update(observable: Observable, o: Any?) {
         activity?.runOnUiThread({
-            Log.e("SiteObserver", "update")
             Update()
         })
     }
@@ -280,8 +278,6 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         mMesonetDataBinding = inContainerBinding
 
         mMesonetDataBinding?.siteToolbar?.title = mMesonetSiteDataController.CurrentStationName()
-
-        Log.e("SiteTitle", mMesonetSiteDataController.CurrentStationName())
 
         if (!mMesonetDataBinding!!.siteToolbar.menu.hasVisibleItems()) {
             mMesonetDataBinding!!.siteToolbar.inflateMenu(R.menu.mesonet_site_menu)

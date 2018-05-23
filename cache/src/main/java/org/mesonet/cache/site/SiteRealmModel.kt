@@ -3,7 +3,7 @@ package org.mesonet.cache.site
 
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
-import org.mesonet.models.MesonetSiteListModel
+import org.mesonet.models.site.MesonetSiteListModel
 
 
 open class SiteRealmModel : RealmObject {

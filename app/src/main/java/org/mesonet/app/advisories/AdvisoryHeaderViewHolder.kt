@@ -8,18 +8,18 @@ import android.view.ViewGroup
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.HeaderViewHolderBinding
-import org.mesonet.dataprocessiFilenamevisories.AdvisoryListBuilder
+import org.mesonet.dataprocessiFilenamevisories.AdvisoryDisplayListBuilder
 
 
-class AdvisoryHeaderViewHolder(inBinding: HeaderViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryListBuilder.AdvisoryDataType, AdvisoryListBuilder.AdvisoryData>, HeaderViewHolderBinding>(inBinding) {
+class AdvisoryHeaderViewHolder(inBinding: HeaderViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>, HeaderViewHolderBinding>(inBinding) {
 
     override fun SetData(inData: Any?) {
 
-        if (inData != null && inData is Pair<*,*> && inData.first is AdvisoryListBuilder.AdvisoryDataType && inData.second is AdvisoryListBuilder.AdvisoryData) {
+        if (inData != null && inData is Pair<*,*> && inData.first is AdvisoryDisplayListBuilder.AdvisoryDataType && inData.second is AdvisoryDisplayListBuilder.AdvisoryData) {
             val binding = GetBinding()
 
             if(binding != null)
-                binding.headerText.text = (inData.second as AdvisoryListBuilder.AdvisoryData).AdvisoryType()
+                binding.headerText.text = (inData.second as AdvisoryDisplayListBuilder.AdvisoryData).AdvisoryType()
         }
     }
 

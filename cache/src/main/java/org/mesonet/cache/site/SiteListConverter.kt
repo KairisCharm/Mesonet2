@@ -1,8 +1,7 @@
 package org.mesonet.cache.site
 
 
-import org.mesonet.core.PerActivity
-import org.mesonet.models.MesonetSiteListModel
+import org.mesonet.models.site.MesonetSiteListModel
 
 import java.util.ArrayList
 

@@ -73,7 +73,7 @@ constructor(internal var mRadarDataController: RadarDataController) : RadarImage
 
         if (radarImages != null) {
             for (i in radarImages.indices) {
-                radarImages[i].GetImage(inContext, object : RadarDataController.ImageLoadedListener {
+                mRadarDataController.GetImage(i, inContext, object : RadarDataController.ImageLoadedListener {
                     override fun BitmapLoaded(inResult: Bitmap) {
 
                         val bitmapDescriptor = BitmapDescriptorFactory.fromBitmap(inResult)
@@ -83,10 +83,10 @@ constructor(internal var mRadarDataController: RadarDataController) : RadarImage
                             transparency = 1f
                         }
 
-                        val position = LatLng(radarDetails.GetLatitude().toDouble(), radarDetails.GetLongitude().toDouble())
+                        val position = LatLng(radarDetails.GetLatitude()!!.toDouble(), radarDetails.GetLongitude()!!.toDouble())
 
                         val options = GroundOverlayOptions().image(bitmapDescriptor)
-                                .position(position, radarDetails.GetRange())
+                                .position(position, radarDetails.GetRange()!!)
                                 .transparency(transparency)
 
                         inResult.recycle()
@@ -199,7 +199,7 @@ constructor(internal var mRadarDataController: RadarDataController) : RadarImage
         mThreadHandler.Run("RadarData", Runnable {
             val radarDetails = mRadarSiteDataProvider.GetRadarDetail()
 
-            result = LatLng(radarDetails.GetLatitude().toDouble(), radarDetails.GetLongitude().toDouble())
+            result = LatLng(radarDetails.GetLatitude()!!.toDouble(), radarDetails.GetLongitude()!!.toDouble())
         }, Runnable {
             if(result != null)
                 inListener.FoundLatLng(result!!)

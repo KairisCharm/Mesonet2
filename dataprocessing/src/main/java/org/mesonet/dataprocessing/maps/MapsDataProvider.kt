@@ -1,11 +1,10 @@
 package org.mesonet.dataprocessing.maps
 
 import android.util.Pair
-import android.view.View
 import com.google.gson.Gson
 import org.mesonet.core.ThreadHandler
+import org.mesonet.models.maps.MapsModel
 import org.mesonet.network.DataDownloader
-import java.net.ContentHandler
 import java.net.HttpURLConnection
 import java.util.*
 import javax.inject.Inject
@@ -39,10 +38,12 @@ class MapsDataProvider @Inject constructor(private var mThreadHandler: ThreadHan
                             mMapsModel = newMapModel
 
                             mThreadHandler.Run("MapsData", Runnable {
-                                result = LoadMapsList(inGroup)
+                                result = LoadMapsList(inGroup, mMapsModel)
                             }, Runnable {
                                 if(result != null)
                                     inListListener.ListLoaded(result?.first, result?.second)
+                                else
+                                    inListListener.ListLoaded(null, null)
                             })
                         }
                     }
@@ -53,7 +54,7 @@ class MapsDataProvider @Inject constructor(private var mThreadHandler: ThreadHan
                 }
             })
 
-            result = LoadMapsList(inGroup)
+            result = LoadMapsList(inGroup, mMapsModel)
 
         }, Runnable {
             if(result != null)
@@ -64,79 +65,100 @@ class MapsDataProvider @Inject constructor(private var mThreadHandler: ThreadHan
 
     internal fun SectionMaps(inSection: MapsModel.SectionModel?, inProducts: Map<String, MapsModel.ProductModel>?, inShowSection: Boolean): List<Any> {
         val result = ArrayList<Any>()
-        for (k in 0 until inSection?.GetProducts()!!.size) {
-            result.add(object : MapsProductData {
-                override fun Product(): String {
-                    return inProducts?.get(inSection.GetProducts()!![k])?.GetTitle()!!
-                }
 
-                override fun Section(): String? {
-                    return if (!inShowSection) null else inSection.GetTitle()
+        if(inSection != null && inSection.GetProducts() != null && inSection.GetProducts()!!.isNotEmpty() && inProducts != null && inProducts.isNotEmpty()) {
+            for (k in 0 until inSection.GetProducts()!!.size) {
 
-                }
+                if(inProducts.containsKey(inSection.GetProducts()!![k])) {
+                    result.add(object : MapsProductData {
+                        override fun Product(): String {
+                            return inProducts[inSection.GetProducts()!![k]]?.GetTitle()!!
+                        }
 
-                override fun Url(): String {
-                    return inProducts?.get(inSection.GetProducts()!![k])?.GetUrl()!!
+                        override fun Section(): String? {
+                            return if (!inShowSection) null else inSection.GetTitle()
+
+                        }
+
+                        override fun Url(): String {
+                            return inProducts[inSection.GetProducts()!![k]]?.GetUrl()!!
+                        }
+                    })
                 }
-            })
+            }
         }
 
         return result
     }
 
 
-    internal fun LoadMapsList(inGroup: Int? = null): Pair<MutableList<Any>?, String?>?
+    internal fun LoadMapsList(inGroup: Int? = null, inMapsModel: MapsModel?): Pair<MutableList<Any>?, String?>?
     {
         val result = ArrayList<Any>()
         var groupName: String? = null
 
-        if(mMapsModel == null)
+        if(inMapsModel == null)
             return null
         else {
 
-            val main = mMapsModel?.GetMain()
-            val sections = mMapsModel?.GetSections()
-            val products = mMapsModel?.GetProducts()
+            val main = inMapsModel.GetMain()
+            val sections = inMapsModel.GetSections()
+            val products = inMapsModel.GetProducts()
 
-            if (main != null) {
+            if (main != null && main.isNotEmpty()) {
                 if (inGroup != null && inGroup >= 0 && inGroup < main.size) {
-                    val sectionIds = main.get(inGroup).GetSections()
+                    val sectionIds = main[inGroup].GetSections()
 
-                    groupName = main.get(inGroup).GetTitle()
+                    groupName = main[inGroup].GetTitle()
 
-                    for (i in sectionIds?.indices!!) {
-                        val section = sections?.get(sectionIds[i])
+                    if(sectionIds != null && sectionIds.isNotEmpty() && sections != null && sections.isEmpty()) {
+                        for (i in sectionIds.indices) {
+                            if(sections.containsKey(sectionIds[i])) {
+                                val section = sections[sectionIds[i]]
 
-                        if (section != null) {
-                            if (section.GetTitle() != null && !section.GetTitle()!!.isEmpty())
-                                result.add(section.GetTitle()!!)
+                                if (section != null) {
+                                    val sectionResults = SectionMaps(section, products, false)
+                                    if (sectionResults.isNotEmpty()) {
+                                        if (section.GetTitle() != null && !section.GetTitle()!!.isEmpty())
+                                            result.add(section.GetTitle()!!)
 
-                            result.addAll(SectionMaps(section, products, false))
+                                        result.addAll(sectionResults)
+                                    }
+                                }
+                            }
                         }
                     }
                 } else {
                     for (i in main.indices) {
 
-                        val mainSections = main.get(i).GetSections()
+                        val mainSections = main[i].GetSections()
 
-                        if (mainSections != null && mainSections.size > 0) {
-                            main[i].GetTitle()?.let { result.add(it) }
+                        if (mainSections != null && mainSections.isNotEmpty()) {
 
                             val sectionProducts = ArrayList<Any>()
-                            for (j in mainSections.indices) {
-                                if (sections?.containsKey(mainSections[j])!!) {
-                                    val section = sections.get(mainSections[j])
+                            if(sections != null) {
+                                for (j in mainSections.indices) {
+                                    val section = sections[mainSections[j]]
+                                    val sectionList = SectionMaps(section, products, true)
+                                    if (sectionList.isNotEmpty() && sections.containsKey(mainSections[j]) && sections[mainSections[j]] != null) {
 
-                                    sectionProducts.addAll(SectionMaps(section, products, true))
+                                        sectionProducts.addAll(sectionList)
+                                    }
+                                }
+
+                                if (sectionProducts.isNotEmpty()) {
+                                    main[i].GetTitle()?.let { result.add(it) }
+                                    result.add(Pair<Int, List<Any>>(i, sectionProducts))
                                 }
                             }
-
-                            result.add(Pair<Int, List<Any>>(i, sectionProducts))
                         }
                     }
                 }
             }
         }
+
+        if(result.isEmpty())
+            return null
 
         return Pair(result, groupName)
     }

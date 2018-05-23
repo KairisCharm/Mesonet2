@@ -1,10 +1,13 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
+import org.mesonet.core.DefaultUnits
 import org.mesonet.dataprocessing.formulas.UnitConverter
-import org.mesonet.dataprocessing.reflection.MesonetModelParser
+import org.mesonet.models.site.mesonetdata.MesonetModelParser
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.core.ThreadHandler
+import org.mesonet.models.site.mesonetdata.MesonetData
+import org.mesonet.models.site.mesonetdata.MesonetDataCreator
 import org.mesonet.network.DataDownloader
 import java.net.HttpURLConnection
 import java.util.*
@@ -19,12 +22,12 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
                                                 private var mThreadHandler: ThreadHandler,
                                                 private var mDerivedValues: DerivedValues,
                                                 private var mUnitConverter: UnitConverter,
-                                                private var mModelParser: MesonetModelParser) : Observable(), Observer {
+                                                private var mMesonetDataCreator: MesonetDataCreator) : Observable(), Observer {
 
 
 
     private var mDataDownloader: DataDownloader
-    private var mMesonetModel: MesonetModel? = null
+    private var mMesonetData: MesonetData? = null
 
 
     init {
@@ -87,17 +90,20 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 
 
     internal fun SetData(inMesonetDataString: String) {
-        SetData(mModelParser.Parse(MesonetModel::class, inMesonetDataString)!!)
+        SetData(mMesonetDataCreator.CreateMesonetData(inMesonetDataString))
     }
 
 
-    internal fun SetData(inMesonetModel: MesonetModel) {
-        if (inMesonetModel.STID?.toLowerCase() != mSiteDataController.CurrentSelection().toLowerCase())
+    internal fun SetData(inMesonetData: MesonetData?) {
+        if(inMesonetData == null)
+            return
+
+        if (inMesonetData.GetStID()?.toLowerCase() != mSiteDataController.CurrentSelection().toLowerCase())
             return
 
         mPreferences.GetPreferencesObservable().addObserver(this)
 
-        mMesonetModel = inMesonetModel
+        mMesonetData = inMesonetData
         setChanged()
         notifyObservers()
     }
@@ -118,18 +124,18 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 
 
     internal fun ProcessTemp(inUnitPreference: Preferences.UnitPreference): Double? {
-        if (mMesonetModel == null)
+        if (mMesonetData == null)
             return null
 
-        if (mMesonetModel!!.TAIR!!.toDouble() < -900.0)
+        if (mMesonetData!!.GetTAir()!!.toDouble() < -900.0)
             return null
 
-        var tempUnits = UnitConverter.TempUnits.kCelsius
+        var tempUnits = DefaultUnits.TempUnits.kCelsius
 
         if (inUnitPreference == Preferences.UnitPreference.kImperial)
-            tempUnits = UnitConverter.TempUnits.kFahrenheit
+            tempUnits = DefaultUnits.TempUnits.kFahrenheit
 
-        val result = mUnitConverter.GetTempInPreferredUnits(mMesonetModel!!.TAIR, mMesonetModel, tempUnits)
+        val result = mUnitConverter.GetTempInPreferredUnits(mMesonetData!!.GetTAir(), mMesonetData, tempUnits)
                 ?: return null
 
         return result.toDouble()
@@ -137,20 +143,20 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 
 
     internal fun ProcessApparentTemp(inUnitPreference: Preferences.UnitPreference): Double? {
-        if (mMesonetModel == null)
+        if (mMesonetData == null)
             return null
 
-        if (mMesonetModel!!.TAIR!!.toDouble() < -900.0)
+        if (mMesonetData!!.GetTAir()!!.toDouble() < -900.0)
             return null
 
-        var tempUnits = UnitConverter.TempUnits.kCelsius
+        var tempUnits = DefaultUnits.TempUnits.kCelsius
 
         if (inUnitPreference == Preferences.UnitPreference.kImperial)
-            tempUnits = UnitConverter.TempUnits.kFahrenheit
+            tempUnits = DefaultUnits.TempUnits.kFahrenheit
 
-        val apparentTemp = mDerivedValues.GetApparentTemperature(mMesonetModel!!.TAIR, mMesonetModel!!.WSPD, mMesonetModel!!.RELH)
+        val apparentTemp = mDerivedValues.GetApparentTemperature(mMesonetData!!.GetTAir(), mMesonetData!!.GetWSpd(), mMesonetData!!.GetRelH())
 
-        val result = mUnitConverter.GetTempInPreferredUnits(apparentTemp, mMesonetModel, tempUnits)
+        val result = mUnitConverter.GetTempInPreferredUnits(apparentTemp, mMesonetData, tempUnits)
                 ?: return null
 
         return result.toDouble()
@@ -158,20 +164,20 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 
 
     internal fun ProcessDewpoint(inUnitPreference: Preferences.UnitPreference): Double? {
-        if (mMesonetModel == null)
+        if (mMesonetData == null)
             return null
 
-        if (mMesonetModel!!.TAIR!!.toDouble() < -900.0 || mMesonetModel!!.RELH!!.toDouble() < -900.0)
+        if (mMesonetData!!.GetTAir()!!.toDouble() < -900.0 || mMesonetData!!.GetRelH()!!.toDouble() < -900.0)
             return null
 
-        var tempUnits = UnitConverter.TempUnits.kCelsius
+        var tempUnits = DefaultUnits.TempUnits.kCelsius
 
         if (inUnitPreference == Preferences.UnitPreference.kImperial)
-            tempUnits = UnitConverter.TempUnits.kFahrenheit
+            tempUnits = DefaultUnits.TempUnits.kFahrenheit
 
-        val apparentTemp = mDerivedValues.GetDewpoint(mMesonetModel!!.TAIR, mMesonetModel!!.RELH)
+        val apparentTemp = mDerivedValues.GetDewpoint(mMesonetData!!.GetTAir(), mMesonetData!!.GetRelH())
 
-        val result = mUnitConverter.GetTempInPreferredUnits(apparentTemp, mMesonetModel, tempUnits)
+        val result = mUnitConverter.GetTempInPreferredUnits(apparentTemp, mMesonetData, tempUnits)
                 ?: return null
 
         return result.toDouble()
@@ -179,49 +185,49 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 
 
     internal fun ProcessWindSpd(inUnitPreference: Preferences.UnitPreference): Double? {
-        if (mMesonetModel == null)
+        if (mMesonetData == null)
             return null
 
-        if (mMesonetModel!!.WSPD == null)
+        if (mMesonetData!!.GetWSpd() == null)
             return null
 
-        if (mMesonetModel!!.WSPD!!.toDouble() < -900.0)
+        if (mMesonetData!!.GetWSpd()!!.toDouble() < -900.0)
             return null
 
-        var speedUnits = UnitConverter.SpeedUnits.kMps
+        var speedUnits = DefaultUnits.SpeedUnits.kMps
 
         if (inUnitPreference == Preferences.UnitPreference.kImperial)
-            speedUnits = UnitConverter.SpeedUnits.kMph
+            speedUnits = DefaultUnits.SpeedUnits.kMph
 
-        val result = mUnitConverter.GetSpeedInPreferredUnits(mMesonetModel!!.WSPD, mMesonetModel, speedUnits)
+        val result = mUnitConverter.GetSpeedInPreferredUnits(mMesonetData!!.GetWSpd(), mMesonetData, speedUnits)
                 ?: return null
 
         return result.toDouble()
     }
 
 
-    internal fun ProcessWindDirection(): UnitConverter.CompassDirections? {
-        if (mMesonetModel == null)
+    internal fun ProcessWindDirection(): DefaultUnits.CompassDirections? {
+        if (mMesonetData == null)
             return null
 
-        return if (mMesonetModel!!.WDIR!!.toDouble() < -900.0) null else mUnitConverter.GetCompassDirection(mMesonetModel!!.WDIR)
+        return if (mMesonetData!!.GetWDir()!!.toDouble() < -900.0) null else mUnitConverter.GetCompassDirection(mMesonetData!!.GetWDir())
 
     }
 
 
     internal fun ProcessMaxWind(inUnitPreference: Preferences.UnitPreference): Double? {
-        if (mMesonetModel == null)
+        if (mMesonetData == null)
             return null
 
-        if (mMesonetModel!!.WMAX!!.toDouble() < -900.0)
+        if (mMesonetData!!.GetWMax()!!.toDouble() < -900.0)
             return null
 
-        var speedUnits = UnitConverter.SpeedUnits.kMps
+        var speedUnits = DefaultUnits.SpeedUnits.kMps
 
         if (inUnitPreference == Preferences.UnitPreference.kImperial)
-            speedUnits = UnitConverter.SpeedUnits.kMph
+            speedUnits = DefaultUnits.SpeedUnits.kMph
 
-        val result = mUnitConverter.GetSpeedInPreferredUnits(mMesonetModel!!.WMAX, mMesonetModel, speedUnits)
+        val result = mUnitConverter.GetSpeedInPreferredUnits(mMesonetData!!.GetWMax(), mMesonetData, speedUnits)
                 ?: return null
 
         return result.toDouble()
@@ -229,18 +235,18 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 
 
     internal fun Process24HrRain(inUnitPreference: Preferences.UnitPreference): Double? {
-        if (mMesonetModel == null || mMesonetModel!!.RAIN_24 == null)
+        if (mMesonetData == null || mMesonetData!!.GetRain24H() == null)
             return null
 
-        if (mMesonetModel!!.RAIN_24H!!.toDouble() < -900.0)
+        if (mMesonetData!!.GetRain24H()!!.toDouble() < -900.0)
             return null
 
-        var lengthUnits = UnitConverter.LengthUnits.kMm
+        var lengthUnits = DefaultUnits.LengthUnits.kMm
 
         if (inUnitPreference == Preferences.UnitPreference.kImperial)
-            lengthUnits = UnitConverter.LengthUnits.kIn
+            lengthUnits = DefaultUnits.LengthUnits.kIn
 
-        val result = mUnitConverter.GetLengthInPreferredUnits(mMesonetModel!!.RAIN_24H, mMesonetModel, lengthUnits)
+        val result = mUnitConverter.GetLengthInPreferredUnits(mMesonetData!!.GetRain24H(), mMesonetData, lengthUnits)
                 ?: return null
 
         return result.toDouble()
@@ -248,24 +254,24 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 
 
     internal fun ProcessHumidity(): Int? {
-        return if (mMesonetModel == null || mMesonetModel!!.RELH == null) null else mMesonetModel!!.RELH?.toInt()
+        return if (mMesonetData == null || mMesonetData!!.GetRelH() == null) null else mMesonetData!!.GetRelH()?.toInt()
 
     }
 
 
     internal fun ProcessPressure(inUnitPreference: Preferences.UnitPreference): Double? {
-        if (mMesonetModel == null)
+        if (mMesonetData == null)
             return null
 
-        if (mMesonetModel!!.PRES!!.toDouble() < -900.0)
+        if (mMesonetData!!.GetPres()!!.toDouble() < -900.0)
             return null
 
-        var pressureUnits = UnitConverter.PressureUnits.kMb
+        var pressureUnits = DefaultUnits.PressureUnits.kMb
 
         if (inUnitPreference == Preferences.UnitPreference.kImperial)
-            pressureUnits = UnitConverter.PressureUnits.kInHg
+            pressureUnits = DefaultUnits.PressureUnits.kInHg
 
-        val result = mUnitConverter.GetPressureInPreferredUnits(mDerivedValues.GetMSLPressure(mMesonetModel!!.TAIR!!, mMesonetModel!!.PRES, mSiteDataController.CurrentStationElevation()), mMesonetModel, pressureUnits)
+        val result = mUnitConverter.GetPressureInPreferredUnits(mDerivedValues.GetMSLPressure(mMesonetData!!.GetTAir()!!, mMesonetData!!.GetPres(), mSiteDataController.CurrentStationElevation()), mMesonetData, pressureUnits)
                 ?: return null
 
         return result.toDouble()
@@ -274,7 +280,7 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 
     /*TODO begin add tests*/
     internal fun ProcessTime(): Date? {
-        return if (mMesonetModel == null || mMesonetModel!!.TIME == null) null else Date(mMesonetModel!!.TIME!! * 1000)
+        return if (mMesonetData == null || mMesonetData!!.GetTime() == null) null else Date(mMesonetData!!.GetTime()!! * 1000)
 
     }
 
@@ -283,8 +289,8 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
         mThreadHandler.Run("MesonetData", Runnable {
             mPreferences.GetSelectedStid(object: Preferences.StidListener{
                 override fun StidFound(inStidPreference: String) {
-                    if (mMesonetModel == null || !mMesonetModel?.STID?.toLowerCase().equals(inStidPreference)) {
-                        mMesonetModel = null
+                    if (mMesonetData == null || !mMesonetData?.GetStID()?.toLowerCase().equals(inStidPreference)) {
+                        mMesonetData = null
                         StopUpdates()
                         while(mDataDownloader.IsUpdating());
                         StartUpdates()

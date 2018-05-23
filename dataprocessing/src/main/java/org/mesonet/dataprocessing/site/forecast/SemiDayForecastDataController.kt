@@ -1,6 +1,7 @@
 package org.mesonet.dataprocessing.site.forecast
 
 import android.content.Context
+import org.mesonet.core.DefaultUnits
 import org.mesonet.core.ThreadHandler
 
 import java.util.Locale
@@ -9,9 +10,10 @@ import org.mesonet.dataprocessing.formulas.UnitConverter
 
 import org.mesonet.dataprocessing.R
 import org.mesonet.dataprocessing.userdata.Preferences
+import org.mesonet.models.site.forecast.Forecast
 
 
-class SemiDayForecastDataController(private var mContext: Context?, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, private var mForecastModel: ForecastModel, private var mThreadHandler: ThreadHandler) : Observable(), ForecastData {
+class SemiDayForecastDataController(private var mContext: Context?, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, private var mForecast: Forecast, private var mThreadHandler: ThreadHandler) : Observable(), ForecastData {
 
     private var mTime: String = ""
     private var mIconUrl: String = ""
@@ -22,66 +24,81 @@ class SemiDayForecastDataController(private var mContext: Context?, private var 
 
     init {
         mThreadHandler.Run("ForecastData", Runnable {
-            SetData(mForecastModel)
+            SetData(mForecast)
         })
     }
 
-    internal fun SetData(inForecast: ForecastModel) {
-        mForecastModel = inForecast
+    internal fun SetData(inForecast: Forecast) {
+        mForecast = inForecast
         mPreferences.GetUnitPreference(object: Preferences.UnitPreferenceListener{
             override fun UnitPreferenceFound(inUnitPreference: Preferences.UnitPreference) {
-                if(mForecastModel.mTime != null)
-                    mTime = mForecastModel.mTime!!
+                if(mForecast.GetTime() != null)
+                    mTime = mForecast.GetTime()!!
 
                 if (mContext != null && mContext!!.resources.getBoolean(R.bool.forceWrapForecasts) && !mTime.contains(" "))
                     mTime += "\n"
 
-                mIconUrl = mForecastModel.mIconUrl!!.replace("http://www.nws.noaa.gov/weather/images/fcicons", "http://www.mesonet.org/images/fcicons-android").replace(".jpg", "@4x.png")
+                if(mForecast.GetIconUrl() != null)
+                    mIconUrl = mForecast.GetIconUrl()!!.replace("http://www.nws.noaa.gov/weather/images/fcicons", "http://www.mesonet.org/images/fcicons-android").replace(".jpg", "@4x.png")
 
-                mStatus = mForecastModel.mStatus!! + "\n"
-                mHighOrLow = mForecastModel.mHighOrLow!!.name
+                if(mForecast.GetStatus() != null)
+                    mStatus = mForecast.GetStatus() + "\n"
 
-                var tempUnits: UnitConverter.TempUnits = UnitConverter.TempUnits.kCelsius
+                if(mForecast.GetHighOrLow() != null)
+                    mHighOrLow = mForecast.GetHighOrLow()!!.name
+
+                var tempUnits: DefaultUnits.TempUnits = DefaultUnits.TempUnits.kCelsius
 
                 if (inUnitPreference == Preferences.UnitPreference.kImperial)
-                    tempUnits = UnitConverter.TempUnits.kFahrenheit
+                    tempUnits = DefaultUnits.TempUnits.kFahrenheit
 
                 var unit = ""
 
                 when (tempUnits) {
-                    UnitConverter.TempUnits.kCelsius -> unit = "C"
-                    UnitConverter.TempUnits.kFahrenheit -> unit = "F"
+                    DefaultUnits.TempUnits.kCelsius -> unit = "C"
+                    DefaultUnits.TempUnits.kFahrenheit -> unit = "F"
                 }
 
                 if (mUnitConverter == null)
                     mTemp = ""
 
-                var value = mUnitConverter!!.GetTempInPreferredUnits(mForecastModel.mTemp, mForecastModel, tempUnits)!!.toInt()
+                var value = mUnitConverter!!.GetTempInPreferredUnits(mForecast.GetTemp(), mForecast, tempUnits)!!.toInt()
 
                 mTemp = String.format(Locale.getDefault(), "%d", value) + "°" + unit
 
-                if (mForecastModel.mWindSpd == null)
+                if (mForecast.GetWindMin() == null)
                     mWindDescription = "Calm\n"
 
                 else {
-                    var speedUnits: UnitConverter.SpeedUnits = UnitConverter.SpeedUnits.kMps
+                    var speedUnits: DefaultUnits.SpeedUnits = DefaultUnits.SpeedUnits.kMps
 
                     if (inUnitPreference == Preferences.UnitPreference.kImperial)
-                        speedUnits = UnitConverter.SpeedUnits.kMph
+                        speedUnits = DefaultUnits.SpeedUnits.kMph
 
                     unit = ""
 
                     when (speedUnits) {
-                        UnitConverter.SpeedUnits.kMps -> unit = "mps"
-                        UnitConverter.SpeedUnits.kMph -> unit = "mph"
+                        DefaultUnits.SpeedUnits.kMps -> unit = "mps"
+                        DefaultUnits.SpeedUnits.kMph -> unit = "mph"
                     }
 
                     if (mUnitConverter == null)
                         mWindDescription = ""
 
-                    value = mUnitConverter!!.GetSpeedInPreferredUnits(mForecastModel.mWindSpd, mForecastModel, speedUnits)!!.toInt()
+                    var directionDesc = mForecast.GetWindDirectionStart()!!.name
 
-                    mWindDescription = "Wind " + value.toString() + " at " + unit
+                    if(!(mForecast.GetWindDirectionStart()!!.equals(mForecast.GetWindDirectionEnd())))
+                        directionDesc += "-" + mForecast.GetWindDirectionEnd()
+
+                    value = mUnitConverter!!.GetSpeedInPreferredUnits(mForecast.GetWindMin(), mForecast, speedUnits)!!.toInt()
+                    val value2 = mUnitConverter!!.GetSpeedInPreferredUnits(mForecast.GetWindMax(), mForecast, speedUnits)!!.toInt()
+
+                    var finalWindSpdValue = value.toString()
+                    if(!value.equals(value2))
+                        finalWindSpdValue += "-" + value2
+
+                    mWindDescription = "Wind " + directionDesc + " " + finalWindSpdValue + " " + unit
+
                 }
 
                 setChanged()

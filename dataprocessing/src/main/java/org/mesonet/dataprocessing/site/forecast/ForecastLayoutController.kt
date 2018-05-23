@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import org.mesonet.dataprocessing.R
 import org.mesonet.core.ThreadHandler
+import org.mesonet.models.site.forecast.Forecast
 import java.util.*
 import javax.inject.Inject
 
@@ -42,11 +43,11 @@ class ForecastLayoutController @Inject constructor(private var mContext: Context
             var colorResource = R.color.colorPrimary
 
             if(!inForecastData.GetHighOrLow().isEmpty()) {
-                val highOrLow = ForecastModel.HighOrLow.valueOf(inForecastData.GetHighOrLow())
+                val highOrLow = Forecast.HighOrLow.valueOf(inForecastData.GetHighOrLow())
 
                 colorResource = when (highOrLow) {
-                    ForecastModel.HighOrLow.High -> R.color.forecastDayBackground
-                    ForecastModel.HighOrLow.Low -> R.color.forecastNightBackground
+                    Forecast.HighOrLow.High -> R.color.forecastDayBackground
+                    Forecast.HighOrLow.Low -> R.color.forecastNightBackground
                 }
             }
 

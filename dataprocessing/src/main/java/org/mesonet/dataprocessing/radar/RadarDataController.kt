@@ -9,6 +9,8 @@ import android.graphics.Paint
 import android.util.Xml
 import com.squareup.picasso.Picasso
 import org.mesonet.core.ThreadHandler
+import org.mesonet.models.radar.RadarImage
+import org.mesonet.models.radar.RadarImageCreator
 import org.mesonet.network.DataDownloader
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
@@ -20,6 +22,7 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 
 import javax.inject.Inject
+import kotlin.collections.ArrayList
 
 
 class RadarDataController @Inject
@@ -29,10 +32,13 @@ constructor(private var mSiteDataProvider: RadarSiteDataProvider, private var mT
         val kRadarImageLimit = 6
     }
 
-    private var mRadarImages: List<RadarImageModel>? = null
+    private var mRadarImages: List<RadarImage> = ArrayList()
     private var mCurrentRadar = ""
 
     private var mDataDownloader: DataDownloader
+
+    @Inject
+    protected lateinit var mRadarImageCreator: RadarImageCreator
 
 
     init {
@@ -47,7 +53,7 @@ constructor(private var mSiteDataProvider: RadarSiteDataProvider, private var mT
         if(!mDataDownloader.IsUpdating()) {
             mThreadHandler.Run("RadarData", Runnable {
                 mCurrentRadar = mSiteDataProvider.CurrentSelection()
-                mDataDownloader.StartDownloads(String.format("http://www.mesonet.org/data/nids/maps/realtime/frames_%s_N0Q.xml", mSiteDataProvider.CurrentSelection()), object : DataDownloader.DownloadCallback {
+                mDataDownloader.StartDownloads(String.format("http://www.mesonet.org/data/nids/maps/realtime/frames_%s_N0Q.xml", mCurrentRadar), object : DataDownloader.DownloadCallback {
                     override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                         ProcessRadarXml(ByteArrayInputStream(inResult?.toByteArray(StandardCharsets.UTF_8)))
                     }
@@ -77,7 +83,7 @@ constructor(private var mSiteDataProvider: RadarSiteDataProvider, private var mT
         try {
             xmlParser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
             xmlParser.setInput(inRadarXmlStream, null)
-            mRadarImages = ParseRadarXml(xmlParser, kRadarImageLimit)
+            mRadarImages = mRadarImageCreator.ParseRadarImagesXml(xmlParser, kRadarImageLimit)
             setChanged()
             notifyObservers()
         } catch (e: XmlPullParserException) {
@@ -95,32 +101,14 @@ constructor(private var mSiteDataProvider: RadarSiteDataProvider, private var mT
     }
 
 
-    @Throws(XmlPullParserException::class, IOException::class)
-    private fun ParseRadarXml(inXmlParser: XmlPullParser, inLimit: Int): List<RadarImageModel> {
-        val result = ArrayList<RadarImageModel>()
 
-        while (inXmlParser.next() != XmlPullParser.END_DOCUMENT && result.size < inLimit) {
-            if (inXmlParser.eventType != XmlPullParser.START_TAG)
-                continue
-
-            val name = inXmlParser.name
-            // Starts by looking for the entry tag
-            if (name == "frame") {
-                val builder = RadarImageModel.Builder(this)
-                for (i in 0 until inXmlParser.attributeCount) {
-                    builder.SetValue(inXmlParser.getAttributeName(i), inXmlParser.getAttributeValue(i))
-                }
-
-                result.add(builder.Build())
-            }
-        }
-
-        return result
+    internal fun GetRadarImageDetails(): List<RadarImage> {
+        return mRadarImages
     }
 
 
-    internal fun GetRadarImageDetails(): List<RadarImageModel>? {
-        return mRadarImages
+    internal fun GetImage(inIndex: Int, inContext: Context, inImageLoadedListener: RadarDataController.ImageLoadedListener) {
+        GetImage(inContext, "https://www.mesonet.org" + mRadarImages[inIndex].GetFilename(), inImageLoadedListener)
     }
 
 
@@ -148,7 +136,7 @@ constructor(private var mSiteDataProvider: RadarSiteDataProvider, private var mT
 
     override fun update(o: Observable, arg: Any?) {
         mThreadHandler.Run("RadarData", Runnable {
-            if(mCurrentRadar.equals(mSiteDataProvider.CurrentSelection())) {
+            if(!mCurrentRadar.equals(mSiteDataProvider.CurrentSelection())) {
                 StopUpdates()
                 while (mDataDownloader.IsUpdating());
                 StartUpdates()
