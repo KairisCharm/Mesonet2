@@ -5,8 +5,8 @@ import javax.inject.Inject
 
 class EmptyLocationProvider @Inject constructor(): LocationProvider
 {
-    override fun GetLocation(inLocationListener: LocationProvider.LocationListener) {
-        inLocationListener.LocationUnavailable()
-    }
+  override fun GetLocation(inLocationListener: LocationProvider.LocationListener) {
+    inLocationListener.LocationUnavailable()
+  }
 
 }

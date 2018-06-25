@@ -6,11 +6,6 @@ import java.util.HashMap
 
 
 class MesonetSiteListModel : HashMap<String, MesonetSiteListModel.MesonetSiteModel>(), MesonetSiteList {
-    override fun GetSite(inStid: String): MesonetSiteModel? {
-        return get(inStid)
-    }
-
-
     class MesonetSiteModel {
 
         @SerializedName("lat")
@@ -31,60 +26,49 @@ class MesonetSiteListModel : HashMap<String, MesonetSiteListModel.MesonetSiteMod
         @SerializedName("lon")
         internal var mLon: String? = null
 
-        fun GetLat(): String?
-        {
+        fun GetLat(): String? {
             return mLat
         }
 
-        fun GetElev(): String?
-        {
+        fun GetElev(): String? {
             return mElev
         }
 
-        fun GetStnm(): String?
-        {
+        fun GetStnm(): String? {
             return mStnm
         }
 
-        fun GetName(): String?
-        {
+        fun GetName(): String? {
             return mName
         }
 
-        fun GetLon(): String?
-        {
+        fun GetLon(): String? {
             return mLon
         }
 
 
-        fun GetDatd(): String?
-        {
+        fun GetDatd(): String? {
             return mDatd
         }
 
 
-        fun SetLat(inLat: String?)
-        {
+        fun SetLat(inLat: String?) {
             mLat = inLat
         }
 
-        fun SetElev(inElev: String?)
-        {
+        fun SetElev(inElev: String?) {
             mElev = inElev
         }
 
-        fun SetStnm(inStnm: String?)
-        {
+        fun SetStnm(inStnm: String?) {
             mStnm = inStnm
         }
 
-        fun SetName(inName: String?)
-        {
+        fun SetName(inName: String?) {
             mName = inName
         }
 
-        fun SetLon(inLon: String?)
-        {
+        fun SetLon(inLon: String?) {
             mLon = inLon
         }
     }

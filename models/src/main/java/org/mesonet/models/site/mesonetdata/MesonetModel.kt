@@ -3,7 +3,7 @@ package org.mesonet.models.site.mesonetdata
 import org.mesonet.core.DefaultUnits
 
 
-internal class MesonetModel : MesonetData
+class MesonetModel : MesonetData
 {
     internal var TIME: Long? = null
     internal var RELH: Number? = null

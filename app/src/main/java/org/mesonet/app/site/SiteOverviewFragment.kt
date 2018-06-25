@@ -39,279 +39,279 @@ import javax.inject.Inject
 
 
 class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser, Toolbar.OnMenuItemClickListener, Observer {
-    private var mMesonetDataBinding: MesonetDataContainerBinding? = null
-    private var mBinding: SiteOverviewFragmentBinding? = null
+  private var mMesonetDataBinding: MesonetDataContainerBinding? = null
+  private var mBinding: SiteOverviewFragmentBinding? = null
 
-    @Inject
-    internal lateinit var mMesonetSiteDataController: MesonetSiteDataController
+  @Inject
+  internal lateinit var mMesonetSiteDataController: MesonetSiteDataController
 
-    @Inject
-    internal lateinit var mFiveDayForecastDataController: FiveDayForecastDataController
+  @Inject
+  internal lateinit var mFiveDayForecastDataController: FiveDayForecastDataController
 
-    @Inject
-    internal lateinit var mMesonetDataController: MesonetDataController
+  @Inject
+  internal lateinit var mMesonetDataController: MesonetDataController
 
-    @Inject
-    internal lateinit var mMesonetUIController: MesonetUIController
+  @Inject
+  internal lateinit var mMesonetUIController: MesonetUIController
 
-    @Inject
-    internal lateinit var mThreadHandler: ThreadHandler
+  @Inject
+  internal lateinit var mThreadHandler: ThreadHandler
 
 
-    override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View {
-        mBinding = DataBindingUtil.inflate(inInflater, R.layout.site_overview_fragment, inParent, false)
+  override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View {
+    mBinding = DataBindingUtil.inflate(inInflater, R.layout.site_overview_fragment, inParent, false)
 
-        mMesonetSiteDataController.GetDataObservable().addObserver(this)
-        mFiveDayForecastDataController.GetObservable().addObserver(this)
-        mMesonetDataController.addObserver(this)
+    mMesonetSiteDataController.GetDataObservable().addObserver(this)
+    mFiveDayForecastDataController.GetObservable().addObserver(this)
+    mMesonetDataController.addObserver(this)
 
-        //        FragmentManager fragmentManager = getChildFragmentManager();
-        //        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        //        transaction.add(R.id.mesonetDetailContainer, new MesonetFragment());
-        //        transaction.commit();
+    //        FragmentManager fragmentManager = getChildFragmentManager();
+    //        FragmentTransaction transaction = fragmentManager.beginTransaction();
+    //        transaction.add(R.id.mesonetDetailContainer, new MesonetFragment());
+    //        transaction.commit();
 
-        Update()
+    Update()
 
-        mBinding!!.previousFab.setOnClickListener {
-            val currentSelected = mBinding!!.forecastViewPager.currentItem
+    mBinding!!.previousFab.setOnClickListener {
+      val currentSelected = mBinding!!.forecastViewPager.currentItem
 
-            if (currentSelected > 0)
-                mBinding!!.forecastViewPager.currentItem = currentSelected - 1
-        }
+      if (currentSelected > 0)
+        mBinding!!.forecastViewPager.currentItem = currentSelected - 1
+    }
 
-        mBinding!!.nextFab.setOnClickListener {
-            val currentSelected = mBinding!!.forecastViewPager.currentItem
+    mBinding!!.nextFab.setOnClickListener {
+      val currentSelected = mBinding!!.forecastViewPager.currentItem
 
-            if (currentSelected < mBinding!!.forecastViewPager.childCount - 1)
-                mBinding!!.forecastViewPager.currentItem = currentSelected + 1
-        }
+      if (currentSelected < mBinding!!.forecastViewPager.childCount - 1)
+        mBinding!!.forecastViewPager.currentItem = currentSelected + 1
+    }
 
-        mBinding!!.forecastViewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
-            override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
-                CalculateScrollButtonVisibility()
-            }
-
-            override fun onPageSelected(position: Int) {
-
-            }
-
-            override fun onPageScrollStateChanged(state: Int) {
-
-            }
-        })
-
+    mBinding!!.forecastViewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+      override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
         CalculateScrollButtonVisibility()
+      }
 
-        return mBinding!!.root
-    }
+      override fun onPageSelected(position: Int) {
 
+      }
 
-    private fun CalculateScrollButtonVisibility()
-    {
-        if(mBinding?.forecastViewPager?.currentItem == 0)
-            mBinding!!.previousFab.visibility = View.GONE
-        else
-            mBinding!!.previousFab.visibility = View.VISIBLE
+      override fun onPageScrollStateChanged(state: Int) {
 
-        if (mBinding?.forecastViewPager?.currentItem!! < mBinding!!.forecastViewPager.childCount - 1)
-            mBinding!!.nextFab.visibility = View.VISIBLE
-        else
-            mBinding!!.nextFab.visibility = View.GONE
-    }
+      }
+    })
+
+    CalculateScrollButtonVisibility()
+
+    return mBinding!!.root
+  }
 
 
-    private fun RevealView(view: View) {
-        val cx = view.left + view.right - 24
-        val cy = (view.top + view.bottom) / 2
-        val radius = Math.max(mBinding!!.childFragmentContainer.width, mBinding!!.childFragmentContainer.height) * 2.0f
+  private fun CalculateScrollButtonVisibility()
+  {
+    if(mBinding?.forecastViewPager?.currentItem == 0)
+      mBinding!!.previousFab.visibility = View.GONE
+    else
+      mBinding!!.previousFab.visibility = View.VISIBLE
 
-        if (mBinding!!.childFragmentContainer.visibility != View.VISIBLE) {
+    if (mBinding?.forecastViewPager?.currentItem!! < mBinding!!.forecastViewPager.childCount - 1)
+      mBinding!!.nextFab.visibility = View.VISIBLE
+    else
+      mBinding!!.nextFab.visibility = View.GONE
+  }
 
 
-            mBinding!!.childFragmentContainer.visibility = View.VISIBLE
-            val hide = ViewAnimationUtils.createCircularReveal(mBinding!!.childFragmentContainer, cx, cy, 0f, radius)
-            hide.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    mBinding!!.childFragmentContainer.visibility = View.VISIBLE
-                    hide.removeListener(this)
-                }
-            })
-            hide.start()
+  private fun RevealView(view: View) {
+    val cx = view.left + view.right - 24
+    val cy = (view.top + view.bottom) / 2
+    val radius = Math.max(mBinding!!.childFragmentContainer.width, mBinding!!.childFragmentContainer.height) * 2.0f
 
-        } else {
-            val reveal = ViewAnimationUtils.createCircularReveal(
-                    mBinding!!.childFragmentContainer, cx, cy, radius, 0f)
-            reveal.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    mBinding!!.childFragmentContainer.visibility = View.INVISIBLE
-                    reveal.removeListener(this)
-                }
-            })
-            reveal.start()
+    if (mBinding!!.childFragmentContainer.visibility != View.VISIBLE) {
+
+
+      mBinding!!.childFragmentContainer.visibility = View.VISIBLE
+      val hide = ViewAnimationUtils.createCircularReveal(mBinding!!.childFragmentContainer, cx, cy, 0f, radius)
+      hide.addListener(object : AnimatorListenerAdapter() {
+        override fun onAnimationEnd(animation: Animator) {
+          mBinding!!.childFragmentContainer.visibility = View.VISIBLE
+          hide.removeListener(this)
         }
-    }
+      })
+      hide.start()
 
-    override fun Close() {
-        activity?.runOnUiThread({
-            RevealView(mBinding!!.mesonetDataContainer?.siteToolbar!!)
-        })
-    }
-
-    override fun onMenuItemClick(menuItem: MenuItem): Boolean {
-        when (menuItem.itemId) {
-            R.id.openList -> {
-                val transaction = getChildFragmentManager().beginTransaction()
-                transaction.replace(R.id.childFragmentContainer, FilterListFragment())
-                transaction.commit()
-                RevealView(mBinding!!.mesonetDataContainer?.siteToolbar!!)
-            }
-            R.id.favorite -> ToggleFavorite()
+    } else {
+      val reveal = ViewAnimationUtils.createCircularReveal(
+              mBinding!!.childFragmentContainer, cx, cy, radius, 0f)
+      reveal.addListener(object : AnimatorListenerAdapter() {
+        override fun onAnimationEnd(animation: Animator) {
+          mBinding!!.childFragmentContainer.visibility = View.INVISIBLE
+          reveal.removeListener(this)
         }
-        return false
+      })
+      reveal.start()
     }
+  }
 
+  override fun Close() {
+    activity?.runOnUiThread({
+      RevealView(mBinding!!.mesonetDataContainer?.siteToolbar!!)
+    })
+  }
 
-    private fun ToggleFavorite() {
-        mMesonetSiteDataController.ToggleFavorite(mMesonetSiteDataController.CurrentSelection())
+  override fun onMenuItemClick(menuItem: MenuItem): Boolean {
+    when (menuItem.itemId) {
+      R.id.openList -> {
+        val transaction = getChildFragmentManager().beginTransaction()
+        transaction.replace(R.id.childFragmentContainer, FilterListFragment())
+        transaction.commit()
+        RevealView(mBinding!!.mesonetDataContainer?.siteToolbar!!)
+      }
+      R.id.favorite -> ToggleFavorite()
     }
+    return false
+  }
 
 
-    override fun onResume() {
-        super.onResume()
-
-        mMesonetDataController.StartUpdates()
-        mFiveDayForecastDataController.StartUpdates()
-    }
+  private fun ToggleFavorite() {
+    mMesonetSiteDataController.ToggleFavorite(mMesonetSiteDataController.CurrentSelection())
+  }
 
 
-    override fun onPause() {
-        mMesonetDataController.StopUpdates()
-        mFiveDayForecastDataController.StopUpdates()
+  override fun onResume() {
+    super.onResume()
 
-        super.onPause()
-    }
-
-
-    override fun update(observable: Observable, o: Any?) {
-        activity?.runOnUiThread({
-            Update()
-        })
-    }
+    mMesonetDataController.StartUpdates()
+    mFiveDayForecastDataController.StartUpdates()
+  }
 
 
-    private fun Update() {
-        if (isAdded()) {
+  override fun onPause() {
+    mMesonetDataController.StopUpdates()
+    mFiveDayForecastDataController.StopUpdates()
+
+    super.onPause()
+  }
+
+
+  override fun update(observable: Observable, o: Any?) {
+    activity?.runOnUiThread({
+      Update()
+    })
+  }
+
+
+  private fun Update() {
+    if (isAdded()) {
 //            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-            SetMesonetBinding(mBinding!!.mesonetDataContainer!!)
+      SetMesonetBinding(mBinding!!.mesonetDataContainer!!)
 
-            mBinding!!.forecastViewPager.removeAllViews()
+      mBinding!!.forecastViewPager.removeAllViews()
 
-            val forecastsPerPage = getResources().getInteger(R.integer.forecastsPerPage)
-            var pageCount = mFiveDayForecastDataController.GetCount() / forecastsPerPage
+      val forecastsPerPage = getResources().getInteger(R.integer.forecastsPerPage)
+      var pageCount = mFiveDayForecastDataController.GetCount() / forecastsPerPage
 
-            val forecastPages = ArrayList<ForecastListView>()
-            var i = 0
-            while (i < mFiveDayForecastDataController.GetCount()) {
-                val forecastListView = ForecastListView(activity!!, mThreadHandler)
+      val forecastPages = ArrayList<ForecastListView>()
+      var i = 0
+      while (i < mFiveDayForecastDataController.GetCount()) {
+        val forecastListView = ForecastListView(activity!!, mThreadHandler)
 
-                var j = 0
-                while (j < forecastsPerPage && i + j < mFiveDayForecastDataController.GetCount()) {
-                    forecastListView.SetSemiDayForecast(j, mFiveDayForecastDataController.GetForecast(i + j))
-                    j++
-                }
+        var j = 0
+        while (j < forecastsPerPage && i + j < mFiveDayForecastDataController.GetCount()) {
+          forecastListView.SetSemiDayForecast(j, mFiveDayForecastDataController.GetForecast(i + j))
+          j++
+        }
 
-                forecastPages.add(forecastListView)
-                i += forecastsPerPage
-            }
+        forecastPages.add(forecastListView)
+        i += forecastsPerPage
+      }
 
+      if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+        pageCount++
+      }
+
+      val finalPageCount = pageCount
+
+      if (mBinding!!.forecastViewPager.childCount == 0) {
+        val pagerAdapter = object : PagerAdapter() {
+          override fun getCount(): Int {
+            return finalPageCount
+          }
+
+          override fun isViewFromObject(view: View, `object`: Any): Boolean {
+            return view == `object`
+          }
+
+          override fun instantiateItem(inViewGroup: ViewGroup, inPosition: Int): View {
+            mBinding!!.forecastProgressBar?.visibility = View.GONE
+            var forecastPostion = inPosition
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                pageCount++
+              if (inPosition == 0) {
+                val mesonetBinding = DataBindingUtil.inflate<MesonetDataContainerBinding>(LayoutInflater.from(getContext()), R.layout.mesonet_data_container, null, false)
+                SetMesonetBinding(mesonetBinding)
+                inViewGroup.addView(mesonetBinding.root)
+                return mesonetBinding.root
+              }
+
+              forecastPostion--
             }
 
-            val finalPageCount = pageCount
+            if (forecastPages[forecastPostion].parent != null)
+              (forecastPages[forecastPostion].parent as ViewGroup).removeView(forecastPages[forecastPostion])
+            inViewGroup.addView(forecastPages[forecastPostion])
+            return forecastPages[forecastPostion]
+          }
 
-            if (mBinding!!.forecastViewPager.childCount == 0) {
-                val pagerAdapter = object : PagerAdapter() {
-                    override fun getCount(): Int {
-                        return finalPageCount
-                    }
+          override fun destroyItem(inParent: ViewGroup, inPosition: Int, inObject: Any) {
 
-                    override fun isViewFromObject(view: View, `object`: Any): Boolean {
-                        return view == `object`
-                    }
-
-                    override fun instantiateItem(inViewGroup: ViewGroup, inPosition: Int): View {
-                        mBinding!!.forecastProgressBar?.visibility = View.GONE
-                        var forecastPostion = inPosition
-                        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                            if (inPosition == 0) {
-                                val mesonetBinding = DataBindingUtil.inflate<MesonetDataContainerBinding>(LayoutInflater.from(getContext()), R.layout.mesonet_data_container, null, false)
-                                SetMesonetBinding(mesonetBinding)
-                                inViewGroup.addView(mesonetBinding.root)
-                                return mesonetBinding.root
-                            }
-
-                            forecastPostion--
-                        }
-
-                        if (forecastPages[forecastPostion].parent != null)
-                            (forecastPages[forecastPostion].parent as ViewGroup).removeView(forecastPages[forecastPostion])
-                        inViewGroup.addView(forecastPages[forecastPostion])
-                        return forecastPages[forecastPostion]
-                    }
-
-                    override fun destroyItem(inParent: ViewGroup, inPosition: Int, inObject: Any) {
-
-                    }
-                }
-
-                mBinding!!.forecastViewPager.adapter = pagerAdapter
-                pagerAdapter.notifyDataSetChanged()
-            }
-
-            //            mBinding.invalidateAll();
+          }
         }
+
+        mBinding!!.forecastViewPager.adapter = pagerAdapter
+        pagerAdapter.notifyDataSetChanged()
+      }
+
+      //            mBinding.invalidateAll();
     }
+  }
 
 
-    private fun SetMesonetBinding(inContainerBinding: MesonetDataContainerBinding) {
-        mMesonetDataBinding = inContainerBinding
+  private fun SetMesonetBinding(inContainerBinding: MesonetDataContainerBinding) {
+    mMesonetDataBinding = inContainerBinding
 
-        mMesonetDataBinding?.siteToolbar?.title = mMesonetSiteDataController.CurrentStationName()
+    mMesonetDataBinding?.siteToolbar?.title = mMesonetSiteDataController.CurrentStationName()
 
-        if (!mMesonetDataBinding!!.siteToolbar.menu.hasVisibleItems()) {
-            mMesonetDataBinding!!.siteToolbar.inflateMenu(R.menu.mesonet_site_menu)
-        }
-        mMesonetDataBinding!!.siteToolbar.setOnMenuItemClickListener(this)
-        mMesonetDataBinding!!.siteToolbar.setNavigationIcon(R.drawable.ic_multiline_chart_white_36dp)
-        mMesonetDataBinding!!.siteToolbar.setNavigationOnClickListener {
-            if(mMesonetSiteDataController.CurrentSelection() != "") {
-                val intent = Intent(activity?.baseContext, WebViewActivity::class.java)
-                intent.putExtra(WebViewActivity.kTitle, mMesonetSiteDataController.CurrentStationName()!! + " Meteogram")
-                intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/data/public/mesonet/meteograms/" + mMesonetSiteDataController.CurrentSelection().toUpperCase() + ".met.gif")
-                intent.putExtra(WebViewActivity.kInitialZoom, 1)
-                intent.putExtra(WebViewActivity.kAllowUserZoom, true)
-                intent.putExtra(WebViewActivity.kAllowShare, true)
-                startActivity(intent)
-            }
-        }
-        if (mMesonetSiteDataController.CurrentIsFavorite()) {
-            mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_white_36dp)
-        } else {
-            mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_border_white_36dp)
-        }
-        mMesonetDataBinding!!.mesonetSiteDataController = mMesonetSiteDataController
-        mMesonetDataBinding!!.mesonetData?.setUiController(mMesonetUIController)
-
-        if(mMesonetUIController.DoingInitialUpdate())
-        {
-            mMesonetDataBinding!!.mesonetData!!.mesonetLayout?.visibility = View.GONE
-            mBinding!!.mesonetProgressBar?.visibility = View.VISIBLE
-        }
-        else
-        {
-            mMesonetDataBinding!!.mesonetData!!.mesonetLayout?.visibility = View.VISIBLE
-            mBinding!!.mesonetProgressBar?.visibility = View.GONE
-        }
+    if (!mMesonetDataBinding!!.siteToolbar.menu.hasVisibleItems()) {
+      mMesonetDataBinding!!.siteToolbar.inflateMenu(R.menu.mesonet_site_menu)
     }
+    mMesonetDataBinding!!.siteToolbar.setOnMenuItemClickListener(this)
+    mMesonetDataBinding!!.siteToolbar.setNavigationIcon(R.drawable.ic_multiline_chart_white_36dp)
+    mMesonetDataBinding!!.siteToolbar.setNavigationOnClickListener {
+      if(mMesonetSiteDataController.CurrentSelection() != "") {
+        val intent = Intent(activity?.baseContext, WebViewActivity::class.java)
+        intent.putExtra(WebViewActivity.kTitle, mMesonetSiteDataController.CurrentStationName()!! + " Meteogram")
+        intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/data/public/mesonet/meteograms/" + mMesonetSiteDataController.CurrentSelection().toUpperCase() + ".met.gif")
+        intent.putExtra(WebViewActivity.kInitialZoom, 1)
+        intent.putExtra(WebViewActivity.kAllowUserZoom, true)
+        intent.putExtra(WebViewActivity.kAllowShare, true)
+        startActivity(intent)
+      }
+    }
+    if (mMesonetSiteDataController.CurrentIsFavorite()) {
+      mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_white_36dp)
+    } else {
+      mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_border_white_36dp)
+    }
+    mMesonetDataBinding!!.mesonetSiteDataController = mMesonetSiteDataController
+    mMesonetDataBinding!!.mesonetData?.setUiController(mMesonetUIController)
+
+    if(mMesonetUIController.DoingInitialUpdate())
+    {
+      mMesonetDataBinding!!.mesonetData!!.mesonetLayout?.visibility = View.GONE
+      mBinding!!.mesonetProgressBar?.visibility = View.VISIBLE
+    }
+    else
+    {
+      mMesonetDataBinding!!.mesonetData!!.mesonetLayout?.visibility = View.VISIBLE
+      mBinding!!.mesonetProgressBar?.visibility = View.GONE
+    }
+  }
 }

@@ -2,19 +2,21 @@ package org.mesonet.dataprocessing.site
 
 
 import android.location.Location
-import android.util.Log
 import com.google.gson.Gson
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.schedulers.Schedulers
 import org.mesonet.cache.site.SiteCache
-import org.mesonet.core.ThreadHandler
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.LocationProvider
 import org.mesonet.dataprocessing.SelectSiteListener
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
 import org.mesonet.dataprocessing.userdata.Preferences
+import org.mesonet.models.site.MesonetSiteList
 import org.mesonet.models.site.MesonetSiteListModel
 import org.mesonet.network.DataDownloader
 
-import java.net.HttpURLConnection
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -25,12 +27,11 @@ import javax.inject.Singleton
 
 @Singleton
 class MesonetSiteDataController @Inject
-constructor(private var mLocationProvider: LocationProvider, private var mCache: SiteCache, private var mPreferences: Preferences, private var mThreadHandler: ThreadHandler) : Observable(), FilterListDataProvider, SelectSiteListener{
-
+constructor(private var mLocationProvider: LocationProvider, private var mCache: SiteCache, private var mPreferences: Preferences): Observable<String>(), FilterListDataProvider, SelectSiteListener {
 
     private val mDataDownloader: DataDownloader
 
-    private var mMesonetSiteModel: MesonetSiteListModel? = null
+    private var mMesonetSiteList: MesonetSiteList? = null
 
     private var mFavorites: MutableList<String>? = ArrayList()
 
@@ -41,38 +42,34 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
     init {
-        mDataDownloader = DataDownloader(mThreadHandler)
-        mThreadHandler.Run("MesonetData", Runnable {
-            mCache.GetSites(object : SiteCache.SitesCacheListener {
-                override fun SitesLoaded(inSiteResults: MesonetSiteListModel) {
-
-                    if (mMesonetSiteModel == null) {
+        mDataDownloader = DataDownloader()
+        Observable.create (ObservableOnSubscribe<Void>{
+            mCache.GetSites().subscribe {
+                    if (mMesonetSiteList == null) {
                         synchronized(this@MesonetSiteDataController)
                         {
-                            mMesonetSiteModel = inSiteResults
+                            mMesonetSiteList = it
                         }
                     }
 
-                    mCache.GetFavorites(object : SiteCache.FavoritesCacheListener {
-                        override fun FavoritesLoaded(inResults: MutableList<String>) {
-
-                            mFavorites = inResults
+                    mCache.GetFavorites().subscribe {
+                            mFavorites = it
 
                             if (mFavorites == null)
                                 mFavorites = ArrayList()
 
                             LoadData()
+                    }
 
-                            setChanged()
-                            notifyObservers()
-                        }
-                    })
-
-                }
-            })
+            }
 
             LoadData()
-        })
+        }).subscribe()
+    }
+
+
+    override fun subscribeActual(observer: Observer<in String>?) {
+        observer?.onNext(mCurrentSelection)
     }
 
 
@@ -81,20 +78,20 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
     }
 
 
-    internal fun SetData(inMesonetSiteModel: MesonetSiteListModel) {
+    internal fun SetData(inMesonetSiteList: MesonetSiteList) {
         synchronized(this@MesonetSiteDataController)
         {
-            mMesonetSiteModel = inMesonetSiteModel
+            mMesonetSiteList = inMesonetSiteList
 
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss z")
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss z", Locale.US)
 
-            val keys = ArrayList(mMesonetSiteModel!!.keys)
+            val keys = ArrayList(mMesonetSiteList!!.keys)
             var i = 0
             while (i < keys.size) {
                 var date: Date? = null
 
                 try {
-                    date = dateFormat.parse(mMesonetSiteModel!![keys[i]]?.GetDatd())
+                    date = dateFormat.parse(mMesonetSiteList!![keys[i]]?.GetDatd())
                 } catch (e: ParseException) {
                     e.printStackTrace()
                 } catch (e: NullPointerException) {
@@ -102,39 +99,38 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
                 }
 
                 if (date == null || date.before(Date())) {
-                    mMesonetSiteModel!!.remove(keys[i])
+                    mMesonetSiteList!!.remove(keys[i])
                     keys.removeAt(i)
                     i--
                 }
                 i++
             }
 
-            mCache.SaveSites(mMesonetSiteModel!!)
+            mCache.SaveSites(mMesonetSiteList!!)
         }
     }
 
 
     private fun FinalizeSelection()
     {
-        if(mMesonetSiteModel != null && mMesonetSiteModel!![mCurrentSelection] != null && mMesonetSiteModel!![mCurrentSelection]?.GetName() != null) {
-            mCurrentStationName = mMesonetSiteModel!![mCurrentSelection]!!.GetName()!!
+        if(mMesonetSiteList != null && mMesonetSiteList!![mCurrentSelection] != null && mMesonetSiteList!![mCurrentSelection]!!.GetName() != null) {
+            mCurrentStationName = mMesonetSiteList!![mCurrentSelection]!!.GetName()!!
         }
 
         mCurrentIsFavorite = IsFavorite(mCurrentSelection)
 
-        setChanged()
-        notifyObservers()
+        subscribe()
     }
 
 
     private fun GetNearestSite(inLocation: Location?): String {
-        val keys = ArrayList(mMesonetSiteModel!!.keys)
+        val keys = ArrayList(mMesonetSiteList!!.keys)
 
         var shortestDistanceIndex = -1
         var shortestDistance = java.lang.Float.MAX_VALUE
 
         for (i in keys.indices) {
-            val site = mMesonetSiteModel!![keys[i]]
+            val site = mMesonetSiteList!![keys[i]]
 
             if(site != null) {
                 val siteLocation = Location("none")
@@ -156,14 +152,10 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
     }
 
 
-    override fun AllViewHolderData(inListener: FilterListDataProvider.FilterListDataListener) {
-        var data: Map<String, BasicListData>? = null
-
-        mThreadHandler.Run("MesonetData", Runnable {
-            data = if (mMesonetSiteModel == null) null else MakeMesonetStidNamePairs(mMesonetSiteModel!!, mFavorites!!)
-        }, Runnable {
-            inListener.ListDataBuilt(data)
-        })
+    override fun AsBasicListData(): Observable<Pair<Map<String, BasicListData>, String>> {
+        return Observable.create(ObservableOnSubscribe<Pair<Map<String, BasicListData>, String>> {
+            if (mMesonetSiteList != null) it.onNext(Pair(MakeMesonetStidNamePairs(mMesonetSiteList!!, mFavorites!!), mCurrentSelection))
+        }).subscribeOn(Schedulers.computation())
     }
 
 
@@ -171,10 +163,6 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
         return mCurrentSelection
     }
 
-
-    internal fun SiteDataFound(): Boolean {
-        return mMesonetSiteModel != null && mMesonetSiteModel!!.size > 0
-    }
 
 
     fun CurrentStationName(): String {
@@ -185,13 +173,13 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
     internal fun CurrentStationElevation(): Number? {
         val currentSelection = CurrentSelection()
 
-        if (mMesonetSiteModel == null || !mMesonetSiteModel!!.containsKey(currentSelection) || mMesonetSiteModel!![currentSelection] == null || mMesonetSiteModel!![currentSelection]?.GetElev() == null)
+        if (mMesonetSiteList == null || !mMesonetSiteList!!.containsKey(currentSelection) || mMesonetSiteList!![currentSelection] == null || mMesonetSiteList!![currentSelection]?.GetElev() == null)
             return null
 
         val result: Double?
 
         try {
-            result = java.lang.Double.parseDouble(mMesonetSiteModel!![currentSelection]?.GetElev())
+            result = java.lang.Double.parseDouble(mMesonetSiteList!![currentSelection]?.GetElev())
         } catch (e: NumberFormatException) {
             return null
         }
@@ -200,22 +188,16 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
     }
 
 
-    override fun addObserver(o: Observer?) {
-        super.addObserver(o)
-        setChanged()
-        notifyObservers()
-    }
-
 
     fun ToggleFavorite(inStid: String)
     {
-        mThreadHandler.Run("MesonetData", Runnable {
+        Observable.create(ObservableOnSubscribe<Void> {
             if (IsFavorite(inStid)) {
                 RemoveFavorite(inStid)
             } else {
                 AddFavorite(inStid)
             }
-        })
+        }).subscribe()
     }
 
 
@@ -236,8 +218,6 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
             if(inStid.equals(mCurrentSelection))
                 mCurrentIsFavorite = IsFavorite(mCurrentSelection)
             mCache.SaveFavorites(mFavorites!!)
-            setChanged()
-            notifyObservers()
         }
     }
 
@@ -248,19 +228,12 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
             mCache.SaveFavorites(mFavorites!!)
             if(inStid.equals(mCurrentSelection))
                 mCurrentIsFavorite = IsFavorite(mCurrentSelection)
-            setChanged()
-            notifyObservers()
         }
     }
 
 
-    override fun GetDataObservable(): Observable {
-        return this
-    }
-
-
     override fun SetResult(inResult: String) {
-        mThreadHandler.Run("MesonetData", Runnable {
+        Observable.create(ObservableOnSubscribe<Void> {
             mCurrentSelection = inResult
             mPreferences.SetSelectedStid(inResult)
 
@@ -273,10 +246,9 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
         mPreferences.GetSelectedStid(object: Preferences.StidListener{
             override fun StidFound(inStidPreference: String) {
                 mCurrentSelection = inStidPreference
-                mCache.GetSites(object : SiteCache.SitesCacheListener {
-                    override fun SitesLoaded(inSiteResults: MesonetSiteListModel) {
-                        if (mMesonetSiteModel == null || mMesonetSiteModel!!.size == 0)
-                            SetData(inSiteResults)
+                mCache.GetSites().subscribe {
+                        if (mMesonetSiteList == null || mMesonetSiteList!!.size == 0)
+                            SetData(it)
 
                         if(mCurrentSelection.isEmpty()) {
                             mLocationProvider.GetLocation(object : LocationProvider.LocationListener {
@@ -295,18 +267,10 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
                         }
                         else
                             FinalizeSelection()
-                    }
-                })
-                mDataDownloader.SingleUpdate("http://www.mesonet.org/find/siteinfo-json", object : DataDownloader.DownloadCallback {
-                    override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
-                        if (inResponseCode == HttpURLConnection.HTTP_OK)
-                            SetData(inResult)
-                    }
-
-                    override fun DownloadFailed() {
-
-                    }
-                })
+                }
+                mDataDownloader.GetMesonetSites().observeOn(Schedulers.computation()).subscribe{
+                    SetData(it)
+                }
             }
 
         })
@@ -314,30 +278,29 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
 
 
-    internal fun MakeMesonetStidNamePairs(inSiteModel : MesonetSiteListModel, inFavorites : List<String>) : Map<String, BasicListData>
+    internal fun MakeMesonetStidNamePairs(inSiteList : MesonetSiteList, inFavorites : List<String>) : Map<String, BasicListData>
     {
         val result = HashMap<String, BasicListData>()
 
-        inSiteModel.forEach(
-                {
-                    val location = Location("none")
-                    location.latitude = it.value.GetLat()!!.toDouble()
-                    location.longitude = it.value.GetLon()!!.toDouble()
-                    result.put(it.key, object: BasicListData {
-                        override fun GetName(): String {
-                            return it.value.GetName()!!
-                        }
+        inSiteList.forEach {
+            val location = Location("none")
+            location.latitude = it.value.GetLat()!!.toDouble()
+            location.longitude = it.value.GetLon()!!.toDouble()
+            result.put(it.key, object: BasicListData {
+                override fun GetName(): String {
+                    return it.value.GetName()!!
+                }
 
-                        override fun IsFavorite(): Boolean {
-                            return inFavorites.contains(it.key)
-                        }
+                override fun IsFavorite(): Boolean {
+                    return inFavorites.contains(it.key)
+                }
 
-                        override fun GetLocation(): Location {
-                            return location
-                        }
+                override fun GetLocation(): Location {
+                    return location
+                }
 
-                    })
-                })
+            })
+        }
 
         return result
     }

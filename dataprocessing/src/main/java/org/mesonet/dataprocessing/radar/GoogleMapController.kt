@@ -1,24 +1,25 @@
 package org.mesonet.dataprocessing.radar
 
-
 import android.content.Context
-import android.graphics.Bitmap
 import android.os.Handler
 
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.GroundOverlayOptions
 import com.google.android.gms.maps.model.LatLng
-import org.mesonet.core.ThreadHandler
-
-import java.util.Observable
-import java.util.Observer
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 
 import javax.inject.Inject
 
 
+
 @org.mesonet.core.PerFragment
 class GoogleMapController @Inject
-constructor(internal var mRadarDataController: RadarDataController) : RadarImageDataProvider, Observer {
+constructor(internal var mRadarDataController: RadarDataController) : RadarImageDataProvider, Observer<Void> {
+
     private var mTransparency = 0f
 
     private var mPlayPauseState = PlayPauseState()
@@ -26,8 +27,6 @@ constructor(internal var mRadarDataController: RadarDataController) : RadarImage
     @Inject
     internal lateinit var mRadarSiteDataProvider: RadarSiteDataProvider
 
-    @Inject
-    internal lateinit var mThreadHandler: ThreadHandler
 
     private var mRadarName: String? = null
 
@@ -41,12 +40,12 @@ constructor(internal var mRadarDataController: RadarDataController) : RadarImage
 
 
     init {
-        mRadarDataController.addObserver(this)
+        mRadarDataController.subscribe(this)
     }
 
 
     fun SetProvider(inMapProvider: GoogleMapSetup?) {
-        mThreadHandler.Run("RadarData", Runnable {
+        Observable.create(ObservableOnSubscribe<Void>{
             mMapProvider = inMapProvider
 
             UpdateRadarImage()
@@ -60,43 +59,41 @@ constructor(internal var mRadarDataController: RadarDataController) : RadarImage
 
 
     fun SetTransparency(inTransparency: Float) {
-        mThreadHandler.Run("RadarData", Runnable {
+        Observable.create(ObservableOnSubscribe<Void> {
             mTransparency = inTransparency
             SetVisibleImage(mSelectedImage)
         })
     }
 
 
-    internal fun GetOverlays(inContext: Context, inListener: RadarImageDataProvider.RadarDataListener) {
-        val radarDetails = mRadarSiteDataProvider.GetRadarDetail()
-        val radarImages = mRadarDataController.GetRadarImageDetails()
+    override fun GetImages(inContext: Context): Observable<ImageInfo> {
+        return Observable.create{observer ->
+            val radarDetails = mRadarSiteDataProvider.GetRadarDetail()
+            val radarImages = mRadarDataController.GetRadarImageDetails()
 
-        if (radarImages != null) {
             for (i in radarImages.indices) {
-                mRadarDataController.GetImage(i, inContext, object : RadarDataController.ImageLoadedListener {
-                    override fun BitmapLoaded(inResult: Bitmap) {
+                mRadarDataController.GetImage(i, inContext).observeOn(Schedulers.computation()).subscribe{
 
-                        val bitmapDescriptor = BitmapDescriptorFactory.fromBitmap(inResult)
+                    val bitmapDescriptor = BitmapDescriptorFactory.fromBitmap(it)
 
-                        var transparency = mTransparency
-                        if (i != mSelectedImage) {
-                            transparency = 1f
-                        }
-
-                        val position = LatLng(radarDetails.GetLatitude()!!.toDouble(), radarDetails.GetLongitude()!!.toDouble())
-
-                        val options = GroundOverlayOptions().image(bitmapDescriptor)
-                                .position(position, radarDetails.GetRange()!!)
-                                .transparency(transparency)
-
-                        inResult.recycle()
-
-                        inListener.FoundImage(options, i, transparency)
-
-                        if(i == (RadarDataController.kRadarImageLimit - 1))
-                            SetVisibleImage(mSelectedImage)
+                    var transparency = mTransparency
+                    if (i != mSelectedImage) {
+                        transparency = 1f
                     }
-                })
+
+                    val position = LatLng(radarDetails.GetLatitude()!!.toDouble(), radarDetails.GetLongitude()!!.toDouble())
+
+                    val options = GroundOverlayOptions().image(bitmapDescriptor)
+                            .position(position, radarDetails.GetRange()!!)
+                            .transparency(transparency)
+
+                    it.recycle()
+
+                    observer.onNext(ImageInfoImpl(i, options, transparency))
+
+                    if(i == radarImages.indices.last)
+                        SetVisibleImage(mSelectedImage)
+                }
             }
         }
     }
@@ -120,17 +117,17 @@ constructor(internal var mRadarDataController: RadarDataController) : RadarImage
 
 
     fun TogglePlay() {
-        mThreadHandler.Run("RadarData", Runnable {
-            mPlayPauseState.SetPlayState(!mPlayPauseState.GetIsPlaying())
+        Observable.create(ObservableOnSubscribe<Void> {
+            mPlayPauseState.SetPlayState(!mPlayPauseState.mIsPlaying)
 
             if (mPlayPauseState.mIsPlaying) {
                 mPlayHandler.postDelayed(object : Runnable {
                     override fun run() {
-                        if (mPlayPauseState.GetIsPlaying()) {
+                        if (mPlayPauseState.mIsPlaying) {
                             var newIndex = mSelectedImage - 1
 
                             if (newIndex < 0)
-                                newIndex = RadarDataController.kRadarImageLimit - 1
+                                newIndex = mRadarDataController.GetRadarImageDetails().indices.last
 
                             SetVisibleImage(newIndex)
                             mPlayHandler.postDelayed(this, 500)
@@ -140,90 +137,82 @@ constructor(internal var mRadarDataController: RadarDataController) : RadarImage
             } else {
                 SetVisibleImage(0)
             }
-        })
+        }).subscribe()
     }
 
 
     private fun SetVisibleImage(inIndex: Int) {
         mSelectedImage = inIndex
 
-        if (mSelectedImage < 0 || mSelectedImage >= RadarDataController.kRadarImageLimit)
+        if (mSelectedImage < 0 || mSelectedImage > mRadarDataController.GetRadarImageDetails().indices.last)
             mSelectedImage = 0
 
-        mMapProvider?.SetActiveImage(inIndex, mTransparency, mRadarDataController.GetRadarImageDetails()?.get(mSelectedImage)!!.GetTimeString())
+        mMapProvider?.SetActiveImage(inIndex, mTransparency, mRadarDataController.GetRadarImageDetails()[mSelectedImage].GetTimeString())
     }
 
 
-    override fun update(observable: Observable, o: Any?) {
-        mThreadHandler.Run("RadarData", Runnable {
-            mRadarName = mRadarSiteDataProvider.GetRadarName()
-            UpdateRadarImage()
-        })
+    override fun onNext(t: Void) {
+        mRadarName = mRadarSiteDataProvider.GetRadarName()
+        UpdateRadarImage()
     }
 
-
-    override fun GetImages(inContext: Context, inListener: RadarImageDataProvider.RadarDataListener) {
-        mThreadHandler.Run("RadarData", Runnable {
-            GetOverlays(inContext, inListener)
-        })
-    }
+    override fun onComplete() {}
+    override fun onSubscribe(d: Disposable) {}
+    override fun onError(e: Throwable) {}
 
 
-    inner class PlayPauseState : Observable() {
+    inner class PlayPauseState : Observable<Boolean>() {
         internal var mIsPlaying: Boolean = false
+
+        override fun subscribeActual(observer: Observer<in Boolean>?) {
+            observer?.onNext(mIsPlaying)
+        }
 
 
         internal fun SetPlayState(inIsPlaying: Boolean) {
             mIsPlaying = inIsPlaying
-
-            setChanged()
-            notifyObservers()
-        }
-
-
-        override fun addObserver(inObserver: Observer) {
-            super.addObserver(inObserver)
-            setChanged()
-            notifyObservers()
-        }
-
-
-        fun GetIsPlaying(): Boolean {
-            return mIsPlaying
         }
     }
 
 
-    override fun GetLocation(inListener: RadarImageDataProvider.RadarDataListener) {
-        var result: LatLng? = null
-        mThreadHandler.Run("RadarData", Runnable {
+    override fun GetLocation(): Observable<LatLng> {
+        return Observable.create{
             val radarDetails = mRadarSiteDataProvider.GetRadarDetail()
 
-            result = LatLng(radarDetails.GetLatitude()!!.toDouble(), radarDetails.GetLongitude()!!.toDouble())
-        }, Runnable {
-            if(result != null)
-                inListener.FoundLatLng(result!!)
-        })
+            it.onNext(LatLng(radarDetails.GetLatitude()!!.toDouble(), radarDetails.GetLongitude()!!.toDouble()))
+        }
     }
 
     fun StartUpdates()
     {
-        mThreadHandler.Run("RadarData", Runnable {
-            mRadarDataController.StartUpdates()
-        })
-    }
-
-
-    fun StopUpdates()
-    {
-        mThreadHandler.Run("RadarData", Runnable {
-            mRadarDataController.StopUpdates()
-        })
+        mRadarDataController.subscribe()
     }
 
 
     interface GoogleMapSetup {
         fun GetMap(inListener: RadarImageDataProvider)
         fun SetActiveImage(inIndex: Int, inTransparency: Float, inTimeString: String?)
+    }
+
+
+    class ImageInfoImpl(val mIndex: Int, val mGroundOverlayOptions: GroundOverlayOptions, val mTransparency: Float): ImageInfo {
+        override fun GetIndex(): Int {
+            return mIndex
+        }
+
+        override fun GetOptions(): GroundOverlayOptions {
+            return mGroundOverlayOptions
+        }
+
+        override fun GetTransparency(): Float {
+            return mTransparency
+        }
+    }
+
+    interface ImageInfo
+    {
+        fun GetIndex(): Int
+        fun GetOptions(): GroundOverlayOptions
+        fun GetTransparency(): Float
     }
 }

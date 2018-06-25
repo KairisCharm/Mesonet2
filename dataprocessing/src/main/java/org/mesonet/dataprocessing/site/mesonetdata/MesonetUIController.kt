@@ -1,264 +1,227 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
-import android.appwidget.AppWidgetManager
-import android.content.Context
-import android.widget.RemoteViews
-import org.mesonet.core.ThreadHandler
+import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.schedulers.Schedulers
 import org.mesonet.dataprocessing.userdata.Preferences
 
 import java.text.SimpleDateFormat
 import java.util.Locale
-import java.util.Observable
-import java.util.Observer
 import java.util.TimeZone
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
 
+
 @Singleton
 class MesonetUIController @Inject
-constructor(private var mDataController: MesonetDataController, private var mThreadHandler: ThreadHandler, private var mPreferences: Preferences) : Observable(), Observer {
-    private var mTimeString: String = "Observed at -:-"
-    private var mAirTempString: String = "-"
-    private var mApparentTempString: String = "-"
-    private var mDewpointString: String = "-"
-    private var mWindString: String = "-"
-    private var m24HrRainfallString: String = "-"
-    private var mHumidityString: String = "-"
-    private var mWindGustsString: String = "-"
-    private var mPressureString: String = "-"
+constructor(private var mDataController: MesonetDataController, private var mPreferences: Preferences) : Observable<MesonetUIController.MesonetDisplayFields>()
+{
+    override fun subscribeActual(observer: Observer<in MesonetDisplayFields>?) {
+        if(observer != null) {
+            mPreferences.GetUnitPreferencesObservable().observeOn(Schedulers.computation()).subscribe { unitPreference ->
+                mDataController.observeOn(Schedulers.computation()).map {
+                    val displayFields = MesonetDisplayFieldsImpl()
+                    val formattedString = "Observed at %s"
 
-    private var mDoingInitialUpdate = true
+                    val time = mDataController.ProcessTime()
 
-    init {
-        mThreadHandler.Run("MesonetData", Runnable {
-            mDataController.addObserver(this)
-            Update2()
-        })
-    }
+                    if (time == null)
+                        displayFields.mTimeString = String.format(formattedString, "-:-")
+                    else {
+                        val dateFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+                        dateFormat.timeZone = TimeZone.getTimeZone("America/Chicago")
 
-
-    override fun update(observable: Observable, o: Any?) {
-        mThreadHandler.Run("MesonetData", Runnable {
-            Update2()
-        })
-    }
-
-
-    internal fun Update2() {
-        mPreferences.GetUnitPreference(object : Preferences.UnitPreferenceListener {
-            override fun UnitPreferenceFound(inUnitPreference: Preferences.UnitPreference) {
-                val formattedString = "Observed at %s"
-
-                val time = mDataController.ProcessTime()
-
-                if (time == null)
-                    mTimeString = String.format(formattedString, "-:-")
-                else {
-                    val dateFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                    dateFormat.timeZone = TimeZone.getTimeZone("America/Chicago")
-
-                    mTimeString = String.format(formattedString, dateFormat.format(time))
-                }
-
-                val temp = mDataController.ProcessTemp(inUnitPreference)
-
-                if (temp == null)
-                    mAirTempString = "-"
-                else
-                    mAirTempString = String.format(Locale.getDefault(), "%.0f", temp) + "°"
-
-                val apparentTemp = mDataController.ProcessApparentTemp(inUnitPreference)
-
-                if (apparentTemp == null)
-                    mApparentTempString = "-"
-                else {
-                    var unit = ""
-
-                    when (inUnitPreference) {
-                        Preferences.UnitPreference.kMetric -> unit = "C"
-                        Preferences.UnitPreference.kImperial -> unit = "F"
+                        displayFields.mTimeString = String.format(formattedString, dateFormat.format(time))
                     }
 
-                    mApparentTempString = String.format(Locale.getDefault(), "%.0f", apparentTemp) + "°" + unit
-                }
+                    val temp = mDataController.ProcessTemp(unitPreference)
 
-                val dewPoint = mDataController.ProcessDewpoint(inUnitPreference)
+                    if (temp == null)
+                        displayFields.mAirTempString = "-"
+                    else
+                        displayFields.mAirTempString = String.format(Locale.getDefault(), "%.0f", temp) + "°"
 
-                if (dewPoint == null)
-                    mDewpointString = "-"
-                else {
-                    var unit = ""
+                    val apparentTemp = mDataController.ProcessApparentTemp(unitPreference)
 
-                    when (inUnitPreference) {
-                        Preferences.UnitPreference.kMetric -> unit = "C"
-                        Preferences.UnitPreference.kImperial -> unit = "F"
-                    }
+                    if (apparentTemp == null)
+                        displayFields.mApparentTempString = "-"
+                    else {
+                        var unit = ""
 
-                    mDewpointString = String.format(Locale.getDefault(), "%.0f", dewPoint) + "°" + unit
-                }
-
-                val windSpd = mDataController.ProcessWindSpd(inUnitPreference)
-                val direction = mDataController.ProcessWindDirection()
-
-                if (windSpd == null || direction == null)
-                    mWindString = "-"
-                else {
-                    var unit = ""
-
-                    when (inUnitPreference) {
-                        Preferences.UnitPreference.kMetric -> unit = "mps"
-                        Preferences.UnitPreference.kImperial -> unit = "mph"
-                    }
-
-                    mWindString = direction.name + " at " + String.format(Locale.getDefault(), "%.0f", windSpd) + " " + unit
-                }
-
-                val rain24h = mDataController.Process24HrRain(inUnitPreference)
-
-                if (rain24h == null)
-                    m24HrRainfallString = "-"
-                else {
-                    var unit = ""
-
-                    when (inUnitPreference) {
-                        Preferences.UnitPreference.kMetric -> unit = "mm"
-                        Preferences.UnitPreference.kImperial -> unit = "in"
-                    }
-
-                    m24HrRainfallString = String.format(Locale.getDefault(), "%.2f", rain24h) + " " + unit
-                }
-
-                val humidity = mDataController.ProcessHumidity()
-
-                if (humidity == null)
-                    mHumidityString = "-"
-                else
-                    mHumidityString = humidity.toString() + "%"
-
-                val windGusts = mDataController.ProcessMaxWind(inUnitPreference)
-
-                if (windGusts == null)
-                    mWindGustsString = "-"
-                else {
-                    var unit = ""
-
-                    when (inUnitPreference) {
-                        Preferences.UnitPreference.kMetric -> unit = "mps"
-                        Preferences.UnitPreference.kImperial -> unit = "mph"
-                    }
-
-                    mWindGustsString = String.format(Locale.getDefault(), "%.0f", windGusts) + " " + unit
-                }
-
-                val pressure = mDataController.ProcessPressure(inUnitPreference)
-
-                if (pressure == null)
-                    mPressureString = "-"
-                else {
-                    var unit = ""
-                    var format = ""
-
-                    when (inUnitPreference) {
-                        Preferences.UnitPreference.kMetric -> {
-                            unit = "mb"
-                            format = "%.1f"
+                        when (unitPreference) {
+                            Preferences.UnitPreference.kMetric -> unit = "C"
+                            Preferences.UnitPreference.kImperial -> unit = "F"
                         }
-                        Preferences.UnitPreference.kImperial -> {
-                            unit = "inHg"
-                            format = "%.2f"
-                        }
+
+                        displayFields.mApparentTempString = String.format(Locale.getDefault(), "%.0f", apparentTemp) + "°" + unit
                     }
 
-                    mPressureString = String.format(Locale.getDefault(), format, pressure) + " " + unit
-                }
+                    val dewPoint = mDataController.ProcessDewpoint(unitPreference)
 
+                    if (dewPoint == null)
+                        displayFields.mDewpointString = "-"
+                    else {
+                        var unit = ""
 
-                mDoingInitialUpdate = time == null && temp == null && apparentTemp == null &&
-                        dewPoint == null && windSpd == null && direction == null &&
-                        rain24h == null && humidity == null && windGusts == null
-                setChanged()
-                notifyObservers()
+                        when (unitPreference) {
+                            Preferences.UnitPreference.kMetric -> unit = "C"
+                            Preferences.UnitPreference.kImperial -> unit = "F"
+                        }
+
+                        displayFields.mDewpointString = String.format(Locale.getDefault(), "%.0f", dewPoint) + "°" + unit
+                    }
+
+                    val windSpd = mDataController.ProcessWindSpd(unitPreference)
+                    val direction = mDataController.ProcessWindDirection()
+
+                    if (windSpd == null || direction == null)
+                        displayFields.mWindString = "-"
+                    else {
+                        var unit = ""
+
+                        when (unitPreference) {
+                            Preferences.UnitPreference.kMetric -> unit = "mps"
+                            Preferences.UnitPreference.kImperial -> unit = "mph"
+                        }
+
+                        displayFields.mWindString = direction.name + " at " + String.format(Locale.getDefault(), "%.0f", windSpd) + " " + unit
+                    }
+
+                    val rain24h = mDataController.Process24HrRain(unitPreference)
+
+                    if (rain24h == null)
+                        displayFields.m24HrRainfallString = "-"
+                    else {
+                        var unit = ""
+
+                        when (unitPreference) {
+                            Preferences.UnitPreference.kMetric -> unit = "mm"
+                            Preferences.UnitPreference.kImperial -> unit = "in"
+                        }
+
+                        displayFields.m24HrRainfallString = String.format(Locale.getDefault(), "%.2f", rain24h) + " " + unit
+                    }
+
+                    val humidity = mDataController.ProcessHumidity()
+
+                    if (humidity == null)
+                        displayFields.mHumidityString = "-"
+                    else
+                        displayFields.mHumidityString = humidity.toString() + "%"
+
+                    val windGusts = mDataController.ProcessMaxWind(unitPreference)
+
+                    if (windGusts == null)
+                        displayFields.mWindGustsString = "-"
+                    else {
+                        var unit = ""
+
+                        when (unitPreference) {
+                            Preferences.UnitPreference.kMetric -> unit = "mps"
+                            Preferences.UnitPreference.kImperial -> unit = "mph"
+                        }
+
+                        displayFields.mWindGustsString = String.format(Locale.getDefault(), "%.0f", windGusts) + " " + unit
+                    }
+
+                    val pressure = mDataController.ProcessPressure(unitPreference)
+
+                    if (pressure == null)
+                        displayFields.mPressureString = "-"
+                    else {
+                        var unit = ""
+                        var format = ""
+
+                        when (unitPreference) {
+                            Preferences.UnitPreference.kMetric -> {
+                                unit = "mb"
+                                format = "%.1f"
+                            }
+                            Preferences.UnitPreference.kImperial -> {
+                                unit = "inHg"
+                                format = "%.2f"
+                            }
+                        }
+
+                        displayFields.mPressureString = String.format(Locale.getDefault(), format, pressure) + " " + unit
+                    }
+
+                    displayFields as MesonetDisplayFields
+                }.subscribe(observer)
             }
-        })
+        }
     }
 
-    @Override
-    override fun addObserver(inObserver: Observer) {
-        mThreadHandler.Run("MesonetData", Runnable {
-            super.addObserver(inObserver)
-            setChanged()
-            notifyObservers()
-        })
+
+
+    private class MesonetDisplayFieldsImpl(internal var mTimeString: String = "Observed at -:-",
+                                         internal var mAirTempString: String = "-",
+                                         internal var mApparentTempString: String = "-",
+                                         internal var mDewpointString: String = "-",
+                                         internal var mWindString: String = "-",
+                                         internal var m24HrRainfallString: String = "-",
+                                         internal var mHumidityString: String = "-",
+                                         internal var mWindGustsString: String = "-",
+                                         internal var mPressureString: String = "-") : MesonetDisplayFields {
+
+        override fun GetAirTempString(): String {
+            return mAirTempString
+        }
+
+
+        override fun GetApparentTempString(): String {
+            return mApparentTempString
+        }
+
+
+        override fun GetDewpointString(): String {
+            return mDewpointString
+        }
+
+
+        override fun GetWindString(): String {
+            return mWindString
+        }
+
+
+        override fun Get24HrRainfallString(): String {
+            return m24HrRainfallString
+        }
+
+
+        override fun GetHumidityString(): String {
+            return mHumidityString
+        }
+
+
+        override fun GetWindGustsString(): String {
+            return mWindGustsString
+        }
+
+
+        override fun GetPressureString(): String {
+            return mPressureString
+        }
+
+
+        override fun GetTimeString(): String {
+            return mTimeString
+        }
     }
 
 
-    fun SingleUpdate(inSingleUpdateListener: MesonetDataController.SingleUpdateListener) {
-        mDataController.SingleUpdate(object : MesonetDataController.SingleUpdateListener {
-            override fun UpdateComplete() {
-                Update2()
-                inSingleUpdateListener.UpdateComplete()
-            }
-
-            override fun UpdateFailed() {
-                inSingleUpdateListener.UpdateFailed()
-            }
-
-        })
-    }
-
-
-
-    fun DoingInitialUpdate(): Boolean
+    interface MesonetDisplayFields
     {
-        return mDoingInitialUpdate
-    }
-
-
-
-    fun GetAirTempString(): String {
-        return mAirTempString
-    }
-
-
-    fun GetApparentTempString(): String {
-        return mApparentTempString
-    }
-
-
-    fun GetDewpointString(): String {
-        return mDewpointString
-    }
-
-
-    fun GetWindString(): String {
-        return mWindString
-    }
-
-
-    fun Get24HrRainfallString(): String {
-        return m24HrRainfallString
-    }
-
-
-    fun GetHumidityString(): String {
-        return mHumidityString
-    }
-
-
-    fun GetWindGustsString(): String {
-        return mWindGustsString
-    }
-
-
-    fun GetPressureString(): String {
-        return mPressureString
-    }
-
-
-    fun GetTimeString(): String
-    {
-        return mTimeString
+        fun GetAirTempString(): String
+        fun GetApparentTempString(): String
+        fun GetDewpointString(): String
+        fun GetWindString(): String
+        fun Get24HrRainfallString(): String
+        fun GetHumidityString(): String
+        fun GetWindGustsString(): String
+        fun GetPressureString(): String
+        fun GetTimeString(): String
     }
 }

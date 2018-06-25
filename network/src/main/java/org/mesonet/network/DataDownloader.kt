@@ -1,165 +1,206 @@
 package org.mesonet.network
 
+import android.graphics.Bitmap
+import io.reactivex.Observable
+import io.reactivex.schedulers.Schedulers
+import org.mesonet.models.advisories.Advisory
+import org.mesonet.models.advisories.AdvisoryModel
+import org.mesonet.models.advisories.AdvisoryModelConverterFactory
+import org.mesonet.models.maps.MapsList
+import org.mesonet.models.maps.MapsModel
+import org.mesonet.models.radar.*
+import org.mesonet.models.site.MesonetSiteList
+import org.mesonet.models.site.MesonetSiteListModel
+import org.mesonet.models.site.forecast.Forecast
+import org.mesonet.models.site.forecast.ForecastModel
+import org.mesonet.models.site.forecast.ForecastModelConverterFactory
+import org.mesonet.models.site.mesonetdata.MesonetData
+import org.mesonet.models.site.mesonetdata.MesonetModel
+import org.mesonet.models.site.mesonetdata.MesonetModelConverterFactory
+import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Path
 
-import android.os.Handler
-import android.util.Log
-import org.mesonet.core.ThreadHandler
-
-import java.io.IOException
-import java.lang.reflect.InvocationTargetException
-import java.net.HttpURLConnection
-import java.net.HttpURLConnection.HTTP_MULT_CHOICE
-import java.net.MalformedURLException
-import java.net.SocketTimeoutException
-import java.net.URL
-import java.util.*
+import javax.inject.Inject
+import javax.inject.Singleton
 
 
-class DataDownloader constructor(internal var mThreadHandler: ThreadHandler)
+@Singleton
+class DataDownloader @Inject constructor()
 {
-    private var mIsUpdating = false
-    private var mUpdateInterval: Long = -1
-    private val mHandler = Handler()
+    private val mRetrofitService = Retrofit.Builder()
+            .baseUrl("http://www.mesonet.org")
+            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(MesonetModelConverterFactory())
+            .addConverterFactory(ForecastModelConverterFactory())
+            .addConverterFactory(RadarImageModelConverterFactory())
+            .addConverterFactory(AdvisoryModelConverterFactory())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .build()
+            .create(MesonetService::class.java)
 
-    fun StartDownloads(inUrl: String, inDownloadCallback: DownloadCallback, inUpdateInterval: Long = -1)
+    fun GetMesonetSites(): Observable<MesonetSiteList>
     {
-        mUpdateInterval = inUpdateInterval
-        mIsUpdating = true
-
-        SingleUpdate(inUrl, inDownloadCallback)
+        return mRetrofitService.GetMesonetSites()
+                .map { it as MesonetSiteList }
+                .subscribeOn(Schedulers.io())
     }
 
 
-    fun SingleUpdate(inUrl: String, inDownloadCallback: DownloadCallback)
+    fun GetMesonetData(inStid: String): Observable<MesonetData>
     {
-        val downloadInfo = DownloadInfo(inUrl, mUpdateInterval)
-
-        var downloadResponseInfo: ResponseInfo? = null
-
-        mThreadHandler.Run("Download", Runnable {
-            downloadResponseInfo = Download(downloadInfo, inDownloadCallback)
-        }, Runnable {
-            if(downloadResponseInfo != null)
-            {
-                if(downloadResponseInfo?.mFailed == null || downloadResponseInfo?.mFailed!!)
-                    inDownloadCallback.DownloadFailed()
-                else if(downloadResponseInfo?.mResponse != null && downloadResponseInfo?.mResponseCode != null)
-                    inDownloadCallback.DownloadComplete(downloadResponseInfo?.mResponseCode!!, downloadResponseInfo?.mResponse!!)
-            }
-        })
+        return mRetrofitService.GetMesonetData(inStid).subscribeOn(Schedulers.computation())
     }
 
 
-    fun StopDownloads()
+    fun GetForecast(inStid: String): Observable<List<Forecast>>
     {
-        mIsUpdating = false
+        return mRetrofitService.GetForecast(inStid).subscribeOn(Schedulers.io())
     }
 
 
-    internal fun Download(inDownloadInfo: DownloadInfo, inDownloadCallback: DownloadCallback): ResponseInfo
+
+    fun GetMaps(): Observable<MapsList>
     {
-        var failed = false
-        var responseCode = -1
-        var result: String? = null
-
-        var conn: HttpURLConnection? = null
-        var scanner: Scanner? = null
-        var resultString: StringBuilder? = null
-        try {
-            val url = URL(inDownloadInfo.mUrl)
-            conn = url.openConnection() as HttpURLConnection
-            conn.readTimeout = 10000
-            conn.connectTimeout = 15000
-            conn.requestMethod = "GET"
-            conn.doInput = true
-
-            conn.ifModifiedSince = inDownloadInfo.mLastModified
-
-            conn.connect()
-
-            if (conn.responseCode >= HttpURLConnection.HTTP_OK && conn.responseCode < HTTP_MULT_CHOICE) {
-                resultString = StringBuilder()
-
-                scanner = Scanner(conn.inputStream)
-
-                while (scanner.hasNextLine()) {
-                    resultString.append(scanner.nextLine())
-                    if(scanner.hasNextLine())
-                        resultString.append("\n")
-                }
-
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            failed = true
-        }
-        catch (e: MalformedURLException)
-        {
-            e.printStackTrace()
-            failed = true
-        }
-        catch (e: SocketTimeoutException)
-        {
-            e.printStackTrace()
-            failed = true
-        }
-        finally {
-            if(resultString != null)
-                result = resultString.toString()
-            if(conn != null) {
-                try {
-                    responseCode = conn.responseCode
-                }
-                catch (e: InvocationTargetException)
-                {
-                    e.printStackTrace()
-                    failed = true
-                }
-                catch (e: SocketTimeoutException)
-                {
-                    e.printStackTrace()
-                    failed = true
-                }
-                conn.disconnect()
-            }
-            scanner?.close()
-        }
-
-        if(mIsUpdating && inDownloadInfo.mUpdateInterval > -1)
-        {
-            mHandler.postDelayed({
-                mThreadHandler.Run("DataDownloader", Runnable {
-                    if(mIsUpdating)
-                        Download(inDownloadInfo, inDownloadCallback)
-                })
-            }, inDownloadInfo.mUpdateInterval)
-        }
-
-        if(failed)
-            inDownloadCallback.DownloadFailed()
-        else
-            inDownloadCallback.DownloadComplete(responseCode, result)
-
-        return ResponseInfo(result, responseCode, failed)
+        return mRetrofitService.GetMaps()
+                .map{ it as MapsList }
+                .subscribeOn(Schedulers.io())
     }
 
 
-    fun IsUpdating(): Boolean
+    fun GetRadarHistory(inRadarId: String): Observable<List<RadarImageInfo>>
     {
-        return mIsUpdating
-    }
-
-    interface DownloadCallback {
-        fun DownloadComplete(inResponseCode: Int, inResult: String?)
-        fun DownloadFailed()
+        return mRetrofitService.GetRadarHistory(inRadarId).subscribeOn(Schedulers.io())
     }
 
 
-
-    internal class DownloadInfo(internal var mUrl: String, internal var mUpdateInterval: Long) {
-        internal var mLastModified: Long = -1
+    fun GetAdvisoriesList(): Observable<List<Advisory>>
+    {
+        return mRetrofitService.GetAdvisoriesList().map { it as List<Advisory> }.subscribeOn(Schedulers.io())
     }
 
 
-    internal class ResponseInfo(internal var mResponse: String? = null, internal var mResponseCode: Int = 0, internal var mFailed: Boolean = false)
+//    fun Download(inUrl: String, inLastModified: Long? = null, inUpdateInterval: Long? = null): Observable<ResponseInfo>
+//    {
+//        val observable = Observable.create(Observable.OnSubscribe<ResponseInfo>{
+//            val result = ResponseInfo()
+//            var conn: HttpURLConnection? = null
+//            var scanner: Scanner? = null
+//            var resultString: StringBuilder? = null
+//            try {
+//                val url = URL(inUrl)
+//                conn = url.openConnection() as HttpURLConnection
+//                conn.readTimeout = 10000
+//                conn.connectTimeout = 15000
+//                conn.requestMethod = "GET"
+//                conn.doInput = true
+//
+//                if(inLastModified != null)
+//                    conn.ifModifiedSince = inLastModified
+//
+//                conn.connect()
+//
+//                if (conn.responseCode >= HttpURLConnection.HTTP_OK && conn.responseCode < HTTP_MULT_CHOICE) {
+//                    resultString = StringBuilder()
+//
+//                    scanner = Scanner(conn.inputStream)
+//
+//                    while (scanner.hasNextLine()) {
+//                        resultString.append(scanner.nextLine())
+//                        if(scanner.hasNextLine())
+//                            resultString.append("\n")
+//                    }
+//
+//                }
+//            } catch (e: IOException) {
+//                e.printStackTrace()
+//                it.onError(e)
+//            }
+//            catch (e: MalformedURLException)
+//            {
+//                e.printStackTrace()
+//                it.onError(e)
+//            }
+//            catch (e: SocketTimeoutException)
+//            {
+//                e.printStackTrace()
+//                it.onError(e)
+//            }
+//            finally {
+//                if(resultString != null)
+//                    result.mResponse = resultString.toString()
+//                if(conn != null) {
+//                    try {
+//                        result.mResponseCode = conn.responseCode
+//                    }
+//                    catch (e: InvocationTargetException)
+//                    {
+//                        e.printStackTrace()
+//                        it.onError(e)
+//                    }
+//                    catch (e: SocketTimeoutException)
+//                    {
+//                        e.printStackTrace()
+//                        it.onError(e)
+//                    }
+//                    conn.disconnect()
+//                }
+//                scanner?.close()
+//
+//                it.onNext(result)
+//            }
+//        }).subscribeOn(Schedulers.io())
+//
+//        if(inUpdateInterval != null)
+//            observable.repeat(inUpdateInterval, Schedulers.io())
+//
+//        return observable
+//    }
+//
+//
+//    class ResponseInfo(var mResponse: String? = null, var mResponseCode: Int = 0)
+//    {
+//        fun IsSuccessful(): Boolean
+//        {
+//            return mResponseCode >= HttpURLConnection.HTTP_OK && mResponseCode < HttpURLConnection.HTTP_BAD_REQUEST
+//        }
+//    }
+
+
+
+    interface MesonetService
+    {
+        @GET("/find/siteinfo-json")
+        fun GetMesonetSites(): Observable<MesonetSiteListModel>
+
+
+        @GET("/index.php/app/latest_iphone/{stid}")
+        fun GetMesonetData(@Path("stid") inStid: String): Observable<MesonetData>
+
+
+        @GET("/index.php/app/forecast/{stid}")
+        fun GetForecast(@Path("stid") inStid: String): Observable<List<Forecast>>
+
+
+        @GET("/images/fcicons-android/{imageId}@4.png")
+        fun GetForecastIcon(@Path("imageId") inImageId: String): Observable<Bitmap>
+
+
+        @GET("/data/public/mesonet/meteograms/{stid}")
+        fun GetMeteogram(@Path("stid") inStid: String): Observable<Bitmap>
+
+
+        @GET("http://content.mesonet.org/mesonet/mobile-app/products.json")
+        fun GetMaps(): Observable<MapsModel>
+
+
+        @GET("http://www.mesonet.org/data/nids/maps/realtime/frames_{site}_N0Q.xml")
+        fun GetRadarHistory(@Path("site") inSite: String): Observable<List<RadarImageInfo>>
+
+
+        @GET("/data/public/noaa/wwa/mobile-ok.txt")
+        fun GetAdvisoriesList(): Observable<ArrayList<AdvisoryModel>>
+    }
 }

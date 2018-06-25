@@ -1,12 +1,9 @@
 package org.mesonet.cache
 
 import android.content.Context
-import android.app.Activity
-import android.os.Handler
-import android.os.HandlerThread
-import android.os.Looper
-
-import org.mesonet.core.PerActivity
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.schedulers.Schedulers
 
 import javax.inject.Inject
 
@@ -14,77 +11,52 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmModel
 import org.mesonet.cache.site.mesonetdata.MesonetRealmModule
-import org.mesonet.core.ThreadHandler
 import javax.inject.Singleton
-import android.content.ComponentName
-import android.app.ActivityManager
-
-
+import io.realm.RealmResults
 
 
 @Singleton
 class Cacher @Inject
-constructor(internal var mThreadHandler: ThreadHandler, inContext: Context) {
-    private var mRealm: Realm? = null
+constructor(inContext: Context) {
+private var mRealm: Realm? = null
 
 
     init {
-        mThreadHandler.RunOnSpecificThread("Cache", Runnable {
-            synchronized(this@Cacher) {
-                Realm.init(inContext)
+        Observable.create(ObservableOnSubscribe<Void>{
+        synchronized(this@Cacher) {
+            Realm.init(inContext)
 
-                val configuration = RealmConfiguration.Builder().schemaVersion(26)
-                        .modules(MesonetRealmModule())
-                        .name(inContext.packageName)
-                        .build()
-                mRealm = Realm.getInstance(configuration)
+            val configuration = RealmConfiguration.Builder().schemaVersion(26)
+                                                                            .modules(MesonetRealmModule())
+                                                                            .name(inContext.packageName)
+                                                                            .build()
+            mRealm = Realm.getInstance(configuration)
 
-                false
+            false
             }
-        })
+        }).subscribeOn(Schedulers.io()).subscribe()
     }
 
 
-    fun SaveToCache(inCacheController: CacheDataProvider<*>) {
-        mThreadHandler.RunOnSpecificThread("Cache", Runnable {
+    fun <T: RealmModel> SaveToCache(inClass: Class<T>, inList: List<T>): Observable<Void> {
+        return Observable.create(ObservableOnSubscribe<Void>{
             synchronized(this@Cacher) {
-
                 mRealm?.executeTransaction { inRealm ->
-                    inRealm.where(inCacheController.GetClass()).findAll().deleteAllFromRealm()
-                    inRealm.copyToRealm(inCacheController.ListToCache())
+                    inRealm.where(inClass).findAll().deleteAllFromRealm()
+                    inRealm.copyToRealm(inList)
                 }
 
-                false
+            false
             }
-        })
+        }).subscribeOn(Schedulers.io())
     }
 
 
-    fun <T : RealmModel, U> FindAll(inListener: FindAllListener<T, U>) {
-        var result: U? = null
-        mThreadHandler.RunOnSpecificThread("Cache", Runnable {
+    fun <T : RealmModel> FindAll(inClass: Class<T>): Observable<RealmResults<T>> {
+        return Observable.create(ObservableOnSubscribe<RealmResults<T>> {
             synchronized(this@Cacher) {
-                result = inListener.Process(mRealm!!.where(inListener.GetClass()).findAll())
+                it.onNext(mRealm!!.where(inClass).findAll())
             }
-        }, Runnable {
-            if(result != null)
-                inListener.Found(result!!)
-        })
-    }
-
-
-    interface FindAllListener<T : RealmModel, U> : CacheController<T> {
-        fun Found(inResults: U)
-        fun Process(inResults: MutableList<T>): U
-    }
-
-
-    interface CacheDataProvider<T : RealmModel> : CacheController<T> {
-        fun ListToCache(): List<T>
-    }
-
-
-    interface CacheController<T : RealmModel> {
-        fun GetClass(): Class<T>
+        }).subscribeOn(Schedulers.io())
     }
 }

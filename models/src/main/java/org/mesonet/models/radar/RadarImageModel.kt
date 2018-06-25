@@ -1,12 +1,9 @@
 package org.mesonet.models.radar
 
 
-import android.content.Context
-
 import java.lang.reflect.Field
-import java.util.ArrayList
 
-class RadarImageModel : RadarImage {
+class RadarImageModel : RadarImageInfo {
     private val filename: String = ""
     private val timestring: String = ""
 

@@ -6,8 +6,6 @@ import junit.framework.TestCase.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mesonet.core.ThreadHandler
-import org.mesonet.dataprocessiFilenamevisories.AdvisoryDisplayListBuilder
 import org.mesonet.models.advisories.Advisory
 import org.mesonet.models.advisories.AdvisoryModel
 import org.powermock.core.classloader.annotations.PrepareForTest
@@ -25,7 +23,7 @@ class AdvisoryDisplayListBuilderTests
     @Test
     fun MakeEmptyCountyListStringTest()
     {
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
         val startList = ArrayList<String>()
 
         val result = listBuilder.MakeCountyListString(startList)
@@ -38,7 +36,7 @@ class AdvisoryDisplayListBuilderTests
     @Test
     fun BrokenMakeCountyListStringTest()
     {
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
         val startList = Arrays.asList("OKC141","OKC143","","OKC147","OKC149","OKC151","OKC153","OKZ001","OKZ002","OKZ003")
 
         val result = listBuilder.MakeCountyListString(startList)
@@ -51,7 +49,7 @@ class AdvisoryDisplayListBuilderTests
     @Test
     fun BadCountyMakeCountyListStringTest()
     {
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
         val startList = Arrays.asList("OKC141","OKC143","bad format","OKC147","OKC149","OKC151","OKC153","OKZ001","OKZ002","OKZ003")
 
         val result = listBuilder.MakeCountyListString(startList)
@@ -65,7 +63,7 @@ class AdvisoryDisplayListBuilderTests
     @Test
     fun BadFileMakeCountyListStringTest()
     {
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
         val startList = Arrays.asList("bad format bad format bad format")
 
         val result = listBuilder.MakeCountyListString(startList)
@@ -78,7 +76,7 @@ class AdvisoryDisplayListBuilderTests
     @Test
     fun GoodMakeCountyListStringTest()
     {
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
         val startList = Arrays.asList("OKC141","OKC143","OKC145","OKC147","OKC149","OKC151","OKC153","OKZ001","OKZ002","OKZ003")
 
         val result = listBuilder.MakeCountyListString(startList)
@@ -92,7 +90,7 @@ class AdvisoryDisplayListBuilderTests
     @Test
     fun SortNullTest()
     {
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
 
         val result = listBuilder.Sort(null)
 
@@ -104,7 +102,7 @@ class AdvisoryDisplayListBuilderTests
     @Test
     fun SortEmptyListTest()
     {
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
 
         val result = listBuilder.Sort(ArrayList())
 
@@ -373,7 +371,7 @@ class AdvisoryDisplayListBuilderTests
             }
         })
 
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
 
         val result = listBuilder.Sort(advisoryList)
 
@@ -415,7 +413,7 @@ class AdvisoryDisplayListBuilderTests
     @Test(timeout = 10000)
     fun BuildListNullListTest()
     {
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
         val latch = CountDownLatch(1)
 
         listBuilder.BuildList(null, object: AdvisoryDisplayListBuilder.AdvisoryListListener{
@@ -425,7 +423,7 @@ class AdvisoryDisplayListBuilderTests
             }
         })
 
-        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]!!.first.looper).runToEndOfTasks()
+//        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]!!.first.looper).runToEndOfTasks()
 
         latch.await()
     }
@@ -434,7 +432,7 @@ class AdvisoryDisplayListBuilderTests
     @Test(timeout = 10000)
     fun BuildListEmptyListTest()
     {
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
         val latch = CountDownLatch(1)
 
         listBuilder.BuildList(ArrayList(), object: AdvisoryDisplayListBuilder.AdvisoryListListener{
@@ -444,7 +442,7 @@ class AdvisoryDisplayListBuilderTests
             }
         })
 
-        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]!!.first.looper).runToEndOfTasks()
+//        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]!!.first.looper).runToEndOfTasks()
 
         latch.await()
     }
@@ -709,7 +707,7 @@ class AdvisoryDisplayListBuilderTests
             }
         })
 
-        val listBuilder = AdvisoryDisplayListBuilder(ThreadHandler())
+        val listBuilder = AdvisoryDisplayListBuilder()
         val latch = CountDownLatch(1)
 
         listBuilder.BuildList(advisoryList, object: AdvisoryDisplayListBuilder.AdvisoryListListener{
@@ -827,7 +825,7 @@ class AdvisoryDisplayListBuilderTests
             }
         })
 
-        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]!!.first.looper).runToEndOfTasks()
+//        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]!!.first.looper).runToEndOfTasks()
 
         latch.await()
     }

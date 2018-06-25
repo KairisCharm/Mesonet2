@@ -2,8 +2,8 @@ package org.mesonet.models.site.forecast
 
 import org.mesonet.core.DefaultUnits
 
-internal class ForecastModel : Forecast {
-
+class ForecastModel : Forecast
+{
     internal var mTime: String? = null
     internal var mIconUrl: String? = null
     internal var mStatus: String? = null
@@ -22,8 +22,8 @@ internal class ForecastModel : Forecast {
         return mTemp
     }
 
-    override fun GetIconUrl(): String? {
-        return mIconUrl
+    override fun GetIconId(): String? {
+        return mIconUrl?.removePrefix("http://www.nws.noaa.gov/weather/images/fcicons")?.removeSuffix(".jpg")
     }
 
     override fun GetStatus(): String? {

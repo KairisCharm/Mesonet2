@@ -28,19 +28,19 @@ class MapsGroupViewHolder(private val mBaseActivity: BaseActivity, inBinding: Ma
             binding?.groupRecyclerView?.GetAdapter()!!.SetItems(inData.second as MutableList<*>)
 
             if ((inData.second as List<*>).size > 4)
-                binding?.viewAllLayout.setVisibility(View.VISIBLE)
+                binding.viewAllLayout.visibility = View.VISIBLE
             else
-                binding?.viewAllLayout.setVisibility(View.GONE)
+                binding.viewAllLayout.visibility = View.GONE
 
-            binding?.viewAllLayout.setOnClickListener(View.OnClickListener {
+            binding.viewAllLayout.setOnClickListener {
                 val args = Bundle()
                 args.putInt(MapListFragment.kSelectedGroup, inData.first as Int)
 
                 val fragment = MapListFragment()
-                fragment.setArguments(args)
+                fragment.arguments = args
 
                 mBaseActivity.NavigateToPage(fragment, true, R.anim.slide_from_right_animation, R.anim.slide_to_left_animation)
-            })
+            }
         }
     }
 

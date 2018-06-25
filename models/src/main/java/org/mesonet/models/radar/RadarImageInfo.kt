@@ -1,6 +1,6 @@
 package org.mesonet.models.radar
 
-interface RadarImage
+interface RadarImageInfo
 {
     fun GetFilename(): String
     fun GetTimeString(): String

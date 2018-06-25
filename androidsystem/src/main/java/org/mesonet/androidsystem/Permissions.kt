@@ -18,62 +18,62 @@ import javax.inject.Singleton
 @Singleton
 class Permissions @Inject
 constructor(private var mThreadHandler: ThreadHandler) {
-    private val mPermissionsListeners = HashMap<String, MutableList<PermissionListener>>()
+  private val mPermissionsListeners = HashMap<String, MutableList<PermissionListener>>()
 
 
-    fun RequestPermission(inPermission: String, inListener: PermissionListener) {
-        mThreadHandler.Run("AndroidSystem", Runnable {
-            if (!mPermissionsListeners.containsKey(inPermission))
-                mPermissionsListeners[inPermission] = ArrayList()
+  fun RequestPermission(inPermission: String, inListener: PermissionListener) {
+    mThreadHandler.Run("AndroidSystem", Runnable {
+      if (!mPermissionsListeners.containsKey(inPermission))
+        mPermissionsListeners[inPermission] = ArrayList()
 
-            if (!mPermissionsListeners[inPermission]?.contains(inListener)!!)
-                mPermissionsListeners[inPermission]?.add(inListener)
+      if (!mPermissionsListeners[inPermission]?.contains(inListener)!!)
+        mPermissionsListeners[inPermission]?.add(inListener)
 
-            val context = inListener.GetContext()
-            if (ContextCompat.checkSelfPermission(context, inPermission) != PackageManager.PERMISSION_GRANTED)
-            {
-                if(context is Activity) {
-                    ActivityCompat.requestPermissions(context,
-                            arrayOf(inPermission),
-                            0)
-                }
-                else
-                {
-                    inListener.PermissionDenied()
-                }
-            } else {
-                inListener.PermissionGranted()
+      val context = inListener.GetContext()
+      if (ContextCompat.checkSelfPermission(context, inPermission) != PackageManager.PERMISSION_GRANTED)
+      {
+        if(context is Activity) {
+          ActivityCompat.requestPermissions(context,
+                  arrayOf(inPermission),
+                  0)
+        }
+        else
+        {
+          inListener.PermissionDenied()
+        }
+      } else {
+        inListener.PermissionGranted()
+      }
+    })
+  }
+
+
+  fun ProcessPermissionResponse(inPermissions: Array<String>, inGrantResults: IntArray) {
+    mThreadHandler.Run("AndroidSystem", Runnable {
+      for (i in inPermissions.indices) {
+        if (mPermissionsListeners.containsKey(inPermissions[i])) {
+          val permissionListeners = mPermissionsListeners[inPermissions[i]]
+
+          val j = 0
+          if (permissionListeners != null) {
+            while (j < permissionListeners.size) {
+              if (inGrantResults[i] == PackageManager.PERMISSION_GRANTED)
+                permissionListeners.get(j).PermissionGranted()
+              else
+                permissionListeners.get(j).PermissionDenied()
+
+              permissionListeners.removeAt(j)
             }
-        })
-    }
+          }
+        }
+      }
+    })
+  }
 
 
-    fun ProcessPermissionResponse(inPermissions: Array<String>, inGrantResults: IntArray) {
-        mThreadHandler.Run("AndroidSystem", Runnable {
-            for (i in inPermissions.indices) {
-                if (mPermissionsListeners.containsKey(inPermissions[i])) {
-                    val permissionListeners = mPermissionsListeners[inPermissions[i]]
-
-                    val j = 0
-                    if (permissionListeners != null) {
-                        while (j < permissionListeners.size) {
-                            if (inGrantResults[i] == PackageManager.PERMISSION_GRANTED)
-                                permissionListeners.get(j).PermissionGranted()
-                            else
-                                permissionListeners.get(j).PermissionDenied()
-
-                            permissionListeners.removeAt(j)
-                        }
-                    }
-                }
-            }
-        })
-    }
-
-
-    interface PermissionListener {
-        fun GetContext(): Context
-        fun PermissionGranted()
-        fun PermissionDenied()
-    }
+  interface PermissionListener {
+    fun GetContext(): Context
+    fun PermissionGranted()
+    fun PermissionDenied()
+  }
 }

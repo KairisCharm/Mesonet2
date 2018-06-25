@@ -1,25 +1,22 @@
 package org.mesonet.dataprocessing.filterlist
 
 import android.location.Location
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.schedulers.Schedulers
 import org.mesonet.core.PerActivity
-import org.mesonet.core.ThreadHandler
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.LocationProvider
 import java.util.*
 import javax.inject.Inject
-import javax.inject.Singleton
 
 @PerActivity
-class FilterListController @Inject constructor()
-{
+class FilterListController @Inject constructor() {
     private var mSortByNearest = false
 
 
     @Inject
     internal lateinit var mDeviceLocation: LocationProvider
-
-    @Inject
-    internal lateinit var mThreadHandler: ThreadHandler
 
 
     private fun SortList(inCurrentValue: String?, inSearchFields: Map<String, BasicListData>, inLocation: Location?): Map<String, BasicListData> {
@@ -46,7 +43,7 @@ class FilterListController @Inject constructor()
                         result = 1
                 }
 
-                if(inCurrentValue != null) {
+                if (inCurrentValue != null) {
                     if (result == 0)
                         result = HasSearchValue(inCurrentValue, name1, name2)
 
@@ -85,58 +82,42 @@ class FilterListController @Inject constructor()
     }
 
 
-
-    fun FillList(inSearchText: String?, inListData: Map<String, BasicListData>?, inListener: ListFilterListener) {
-        mThreadHandler.Run("FilterListData", Runnable {
+    fun FillListObservable(inSearchText: String?, inListData: Map<String, BasicListData>?): Observable<MutableList<Pair<String, BasicListData>>> {
+        return Observable.create (ObservableOnSubscribe<MutableList<Pair<String, BasicListData>>>{
             if (mSortByNearest) {
                 mDeviceLocation.GetLocation(object : LocationProvider.LocationListener {
                     override fun LastLocationFound(inLocation: Location?) {
-                        FillList(inSearchText, inListData, inLocation, inListener)
+                        it.onNext(GenerateList(inSearchText, inListData, inLocation))
                     }
 
                     override fun LocationUnavailable() {
-                        FillList(inSearchText, inListData, null, inListener)
+                        it.onNext(GenerateList(inSearchText, inListData, null))
                     }
                 })
             } else {
-                FillList(inSearchText,inListData,null, inListener)
+                it.onNext(GenerateList(inSearchText, inListData, null))
             }
-        })
+        }).subscribeOn(Schedulers.computation())
     }
 
 
-
-    private fun FillList(inSearchText: String?, inListData: Map<String, BasicListData>?, inLocation: Location?, inListener: ListFilterListener) {
-
-        inListener.ListFiltered(MapToPairs(SortList(inSearchText, inListData!!, inLocation)))
+    private fun GenerateList(inSearchText: String?, inListData: Map<String, BasicListData>?, inLocation: Location?): MutableList<Pair<String, BasicListData>> {
+        return MapToPairs(SortList(inSearchText, inListData!!, inLocation))
     }
 
 
-
-    fun SortByNearest(inSortText: String?, inListData: Map<String, BasicListData>?, inListener: ListFilterListener)
-    {
-        mThreadHandler.Run("FilterListData", Runnable {
-            mSortByNearest = true
-            FillList(inSortText, inListData, inListener)
-        })
+    fun SortByNearest(inSortText: String?, inListData: Map<String, BasicListData>?): Observable<MutableList<Pair<String, BasicListData>>> {
+        mSortByNearest = true
+        return FillListObservable(inSortText, inListData)
     }
 
 
-
-    internal fun MapToPairs(inMap : Map<String, BasicListData>) : MutableList<Pair<String, BasicListData>>
-    {
+    internal fun MapToPairs(inMap: Map<String, BasicListData>): MutableList<Pair<String, BasicListData>> {
         return inMap.toList() as MutableList<Pair<String, BasicListData>>
     }
 
 
-    internal fun PairsToMap(inPairs: MutableList<Pair<String, BasicListData>>) : Map<String, BasicListData>
-    {
+    internal fun PairsToMap(inPairs: MutableList<Pair<String, BasicListData>>): Map<String, BasicListData> {
         return inPairs.toMap()
-    }
-
-
-    interface ListFilterListener
-    {
-        fun ListFiltered(inFilteredResults: MutableList<Pair<String, BasicListData>>)
     }
 }

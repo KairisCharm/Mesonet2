@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 class AdvisoryModelCreatorTests @Inject constructor()
 {
-    var mAdvisoryCreator = AdvisoryModelCreator()
+    var mAdvisoryCreator = AdvisoryModelConverterFactory()
 
     @Test fun EmptyAdvisoryFileTest()
     {

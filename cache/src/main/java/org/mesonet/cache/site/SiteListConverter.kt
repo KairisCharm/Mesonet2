@@ -1,6 +1,7 @@
 package org.mesonet.cache.site
 
 
+import org.mesonet.models.site.MesonetSiteList
 import org.mesonet.models.site.MesonetSiteListModel
 
 import java.util.ArrayList
@@ -14,7 +15,7 @@ class SiteListConverter @Inject
 constructor() {
 
 
-    fun FavoriteToRealmModels(inSiteModels: MesonetSiteListModel): List<SiteRealmModel> {
+    fun SitesToRealmModels(inSiteModels: MesonetSiteList): List<SiteRealmModel> {
         val result = ArrayList<SiteRealmModel>()
 
         val keySet = ArrayList(inSiteModels.keys)
@@ -27,7 +28,7 @@ constructor() {
     }
 
 
-    fun SiteFromRealmModels(inRealmModels: List<SiteRealmModel>): MesonetSiteListModel {
+    fun SitesFromRealmModels(inRealmModels: List<SiteRealmModel>): MesonetSiteList {
         val result = MesonetSiteListModel()
 
         for (i in inRealmModels.indices) {
@@ -38,7 +39,7 @@ constructor() {
     }
 
 
-    fun FavoriteToRealmModels(inFavorites: List<String>): List<FavoriteSiteRealmModel> {
+    fun FavoritesToRealmModels(inFavorites: List<String>): List<FavoriteSiteRealmModel> {
         val result = ArrayList<FavoriteSiteRealmModel>()
 
         for (i in inFavorites.indices) {

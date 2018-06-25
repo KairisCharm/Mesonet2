@@ -1,152 +1,94 @@
 package org.mesonet.dataprocessing.radar
 
-
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.util.Xml
 import com.squareup.picasso.Picasso
-import org.mesonet.core.ThreadHandler
-import org.mesonet.models.radar.RadarImage
-import org.mesonet.models.radar.RadarImageCreator
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
+import org.mesonet.models.radar.RadarDetails
+import org.mesonet.models.radar.RadarImageInfo
 import org.mesonet.network.DataDownloader
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserException
-
-import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.io.InputStream
-import java.nio.charset.StandardCharsets
-import java.util.*
 
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 
 
 class RadarDataController @Inject
-constructor(private var mSiteDataProvider: RadarSiteDataProvider, private var mThreadHandler: ThreadHandler) : Observable(), Observer {
+constructor(private var mSiteDataProvider: RadarSiteDataProvider) : Observable<Void>(), Observer<Pair<Map<String, RadarDetails>, String>> {
 
-    companion object {
-        val kRadarImageLimit = 6
-    }
 
-    private var mRadarImages: List<RadarImage> = ArrayList()
+    private var mRadarImageInfo: List<RadarImageInfo> = ArrayList()
     private var mCurrentRadar = ""
 
-    private var mDataDownloader: DataDownloader
-
     @Inject
-    protected lateinit var mRadarImageCreator: RadarImageCreator
+    lateinit private var mDataDownloader: DataDownloader
 
 
     init {
-        mDataDownloader = DataDownloader(mThreadHandler)
-        mThreadHandler.Run("RadarData", Runnable {
-            mSiteDataProvider.addObserver(this)
-        })
+        mSiteDataProvider.observeOn(Schedulers.computation()).subscribe(this)
     }
 
-    fun StartUpdates()
+
+    override fun subscribeActual(observer: Observer<in Void>?)
     {
-        if(!mDataDownloader.IsUpdating()) {
-            mThreadHandler.Run("RadarData", Runnable {
-                mCurrentRadar = mSiteDataProvider.CurrentSelection()
-                mDataDownloader.StartDownloads(String.format("http://www.mesonet.org/data/nids/maps/realtime/frames_%s_N0Q.xml", mCurrentRadar), object : DataDownloader.DownloadCallback {
-                    override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
-                        ProcessRadarXml(ByteArrayInputStream(inResult?.toByteArray(StandardCharsets.UTF_8)))
-                    }
+        mCurrentRadar = mSiteDataProvider.CurrentSelection()
 
-
-                    override fun DownloadFailed() {
-
-                    }
-                }, 60000)
-            })
+        mDataDownloader.GetRadarHistory(mCurrentRadar).observeOn(Schedulers.computation()).subscribe {
+            mRadarImageInfo = it
         }
     }
 
 
-    fun StopUpdates()
-    {
-        mThreadHandler.Run("RadarData", Runnable {
-            mDataDownloader.StopDownloads()
-        })
+    override fun onComplete() {}
+    override fun onSubscribe(d: Disposable) {}
+    override fun onError(e: Throwable) {}
+
+
+
+    internal fun GetRadarImageDetails(): List<RadarImageInfo> {
+        return mRadarImageInfo
     }
 
 
-
-    protected fun ProcessRadarXml(inRadarXmlStream: InputStream) {
-        val xmlParser = Xml.newPullParser()
-
-        try {
-            xmlParser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
-            xmlParser.setInput(inRadarXmlStream, null)
-            mRadarImages = mRadarImageCreator.ParseRadarImagesXml(xmlParser, kRadarImageLimit)
-            setChanged()
-            notifyObservers()
-        } catch (e: XmlPullParserException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-
-        try {
-            inRadarXmlStream.close()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-
+    internal fun GetImage(inIndex: Int, inContext: Context): Observable<Bitmap> {
+        return GetImage(inContext, "https://www.mesonet.org" + mRadarImageInfo[inIndex])
     }
 
 
+    internal fun GetImage(inContext: Context, inImagePath: String): Observable<Bitmap> {
 
-    internal fun GetRadarImageDetails(): List<RadarImage> {
-        return mRadarImages
-    }
+        return Observable.create(ObservableOnSubscribe<Bitmap> {
+            try {
+                val original = Picasso.with(inContext).load(inImagePath).get()
 
+                val matrix = Matrix()
+                matrix.postScale(2f, 2f)
+                val resizedBitmap = Bitmap.createBitmap(1200, 1200, Bitmap.Config.ARGB_8888)
 
-    internal fun GetImage(inIndex: Int, inContext: Context, inImageLoadedListener: RadarDataController.ImageLoadedListener) {
-        GetImage(inContext, "https://www.mesonet.org" + mRadarImages[inIndex].GetFilename(), inImageLoadedListener)
-    }
+                val canvas = Canvas(resizedBitmap)
+                canvas.drawBitmap(original, matrix, Paint())
+                canvas.save()
 
+                original.recycle()
 
-    internal fun GetImage(inContext: Context, inImagePath: String, inImageLoadedListener: ImageLoadedListener) {
-        try {
-            val original = Picasso.with(inContext).load(inImagePath).get()
-
-            val matrix = Matrix()
-            matrix.postScale(2f, 2f)
-            val resizedBitmap = Bitmap.createBitmap(1200, 1200, Bitmap.Config.ARGB_8888)
-
-            val canvas = Canvas(resizedBitmap)
-            canvas.drawBitmap(original, matrix, Paint())
-            canvas.save()
-
-            original.recycle()
-
-            inImageLoadedListener.BitmapLoaded(resizedBitmap)
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-    }
-
-
-
-    override fun update(o: Observable, arg: Any?) {
-        mThreadHandler.Run("RadarData", Runnable {
-            if(!mCurrentRadar.equals(mSiteDataProvider.CurrentSelection())) {
-                StopUpdates()
-                while (mDataDownloader.IsUpdating());
-                StartUpdates()
+                it.onNext(resizedBitmap)
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
-        })
+        }).subscribeOn(Schedulers.computation())
     }
 
 
-
-    internal interface ImageLoadedListener {
-        fun BitmapLoaded(inResult: Bitmap)
+    override fun onNext(t: Pair<Map<String, RadarDetails>, String>) {
+        if(mCurrentRadar != mSiteDataProvider.CurrentSelection()) {
+            subscribe()
+        }
     }
 }

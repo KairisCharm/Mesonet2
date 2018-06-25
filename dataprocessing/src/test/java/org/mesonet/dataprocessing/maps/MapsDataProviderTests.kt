@@ -1,11 +1,9 @@
 package org.mesonet.dataprocessing.maps
 
 import com.google.gson.Gson
-import junit.framework.Assert
 import junit.framework.TestCase.*
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mesonet.core.ThreadHandler
 import org.mesonet.models.maps.MapsModel
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.robolectric.RobolectricTestRunner

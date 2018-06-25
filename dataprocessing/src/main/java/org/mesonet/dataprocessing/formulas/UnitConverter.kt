@@ -6,81 +6,68 @@ import javax.inject.Inject
 
 class UnitConverter @Inject
 internal constructor() {
-
-
-    fun CelsiusToFahrenheit(inCelsius: Number?): Number? {
+    internal fun CelsiusToFahrenheit(inCelsius: Number?): Number? {
         return if (inCelsius == null) null else inCelsius.toDouble() * (9.0 / 5.0) + 32.0
-
     }
 
 
-    fun FahrenheitToCelsius(inFahrenheit: Number?): Number? {
+    internal fun FahrenheitToCelsius(inFahrenheit: Number?): Number? {
         return if (inFahrenheit == null) null else (inFahrenheit.toDouble() - 32.0) / (9.0 / 5.0)
-
     }
 
 
-    fun MpsToMph(inMps: Number?): Number? {
+    internal fun MpsToMph(inMps: Number?): Number? {
         return if (inMps == null) null else inMps.toDouble() * 2.236936292054402
-
     }
 
 
-    fun MphToMps(inMph: Number?): Number? {
+    internal fun MphToMps(inMph: Number?): Number? {
         return if (inMph == null) null else inMph.toDouble() * (1.0 / MpsToMph(1)!!.toDouble())
-
     }
 
 
-    fun MpsToKmph(inMps: Number?): Number? {
+    internal fun MpsToKmph(inMps: Number?): Number? {
         return if (inMps == null) null else inMps.toDouble() * 3.6
 
     }
 
 
-    fun KmphToMps(inKmph: Number?): Number? {
+    internal fun KmphToMps(inKmph: Number?): Number? {
         return if (inKmph == null) null else inKmph.toDouble() * (1.0 / MpsToKmph(1)!!.toDouble())
-
     }
 
 
-    fun MphToKmph(inMph: Number?): Number? {
+    internal fun MphToKmph(inMph: Number?): Number? {
         return if (inMph == null) null else inMph.toDouble() * 1.609344
-
     }
 
 
-    fun KmphToMph(inMph: Number?): Number? {
+    internal fun KmphToMph(inMph: Number?): Number? {
         return if (inMph == null) null else inMph.toDouble() * (1.0 / MphToKmph(1)!!.toDouble())
-
     }
 
 
-    fun MmToIn(inMm: Number?): Number? {
+    internal fun MmToIn(inMm: Number?): Number? {
         return if (inMm == null) null else inMm.toDouble() * 0.0393700787401575
-
     }
 
 
-    fun InToMm(inIn: Number?): Number? {
+    internal fun InToMm(inIn: Number?): Number? {
         return if (inIn == null) null else inIn.toDouble() * (1.0 / MmToIn(1)!!.toDouble())
-
     }
 
 
-    fun InHgToMb(inIn: Number?): Number? {
+    internal fun InHgToMb(inIn: Number?): Number? {
         return if (inIn == null) null else inIn.toDouble() * 33.8639
-
     }
 
 
-    fun MbToInHg(inIn: Number?): Number? {
+    internal fun MbToInHg(inIn: Number?): Number? {
         return if (inIn == null) null else inIn.toDouble() / 33.8639
-
     }
 
 
-    fun GetTempInPreferredUnits(inBaseValue: Number?, inDefaultUnits: DefaultUnits?, inPreference: DefaultUnits.TempUnits?): Number? {
+    internal fun GetTempInPreferredUnits(inBaseValue: Number?, inDefaultUnits: DefaultUnits?, inPreference: DefaultUnits.TempUnits?): Number? {
         if (inBaseValue == null || inDefaultUnits == null || inDefaultUnits.GetDefaultTempUnit() == null || inPreference == null)
             return null
 
@@ -98,7 +85,7 @@ internal constructor() {
     }
 
 
-    fun GetSpeedInPreferredUnits(inBaseValue: Number?, inDefaultUnits: DefaultUnits?, inPreference: DefaultUnits.SpeedUnits?): Number? {
+    internal fun GetSpeedInPreferredUnits(inBaseValue: Number?, inDefaultUnits: DefaultUnits?, inPreference: DefaultUnits.SpeedUnits?): Number? {
         if (inBaseValue == null || inDefaultUnits == null || inDefaultUnits.GetDefaultSpeedUnit() == null || inPreference == null)
             return null
 
@@ -130,7 +117,7 @@ internal constructor() {
     }
 
 
-    fun GetLengthInPreferredUnits(inBaseValue: Number?, inDefaultUnits: DefaultUnits?, inPreference: DefaultUnits.LengthUnits?): Number? {
+    internal fun GetLengthInPreferredUnits(inBaseValue: Number?, inDefaultUnits: DefaultUnits?, inPreference: DefaultUnits.LengthUnits?): Number? {
         if (inBaseValue == null || inDefaultUnits == null || inDefaultUnits.GetDefaultLengthUnit() == null || inPreference == null)
             return null
 
@@ -148,7 +135,7 @@ internal constructor() {
     }
 
 
-    fun GetPressureInPreferredUnits(inBaseValue: Number?, inDefaultUnits: DefaultUnits?, inPreference: DefaultUnits.PressureUnits?): Number? {
+    internal fun GetPressureInPreferredUnits(inBaseValue: Number?, inDefaultUnits: DefaultUnits?, inPreference: DefaultUnits.PressureUnits?): Number? {
         if (inBaseValue == null || inDefaultUnits == null || inDefaultUnits.GetDefaultPressureUnit() == null || inPreference == null)
             return null
 
@@ -166,7 +153,7 @@ internal constructor() {
     }
 
 
-    fun GetCompassDirection(inDirection: Number?): DefaultUnits.CompassDirections? {
+    internal fun GetCompassDirection(inDirection: Number?): DefaultUnits.CompassDirections? {
         if (inDirection == null)
             return null
 
@@ -211,6 +198,5 @@ internal constructor() {
         if (direction > 326.25 && direction <= 348.75)
             return DefaultUnits.CompassDirections.NNW
         return if (direction > 348.75 && direction <= 360) DefaultUnits.CompassDirections.N else null
-
     }
 }

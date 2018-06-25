@@ -1,5 +1,7 @@
 package org.mesonet.dataprocessing.userdata
 
+import io.reactivex.Observable
+
 
 interface Preferences {
     enum class UnitPreference {
@@ -7,25 +9,10 @@ interface Preferences {
     }
 
 
-    fun GetUnitPreference(inListener: UnitPreferenceListener)
     fun SetUnitPreference(inPreference: UnitPreference)
-    fun GetSelectedStid(inListener: StidListener)
+    fun GetSelectedStid()
     fun SetSelectedStid(inStid: String)
-    fun GetSelectedRadar(inListener: RadarListener)
+    fun GetSelectedRadar()
     fun SetSelectedRadar(inRadarName: String)
-    fun GetPreferencesObservable(): PreferencesObservable
-
-    interface UnitPreferenceListener
-    {
-        fun UnitPreferenceFound(inUnitPreference: UnitPreference)
-    }
-    interface StidListener
-    {
-        fun StidFound(inStidPreference: String)
-    }
-
-    interface RadarListener
-    {
-        fun RadarFound(inRadarName: String)
-    }
+    fun GetUnitPreferencesObservable(): Observable<UnitPreference>
 }

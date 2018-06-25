@@ -8,7 +8,7 @@ import android.view.ViewGroup
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.HeaderViewHolderBinding
-import org.mesonet.dataprocessiFilenamevisories.AdvisoryDisplayListBuilder
+import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilder
 
 
 class AdvisoryHeaderViewHolder(inBinding: HeaderViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>, HeaderViewHolderBinding>(inBinding) {

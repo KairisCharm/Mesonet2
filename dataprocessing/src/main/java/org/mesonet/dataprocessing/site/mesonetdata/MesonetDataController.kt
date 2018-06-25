@@ -1,15 +1,15 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
+import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import org.mesonet.core.DefaultUnits
 import org.mesonet.dataprocessing.formulas.UnitConverter
-import org.mesonet.models.site.mesonetdata.MesonetModelParser
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.userdata.Preferences
-import org.mesonet.core.ThreadHandler
 import org.mesonet.models.site.mesonetdata.MesonetData
-import org.mesonet.models.site.mesonetdata.MesonetDataCreator
 import org.mesonet.network.DataDownloader
-import java.net.HttpURLConnection
 import java.util.*
 
 import javax.inject.Inject
@@ -18,79 +18,24 @@ import javax.inject.Singleton
 
 @Singleton
 class MesonetDataController @Inject constructor(private var mSiteDataController: MesonetSiteDataController,
-                                                private var mPreferences: Preferences,
-                                                private var mThreadHandler: ThreadHandler,
                                                 private var mDerivedValues: DerivedValues,
                                                 private var mUnitConverter: UnitConverter,
-                                                private var mMesonetDataCreator: MesonetDataCreator) : Observable(), Observer {
+                                                private var mDataDownloader: DataDownloader) : Observable<MesonetData>(), Observer<String>
 
 
-
-    private var mDataDownloader: DataDownloader
+{
     private var mMesonetData: MesonetData? = null
 
-
     init {
-        mDataDownloader = DataDownloader(mThreadHandler)
-        mSiteDataController.GetDataObservable().addObserver(this)
-        mPreferences.GetPreferencesObservable().addObserver(this)
-        mSiteDataController.addObserver(this)
+        mSiteDataController.observeOn(Schedulers.computation()).subscribe(this)
     }
 
-
-
-    fun SingleUpdate(inUpdateListener: SingleUpdateListener)
-    {
-        mThreadHandler.Run("MesonetData", Runnable {
-            mDataDownloader.SingleUpdate(GetUrl(), object : DataDownloader.DownloadCallback{
-                override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
-                    if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
-                        SetData(inResult!!)
-                        inUpdateListener.UpdateComplete()
-                    }
-                    else
-                        inUpdateListener.UpdateFailed()
-                }
-
-                override fun DownloadFailed() {
-                    inUpdateListener.UpdateFailed()
-                }
-
-            })
-        })
-    }
-
-
-    fun StartUpdates() {
-        if(!mDataDownloader.IsUpdating()) {
-            mThreadHandler.Run("MesonetData", Runnable {
-                if (!mSiteDataController.SiteDataFound() || mSiteDataController.CurrentSelection().isEmpty()) {
-                    StopUpdates()
-                } else {
-
-                    mDataDownloader.StartDownloads(GetUrl(),
-                            object : DataDownloader.DownloadCallback {
-                                override fun DownloadComplete(inResponseCode: Int,
-                                                              inResult: String?) {
-                                    if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
-                                        SetData(inResult!!)
-                                    }
-                                }
-
-
-                                override fun DownloadFailed() {
-
-                                }
-                            }, 60000)
-                }
-            })
+    override fun subscribeActual(observer: Observer<in MesonetData>?) {
+        mDataDownloader.GetMesonetData(mSiteDataController.CurrentSelection()).observeOn(Schedulers.computation()).subscribe {
+            SetData(it)
+            if(mMesonetData != null)
+                observer?.onNext(mMesonetData!!)
         }
-    }
-
-
-
-    internal fun SetData(inMesonetDataString: String) {
-        SetData(mMesonetDataCreator.CreateMesonetData(inMesonetDataString))
     }
 
 
@@ -101,26 +46,8 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
         if (inMesonetData.GetStID()?.toLowerCase() != mSiteDataController.CurrentSelection().toLowerCase())
             return
 
-        mPreferences.GetPreferencesObservable().addObserver(this)
-
         mMesonetData = inMesonetData
-        setChanged()
-        notifyObservers()
     }
-
-
-    fun StopUpdates() {
-        mThreadHandler.Run("MesonetData", Runnable {
-            mDataDownloader.StopDownloads()
-        })
-    }
-
-
-
-    internal fun GetUrl(): String {
-        return "http://www.mesonet.org/index.php/app/latest_iphone/" + mSiteDataController.CurrentSelection()
-    }
-
 
 
     internal fun ProcessTemp(inUnitPreference: Preferences.UnitPreference): Double? {
@@ -140,6 +67,7 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 
         return result.toDouble()
     }
+
 
 
     internal fun ProcessApparentTemp(inUnitPreference: Preferences.UnitPreference): Double? {
@@ -278,42 +206,20 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
     }
 
 
-    /*TODO begin add tests*/
     internal fun ProcessTime(): Date? {
         return if (mMesonetData == null || mMesonetData!!.GetTime() == null) null else Date(mMesonetData!!.GetTime()!! * 1000)
-
     }
 
 
-    override fun update(observable: Observable, o: Any?) {
-        mThreadHandler.Run("MesonetData", Runnable {
-            mPreferences.GetSelectedStid(object: Preferences.StidListener{
-                override fun StidFound(inStidPreference: String) {
-                    if (mMesonetData == null || !mMesonetData?.GetStID()?.toLowerCase().equals(inStidPreference)) {
-                        mMesonetData = null
-                        StopUpdates()
-                        while(mDataDownloader.IsUpdating());
-                        StartUpdates()
-                    }
-
-                    setChanged()
-                    notifyObservers()
-                }
-            })
-        })
-    }
-
-    override fun addObserver(o: Observer?) {
-        super.addObserver(o)
-        setChanged()
-        notifyObservers()
+    override fun onNext(t: String) {
+        if (mMesonetData == null || !mMesonetData?.GetStID()?.toLowerCase().equals(t)) {
+            mMesonetData = null
+            subscribe()
+        }
     }
 
 
-    interface SingleUpdateListener
-    {
-        fun UpdateComplete()
-        fun UpdateFailed()
-    }
+    override fun onComplete() {}
+    override fun onSubscribe(d: Disposable) {}
+    override fun onError(e: Throwable) {}
 }
-

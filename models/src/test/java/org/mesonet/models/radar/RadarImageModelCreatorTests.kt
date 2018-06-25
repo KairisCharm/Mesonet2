@@ -15,7 +15,7 @@ class RadarImageModelCreatorTests
     @Test
     fun EmptyFileTests()
     {
-        val creator = RadarImageModelCreator()
+        val creator = RadarImageModelConverterFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream("".toByteArray(StandardCharsets.UTF_8)), null)
 
@@ -28,7 +28,7 @@ class RadarImageModelCreatorTests
     @Test
     fun BadXmlTests()
     {
-        val creator = RadarImageModelCreator()
+        val creator = RadarImageModelConverterFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream("bad file bad file bad file".toByteArray(StandardCharsets.UTF_8)), null)
 
@@ -41,7 +41,7 @@ class RadarImageModelCreatorTests
     @Test
     fun IncompatibleXmlTests()
     {
-        val creator = RadarImageModelCreator()
+        val creator = RadarImageModelConverterFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
@@ -56,7 +56,7 @@ class RadarImageModelCreatorTests
     @Test
     fun PartlyBadXmlTests()
     {
-        val creator = RadarImageModelCreator()
+        val creator = RadarImageModelConverterFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<list timeStampUTC=\"2018-05-11 02:06:10\" radar=\"KTLX\" product=\"N0Q\">\n" +
                 "<frame filename=\"/data/nids/maps/realtime/storage/KTLX/N0Q/201805110202.gif\" timestring=\" 9:02 PM May 10, 2018 CDT\" datatime=\"1526004120\" looptime=\"1526004120\"/>\n" +
@@ -79,7 +79,7 @@ class RadarImageModelCreatorTests
     @Test
     fun PartlyIncompatibleXmlTests()
     {
-        val creator = RadarImageModelCreator()
+        val creator = RadarImageModelConverterFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<list timeStampUTC=\"2018-05-11 02:06:10\" radar=\"KTLX\" product=\"N0Q\">\n" +
                 "<frame filename=\"/data/nids/maps/realtime/storage/KTLX/N0Q/201805110202.gif\" timestring=\" 9:02 PM May 10, 2018 CDT\" datatime=\"1526004120\" looptime=\"1526004120\"/>\n" +
@@ -102,7 +102,7 @@ class RadarImageModelCreatorTests
     @Test
     fun IncompatibleFrameXmlTests()
     {
-        val creator = RadarImageModelCreator()
+        val creator = RadarImageModelConverterFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<list timeStampUTC=\"2018-05-11 02:06:10\" radar=\"KTLX\" product=\"N0Q\">\n" +
                 "<frame filename=\"/data/nids/maps/realtime/storage/KTLX/N0Q/201805110202.gif\" timestring=\" 9:02 PM May 10, 2018 CDT\" datatime=\"1526004120\" looptime=\"1526004120\"/>\n" +
@@ -127,7 +127,7 @@ class RadarImageModelCreatorTests
     @Test
     fun FrameLimitHitXmlTests()
     {
-        val creator = RadarImageModelCreator()
+        val creator = RadarImageModelConverterFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<list timeStampUTC=\"2018-05-11 02:06:10\" radar=\"KTLX\" product=\"N0Q\">\n" +
                 "<frame filename=\"/data/nids/maps/realtime/storage/KTLX/N0Q/201805110202.gif\" timestring=\" 9:02 PM May 10, 2018 CDT\" datatime=\"1526004120\" looptime=\"1526004120\"/>\n" +

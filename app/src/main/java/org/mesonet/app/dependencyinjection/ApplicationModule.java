@@ -6,7 +6,7 @@ import android.content.BroadcastReceiver;
 import org.mesonet.androidsystem.DeviceLocation;
 import org.mesonet.androidsystem.UserSettings;
 import org.mesonet.app.MainActivity;
-import org.mesonet.app.WidgetProvider;
+import org.mesonet.app.widget.WidgetProvider;
 import org.mesonet.app.contact.ContactActivity;
 import org.mesonet.app.contact.dependencyinjection.ContactActivitySubcomponent;
 import org.mesonet.app.usersettings.UserSettingsActivity;
@@ -16,16 +16,6 @@ import org.mesonet.app.widget.dependencyinjection.WidgetProviderLargeSubcomponen
 import org.mesonet.app.widget.dependencyinjection.WidgetProviderSubcomponent;
 import org.mesonet.dataprocessing.LocationProvider;
 import org.mesonet.dataprocessing.userdata.Preferences;
-import org.mesonet.models.advisories.AdvisoryCreator;
-import org.mesonet.models.advisories.AdvisoryModelCreator;
-import org.mesonet.models.radar.RadarDetailCreator;
-import org.mesonet.models.radar.RadarDetailModelCreator;
-import org.mesonet.models.radar.RadarImageCreator;
-import org.mesonet.models.radar.RadarImageModelCreator;
-import org.mesonet.models.site.forecast.ForecastModelParser;
-import org.mesonet.models.site.forecast.ForecastParser;
-import org.mesonet.models.site.mesonetdata.MesonetDataCreator;
-import org.mesonet.models.site.mesonetdata.MesonetModelParser;
 
 import dagger.Binds;
 import dagger.Module;
@@ -81,19 +71,4 @@ abstract class ApplicationModule
 
     @Binds
     abstract LocationProvider LocationProvider(DeviceLocation inDeviceLocation);
-
-    @Binds
-    abstract MesonetDataCreator MesonetDataCreator(MesonetModelParser inMesonetModelParser);
-
-    @Binds
-    abstract ForecastParser ForecastParser(ForecastModelParser inForecastModelParser);
-
-    @Binds
-    abstract RadarDetailCreator RadarDetailCreator(RadarDetailModelCreator inRadarDetailModelCreator);
-
-    @Binds
-    abstract RadarImageCreator RadarImageCreator(RadarImageModelCreator inRadarImageModelCreator);
-
-    @Binds
-    abstract AdvisoryCreator AdvisoryCreator(AdvisoryModelCreator inAdvisoryModelCreator);
 }

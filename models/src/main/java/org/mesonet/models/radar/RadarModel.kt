@@ -1,8 +1,7 @@
 package org.mesonet.models.radar
 
-import android.nfc.FormatException
 import java.lang.reflect.Field
-import java.util.HashMap
+
 
 
 class RadarModel : RadarDetails {

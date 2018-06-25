@@ -1,13 +1,11 @@
 
 package org.mesonet.network
 
-import android.os.HandlerThread
 import android.os.Looper
 import junit.framework.TestCase.assertNotNull
 import junit.framework.TestCase.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mesonet.core.ThreadHandler
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf

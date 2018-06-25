@@ -1,18 +1,16 @@
 package org.mesonet.dataprocessing.site.forecast
 
-
 import android.content.Context
-import org.mesonet.core.ThreadHandler
+import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 
 import org.mesonet.dataprocessing.formulas.UnitConverter
-import org.mesonet.models.site.forecast.ForecastModelParser
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.site.forecast.Forecast
-import org.mesonet.models.site.forecast.ForecastParser
 import org.mesonet.network.DataDownloader
-import java.net.HttpURLConnection
-import java.util.*
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -20,94 +18,51 @@ import kotlin.collections.ArrayList
 
 @Singleton
 class FiveDayForecastDataController @Inject constructor(private var mMesonetSiteDataController: MesonetSiteDataController,
-                                                        private var mThreadHandler: ThreadHandler,
-                                                        private var mModelParser: ForecastParser,
                                                         private var mPreferences: Preferences,
                                                         private var mUnitConverter: UnitConverter,
-                                                        private var mContext: Context) : Observable(), Observer {
+                                                        private var mContext: Context,
+                                                        private var mDataDownloader: DataDownloader) : Observable<List<SemiDayForecastDataController>>(), Observer<String> {
 
 
-
-    private var mDataDownloader: DataDownloader
     private var mSemiDayForecasts: MutableList<SemiDayForecastDataController> = ArrayList()
 
     private var mCurrentSite: String? = null
 
     init {
-        mDataDownloader = DataDownloader(mThreadHandler)
-        mThreadHandler.Run("ForecastData", Runnable {
-            mMesonetSiteDataController.addObserver(this)
-        })
+        mMesonetSiteDataController.observeOn(Schedulers.computation()).subscribe(this)
     }
 
 
-    fun SingleUpdate(inSingleUpdateListener: SingleUpdateListener)
-    {
-        mThreadHandler.Run("ForecastData", Runnable {
-            mDataDownloader.SingleUpdate("http://www.mesonet.org/index.php/app/forecast/" + mMesonetSiteDataController.CurrentSelection(), object : DataDownloader.DownloadCallback {
-                override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
-                    mThreadHandler.Run("ForecastData", Runnable {
-                        if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE) {
-                            SetData(inResult)
-                            inSingleUpdateListener.UpdateComplete()
-                        }
-                        else
-                            inSingleUpdateListener.UpdateFailed()
-                    })
-                }
+    override fun subscribeActual(observer: Observer<in List<SemiDayForecastDataController>>?) {
+        mDataDownloader.GetForecast(mMesonetSiteDataController.CurrentSelection()).observeOn(Schedulers.computation()).subscribe{
+            SetData(it)
 
-                override fun DownloadFailed() {
-                    inSingleUpdateListener.UpdateFailed()
-                }
-            })
-        })
-    }
-
-
-    fun StartUpdates() {
-        if(!mDataDownloader.IsUpdating()) {
-            mThreadHandler.Run("ForecastData", Runnable {
-                if (mMesonetSiteDataController.SiteDataFound()) {
-
-                    mDataDownloader.StartDownloads("http://www.mesonet.org/index.php/app/forecast/" + mMesonetSiteDataController.CurrentSelection(), object : DataDownloader.DownloadCallback {
-                        override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
-                            mThreadHandler.Run("ForecastData", Runnable {
-                                if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode < HttpURLConnection.HTTP_MULT_CHOICE)
-                                    SetData(inResult)
-                            })
-                        }
-
-                        override fun DownloadFailed() {
-
-                        }
-                    }, 60000)
-                }
-            })
+            observer?.onNext(mSemiDayForecasts)
         }
     }
 
-    override fun update(o: Observable, arg: Any?) {
-        mThreadHandler.Run("ForecastData", Runnable {
-            if(mCurrentSite == null || !mCurrentSite.equals(mMesonetSiteDataController.CurrentSelection()))
-            {
-                mCurrentSite = mMesonetSiteDataController.CurrentSelection()
-                mSemiDayForecasts = ArrayList()
-                StopUpdates()
-                while(mDataDownloader.IsUpdating());
-                StartUpdates()
-                setChanged()
-                notifyObservers()
-            }
-        })
+
+    override fun onComplete() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-
-    internal fun SetData(inForecast: String?) {
-        if(inForecast == null)
-            SetData(null as List<Forecast>?)
-        else
-            SetData(mModelParser.Parse(inForecast))
+    override fun onSubscribe(d: Disposable) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
+
+    override fun onNext(t: String) {
+        if(mCurrentSite == null || !mCurrentSite.equals(mMesonetSiteDataController.CurrentSelection()))
+        {
+            mCurrentSite = mMesonetSiteDataController.CurrentSelection()
+            mSemiDayForecasts = ArrayList()
+            subscribe()
+        }
+    }
+
+    override fun onError(e: Throwable) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
 
 
     internal fun SetData(inForecast: List<Forecast>?) {
@@ -115,14 +70,13 @@ class FiveDayForecastDataController @Inject constructor(private var mMesonetSite
 
             for (i in inForecast.indices) {
                 if(mSemiDayForecasts.size <= i)
-                    mSemiDayForecasts.add(SemiDayForecastDataController(mContext, mPreferences, mUnitConverter, inForecast[i], mThreadHandler))
+                    mSemiDayForecasts.add(SemiDayForecastDataController(mContext, mPreferences, mUnitConverter, inForecast[i]))
                 else
                     mSemiDayForecasts[i].SetData(inForecast[i])
             }
         }
 
-        setChanged()
-        notifyObservers()
+        subscribe()
     }
 
 
@@ -133,32 +87,5 @@ class FiveDayForecastDataController @Inject constructor(private var mMesonetSite
 
     fun GetForecast(inIndex: Int): SemiDayForecastDataController {
         return mSemiDayForecasts[inIndex]
-    }
-
-
-
-    fun StopUpdates()
-    {
-        mThreadHandler.Run("ForecastData", Runnable {
-            mDataDownloader.StopDownloads()
-        })
-    }
-
-
-    fun GetObservable(): Observable {
-        return this
-    }
-
-    override fun addObserver(o: Observer?) {
-        super.addObserver(o)
-        setChanged()
-        notifyObservers()
-    }
-
-
-    interface SingleUpdateListener
-    {
-        fun UpdateComplete()
-        fun UpdateFailed()
     }
 }

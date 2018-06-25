@@ -1,177 +1,172 @@
 package org.mesonet.dataprocessing.maps
 
-import android.util.Pair
-import com.google.gson.Gson
-import org.mesonet.core.ThreadHandler
-import org.mesonet.models.maps.MapsModel
+import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.schedulers.Schedulers
+import org.mesonet.models.maps.MapsList
 import org.mesonet.network.DataDownloader
-import java.net.HttpURLConnection
 import java.util.*
 import javax.inject.Inject
 
 
-class MapsDataProvider @Inject constructor(private var mThreadHandler: ThreadHandler) {
+class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDownloader): Observable<List<MapsDataProvider.MapDataDisplayGroup>>()
+{
     enum class MapViewHolderTypes {
         kHeader, kProduct, kGroup
     }
 
-    internal var mDataDownloader: DataDownloader
 
-    private var mMapsModel: MapsModel? = null
+    private var mLastUpdate = 0L
+
+
+    @Inject
+    internal lateinit var mMapsListParser: MapsListParser
+
+    private var mMapsList: MapsList? = null
 
 
     init {
-        mDataDownloader = DataDownloader(mThreadHandler)
+        subscribeOn(Schedulers.computation())
     }
 
 
-    fun Download(inGroup: Int? = null, inListListener: MapsDataProvider.MapsListListener) {
-        var result: Pair<MutableList<Any>?, String?>? = null
+    override fun subscribeActual(inObserver: Observer<in List<MapDataDisplayGroup>>) {
+        if(mMapsList != null)
+            inObserver.onNext(LoadMapsList(mMapsList))
 
-        mThreadHandler.Run("MapsData", Runnable {
-            mDataDownloader.SingleUpdate("http://content.mesonet.org/mesonet/mobile-app/products.json", object : DataDownloader.DownloadCallback {
-                override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
-                    if (inResponseCode >= HttpURLConnection.HTTP_OK && inResponseCode <= HttpURLConnection.HTTP_PARTIAL) {
-                        val newMapModel = Gson().fromJson(inResult, MapsModel::class.java)
+        if((mLastUpdate - Date().time) > 300000) {
+            mDataDownloader.GetMaps().observeOn(Schedulers.computation()).map {
+                mMapsList = it
+                LoadMapsList(mMapsList)
+            }.subscribe(inObserver)
+        }
+    }
 
-                        if(mMapsModel == null || !mMapsModel?.equals(newMapModel)!!) {
-                            mMapsModel = newMapModel
 
-                            mThreadHandler.Run("MapsData", Runnable {
-                                result = LoadMapsList(inGroup, mMapsModel)
-                            }, Runnable {
-                                if(result != null)
-                                    inListListener.ListLoaded(result?.first, result?.second)
-                                else
-                                    inListListener.ListLoaded(null, null)
-                            })
-                        }
-                    }
-                }
+    internal fun LoadMapsList(inMapsList: MapsList?): List<MapDataDisplayGroup>
+    {
+        val allGroups = inMapsList?.GetMain()
+        val allSections = inMapsList?.GetSections()
+        val allProducts = inMapsList?.GetProducts()
 
-                override fun DownloadFailed() {
+        var groupsWithSectionsWithGoodProducts = ArrayList<MapDataDisplayGroupImpl>()
+        var sectionsWithGoodProducts = HashMap<String, MapDataDisplayGroupImpl.MapGroupSectionImpl>()
+        var goodProducts = HashMap<String, MapDataDisplayGroupImpl.MapGroupSectionImpl.MapsProductImpl>()
 
-                }
+        val orphanedGoodProducts = ArrayList<String>()
+        val orphanedSectionsWithGoodProducts = ArrayList<String>()
+
+        if(allProducts != null)
+        {
+            goodProducts = HashMap(allProducts.filter { !it.value.GetUrl().isNullOrBlank() }.mapValues {
+                MapDataDisplayGroupImpl.MapGroupSectionImpl.MapsProductImpl(it.value.GetTitle(), it.value.GetUrl())
             })
 
-            result = LoadMapsList(inGroup, mMapsModel)
+            orphanedGoodProducts.addAll(goodProducts.keys)
+        }
 
-        }, Runnable {
-            if(result != null)
-                inListListener.ListLoaded(result?.first, result?.second)
-        })
-    }
+        if(goodProducts.isNotEmpty())
+        {
+            if(allSections != null) {
+                sectionsWithGoodProducts = HashMap(allSections.filter { it.value.GetProducts().intersect(goodProducts.keys).isNotEmpty()}
+                                                              .mapValues {
+                                                                            MapDataDisplayGroupImpl.MapGroupSectionImpl(it.value.GetTitle(), HashMap(it.value.GetProducts().filter { goodProducts.keys.contains(it) }
+                                                                                                                                                                            .associate { it to goodProducts[it]!!}))
+                                                              })
 
-
-    internal fun SectionMaps(inSection: MapsModel.SectionModel?, inProducts: Map<String, MapsModel.ProductModel>?, inShowSection: Boolean): List<Any> {
-        val result = ArrayList<Any>()
-
-        if(inSection != null && inSection.GetProducts() != null && inSection.GetProducts()!!.isNotEmpty() && inProducts != null && inProducts.isNotEmpty()) {
-            for (k in 0 until inSection.GetProducts()!!.size) {
-
-                if(inProducts.containsKey(inSection.GetProducts()!![k])) {
-                    result.add(object : MapsProductData {
-                        override fun Product(): String {
-                            return inProducts[inSection.GetProducts()!![k]]?.GetTitle()!!
-                        }
-
-                        override fun Section(): String? {
-                            return if (!inShowSection) null else inSection.GetTitle()
-
-                        }
-
-                        override fun Url(): String {
-                            return inProducts[inSection.GetProducts()!![k]]?.GetUrl()!!
-                        }
-                    })
-                }
+                sectionsWithGoodProducts.forEach{ orphanedGoodProducts.removeAll(it.value.GetProducts().keys) }
             }
         }
 
-        return result
+        if(sectionsWithGoodProducts.isNotEmpty())
+        {
+            if(allGroups != null)
+            {
+                groupsWithSectionsWithGoodProducts = ArrayList(allGroups.filter { it.GetSections().intersect(sectionsWithGoodProducts.keys).isNotEmpty() }.map {
+                    MapDataDisplayGroupImpl(it.GetTitle(), HashMap(it.GetSections().filter{sectionsWithGoodProducts.keys.contains(it)}.associate { it to sectionsWithGoodProducts[it]!! }))
+                })
+
+                groupsWithSectionsWithGoodProducts.forEach{ orphanedSectionsWithGoodProducts.removeAll(it.GetSections().keys)}
+            }
+        }
+
+        if(orphanedGoodProducts.isNotEmpty())
+        {
+            val uncategorizedKey = "uncategorized"
+            sectionsWithGoodProducts[uncategorizedKey] = MapDataDisplayGroupImpl.MapGroupSectionImpl("", HashMap(orphanedGoodProducts.associate { it to goodProducts[it]!! }))
+            orphanedSectionsWithGoodProducts.add(uncategorizedKey)
+        }
+
+        if(orphanedSectionsWithGoodProducts.isNotEmpty())
+        {
+            groupsWithSectionsWithGoodProducts.add(MapDataDisplayGroupImpl("Uncategorized", HashMap(orphanedSectionsWithGoodProducts.associate { it to sectionsWithGoodProducts[it]!! })))
+        }
+
+        return groupsWithSectionsWithGoodProducts
     }
 
 
-    internal fun LoadMapsList(inGroup: Int? = null, inMapsModel: MapsModel?): Pair<MutableList<Any>?, String?>?
+
+    class MapDataDisplayGroupImpl(var mTitle: String? = null,
+                                  var mSections: HashMap<String, MapDataDisplayGroup.MapGroupSection> = HashMap()): MapDataDisplayGroup
     {
-        val result = ArrayList<Any>()
-        var groupName: String? = null
+        override fun GetTitle(): String?
+        {
+            return mTitle
+        }
 
-        if(inMapsModel == null)
-            return null
-        else {
+        override fun GetSections(): HashMap<String, MapDataDisplayGroup.MapGroupSection>
+        {
+            return mSections
+        }
 
-            val main = inMapsModel.GetMain()
-            val sections = inMapsModel.GetSections()
-            val products = inMapsModel.GetProducts()
 
-            if (main != null && main.isNotEmpty()) {
-                if (inGroup != null && inGroup >= 0 && inGroup < main.size) {
-                    val sectionIds = main[inGroup].GetSections()
 
-                    groupName = main[inGroup].GetTitle()
+        class MapGroupSectionImpl(var mTitle: String? = null, var mProducts: HashMap<String, MapDataDisplayGroup.MapGroupSection.MapsProduct> = HashMap()): MapDataDisplayGroup.MapGroupSection
+        {
+            override fun GetTitle(): String?
+            {
+                return mTitle
+            }
 
-                    if(sectionIds != null && sectionIds.isNotEmpty() && sections != null && sections.isEmpty()) {
-                        for (i in sectionIds.indices) {
-                            if(sections.containsKey(sectionIds[i])) {
-                                val section = sections[sectionIds[i]]
+            override fun GetProducts(): HashMap<String, MapDataDisplayGroup.MapGroupSection.MapsProduct>
+            {
+                return mProducts
+            }
 
-                                if (section != null) {
-                                    val sectionResults = SectionMaps(section, products, false)
-                                    if (sectionResults.isNotEmpty()) {
-                                        if (section.GetTitle() != null && !section.GetTitle()!!.isEmpty())
-                                            result.add(section.GetTitle()!!)
 
-                                        result.addAll(sectionResults)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    for (i in main.indices) {
 
-                        val mainSections = main[i].GetSections()
+            class MapsProductImpl(var mTitle: String? = null, var mImageUrl: String? = null): MapDataDisplayGroup.MapGroupSection.MapsProduct
+            {
+                override fun GetTitle(): String? {
+                    return mTitle
+                }
 
-                        if (mainSections != null && mainSections.isNotEmpty()) {
-
-                            val sectionProducts = ArrayList<Any>()
-                            if(sections != null) {
-                                for (j in mainSections.indices) {
-                                    val section = sections[mainSections[j]]
-                                    val sectionList = SectionMaps(section, products, true)
-                                    if (sectionList.isNotEmpty() && sections.containsKey(mainSections[j]) && sections[mainSections[j]] != null) {
-
-                                        sectionProducts.addAll(sectionList)
-                                    }
-                                }
-
-                                if (sectionProducts.isNotEmpty()) {
-                                    main[i].GetTitle()?.let { result.add(it) }
-                                    result.add(Pair<Int, List<Any>>(i, sectionProducts))
-                                }
-                            }
-                        }
-                    }
+                override fun GetImageUrl(): String? {
+                    return mImageUrl
                 }
             }
         }
-
-        if(result.isEmpty())
-            return null
-
-        return Pair(result, groupName)
     }
 
 
-    interface MapsListListener {
-        fun ListLoaded(inMapsList: MutableList<Any>?, inGroupName: String? = null)
-    }
+    interface MapDataDisplayGroup
+    {
+        fun GetTitle(): String?
+        fun GetSections(): HashMap<String, MapGroupSection>
 
 
-    interface MapsProductData {
-        fun Product(): String
-        fun Section(): String?
-        fun Url(): String
+        interface MapGroupSection
+        {
+            fun GetTitle(): String?
+            fun GetProducts(): HashMap<String, MapsProduct>
+
+
+            interface MapsProduct
+            {
+                fun GetTitle(): String?
+                fun GetImageUrl(): String?
+            }
+        }
     }
 }

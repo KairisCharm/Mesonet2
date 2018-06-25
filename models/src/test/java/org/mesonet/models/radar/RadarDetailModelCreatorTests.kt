@@ -1,7 +1,6 @@
 package org.mesonet.models.radar
 
 import android.util.Xml
-import junit.framework.TestCase
 import junit.framework.TestCase.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +15,7 @@ class RadarDetailModelCreatorTests
     @Test
     fun ParseEmptyRadarDetail()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream("".toByteArray(StandardCharsets.UTF_8)), null)
 
@@ -33,7 +32,7 @@ class RadarDetailModelCreatorTests
     @Test
     fun ParseBadRadarDetail()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream("ERROR!!! ERROR!!! ERROR!!!".toByteArray(StandardCharsets.UTF_8)), null)
 
@@ -49,7 +48,7 @@ class RadarDetailModelCreatorTests
     @Test
     fun ParseRadarDetailWithKeyPrefix()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<key>KFDR</key>\n" +
                 "        <dict>\n" +
@@ -85,7 +84,7 @@ class RadarDetailModelCreatorTests
 
     fun ParseRadarDetailWithDictPrefix()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<dict>KFDR</dict>\n" +
                 "        <dict>\n" +
@@ -121,7 +120,7 @@ class RadarDetailModelCreatorTests
 
     fun ParseRadarDetailWithBadEntry()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("        <dict>\n" +
                 "            <key>state</key>\n" +
@@ -150,7 +149,7 @@ class RadarDetailModelCreatorTests
     @Test
     fun EmptyFileTests()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream("".toByteArray(StandardCharsets.UTF_8)), null)
 
@@ -164,7 +163,7 @@ class RadarDetailModelCreatorTests
     @Test
     fun BadXmlTests()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream("bad file bad file bad file".toByteArray(StandardCharsets.UTF_8)), null)
 
@@ -178,7 +177,7 @@ class RadarDetailModelCreatorTests
     @Test
     fun IncompatibleXmlTests()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
@@ -194,7 +193,7 @@ class RadarDetailModelCreatorTests
     @Test
     fun PartlyBadXmlTests()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +
@@ -259,7 +258,7 @@ class RadarDetailModelCreatorTests
     @Test
     fun PartlyBadRadarInfoTests()
     {
-        val creator = RadarDetailModelCreator()
+        val creator = RadarDetailModelCreatorFactory()
         val parser = Xml.newPullParser()
         parser.setInput(ByteArrayInputStream(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n" +

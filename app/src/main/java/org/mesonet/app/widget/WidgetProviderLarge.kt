@@ -9,7 +9,7 @@ import android.os.Looper
 import android.widget.RemoteViews
 import com.squareup.picasso.Picasso
 import org.mesonet.app.R
-import org.mesonet.app.WidgetProvider
+import org.mesonet.app.widget.WidgetProvider
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController
 import java.util.*

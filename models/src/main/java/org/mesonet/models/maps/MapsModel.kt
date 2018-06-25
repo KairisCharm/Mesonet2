@@ -3,71 +3,75 @@ package org.mesonet.models.maps
 
 import com.google.gson.annotations.SerializedName
 
-class MapsModel {
+class MapsModel: MapsList
+{
     @SerializedName("main")
     private val mMain: List<MainModel>? = null
 
     @SerializedName("sections")
-    private val mSections: Map<String, SectionModel>? = null
+    private lateinit var mSections: Map<String, SectionModel>
 
     @SerializedName("products")
-    private val mProducts: Map<String, ProductModel>? = null
+    private lateinit var mProducts: Map<String, ProductModel>
 
 
-    fun GetMain(): List<MainModel>? {
+    override fun GetMain(): List<MapsList.Group>? {
         return mMain
     }
 
 
-    fun GetSections(): Map<String, SectionModel>? {
+    override fun GetSections(): Map<String, MapsList.GroupSection> {
         return mSections
     }
 
-
-    fun GetProducts(): Map<String, ProductModel>? {
+    override fun GetProducts(): Map<String, MapsList.Product>
+    {
         return mProducts
     }
 
 
-    class MainModel {
+
+    class MainModel: MapsList.Group {
         @SerializedName("sections")
-        private val mSections: List<String>? = null
+        private lateinit var mSections: List<String>
 
         @SerializedName("title")
-        private val mTitle: String? = null
+        private lateinit var mTitle: String
 
 
-        fun GetSections(): List<String>? {
+        override fun GetSections(): List<String> {
             return mSections
         }
 
 
-        fun GetTitle(): String? {
+        override fun GetTitle(): String? {
             return mTitle
         }
     }
 
 
-    class SectionModel {
+    class SectionModel: MapsList.GroupSection {
         @SerializedName("title")
         private var mTitle: String? = null
 
         @SerializedName("products")
-        private val mProducts: List<String>? = null
+        private lateinit var mProducts: List<String>
 
 
-        fun GetTitle(): String? {
+        override fun GetTitle(): String?
+        {
             return mTitle
         }
 
 
-        fun GetProducts(): List<String>? {
+        override fun GetProducts(): List<String>
+        {
             return mProducts
         }
     }
 
 
-    class ProductModel {
+    class ProductModel: MapsList.Product {
         @SerializedName("url")
         private var mUrl: String? = null
 
@@ -75,13 +79,13 @@ class MapsModel {
         private var mTitle: String? = null
 
 
-        fun GetUrl(): String?
+        override fun GetUrl(): String?
         {
             return mUrl
         }
 
 
-        fun GetTitle(): String?
+        override fun GetTitle(): String?
         {
             return mTitle
         }

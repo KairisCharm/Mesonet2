@@ -1,11 +1,14 @@
 package org.mesonet.cache.site
 
-
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.schedulers.Schedulers
 import org.mesonet.cache.Cacher
-import org.mesonet.models.site.MesonetSiteListModel
+import org.mesonet.models.site.MesonetSiteList
 
 import javax.inject.Inject
 import javax.inject.Singleton
+
 
 
 @Singleton
@@ -18,72 +21,30 @@ constructor() {
     internal lateinit var mConverter: SiteListConverter
 
 
-    fun SaveSites(inMesonetSites: MesonetSiteListModel) {
-        mCacher.SaveToCache(object : Cacher.CacheDataProvider<SiteRealmModel> {
-            override fun ListToCache(): List<SiteRealmModel> {
-                return mConverter.FavoriteToRealmModels(inMesonetSites)
-            }
-
-            override fun GetClass(): Class<SiteRealmModel> {
-                return SiteRealmModel::class.java
-            }
-        })
+    fun SaveSites(inMesonetSites: MesonetSiteList): Observable<Void> {
+        return Observable.create(ObservableOnSubscribe<Void> {
+            mCacher.SaveToCache(SiteRealmModel::class.java, mConverter.SitesToRealmModels(inMesonetSites))
+        }).subscribeOn(Schedulers.computation())
     }
 
 
-    fun GetSites(inSitesCacheListener: SitesCacheListener) {
-        mCacher.FindAll(object : Cacher.FindAllListener<SiteRealmModel, MesonetSiteListModel> {
-            override fun GetClass(): Class<SiteRealmModel> {
-                return SiteRealmModel::class.java
-            }
-
-            override fun Found(inResults: MesonetSiteListModel) {
-                inSitesCacheListener.SitesLoaded(inResults)
-            }
-
-            override fun Process(inResults: MutableList<SiteRealmModel>): MesonetSiteListModel {
-                return mConverter.SiteFromRealmModels(inResults)
-            }
-        })
+    fun GetSites(): Observable<MesonetSiteList> {
+        return mCacher.FindAll(SiteRealmModel::class.java).observeOn(Schedulers.computation()).map{
+            mConverter.SitesFromRealmModels(it)
+        }
     }
 
 
-    fun SaveFavorites(inFavorites: List<String>) {
-        mCacher.SaveToCache(object : Cacher.CacheDataProvider<FavoriteSiteRealmModel> {
-            override fun ListToCache(): List<FavoriteSiteRealmModel> {
-                return mConverter.FavoriteToRealmModels(inFavorites)
-            }
-
-            override fun GetClass(): Class<FavoriteSiteRealmModel> {
-                return FavoriteSiteRealmModel::class.java
-            }
-        })
+    fun SaveFavorites(inFavorites: List<String>): Observable<Void> {
+        return Observable.create(ObservableOnSubscribe<Void> {
+            mCacher.SaveToCache(FavoriteSiteRealmModel::class.java, mConverter.FavoritesToRealmModels(inFavorites))
+        }).subscribeOn(Schedulers.computation())
     }
 
 
-    fun GetFavorites(inFavoritesCacheListener: FavoritesCacheListener) {
-        mCacher.FindAll(object : Cacher.FindAllListener<FavoriteSiteRealmModel, MutableList<String>> {
-            override fun GetClass(): Class<FavoriteSiteRealmModel> {
-                return FavoriteSiteRealmModel::class.java
-            }
-
-            override fun Found(inResults: MutableList<String>) {
-                inFavoritesCacheListener.FavoritesLoaded(inResults)
-            }
-
-            override fun Process(inResults: MutableList<FavoriteSiteRealmModel>): MutableList<String> {
-                return mConverter.FavoriteFromRealmModels(inResults)
-            }
-        })
-    }
-
-
-    interface SitesCacheListener {
-        fun SitesLoaded(inSiteResults: MesonetSiteListModel)
-    }
-
-
-    interface FavoritesCacheListener {
-        fun FavoritesLoaded(inResults: MutableList<String>)
+    fun GetFavorites(): Observable<MutableList<String>> {
+        return mCacher.FindAll(FavoriteSiteRealmModel::class.java).observeOn(Schedulers.computation()).map {
+            mConverter.FavoriteFromRealmModels(it)
+        }
     }
 }

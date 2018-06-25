@@ -1,31 +1,35 @@
 package org.mesonet.dataprocessing.site.forecast
 
 import android.content.Context
+
+
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
 import org.mesonet.core.DefaultUnits
-import org.mesonet.core.ThreadHandler
-
 import java.util.Locale
-import java.util.Observable
-import org.mesonet.dataprocessing.formulas.UnitConverter
 
+import org.mesonet.dataprocessing.formulas.UnitConverter
 import org.mesonet.dataprocessing.R
+
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.site.forecast.Forecast
-
-
-class SemiDayForecastDataController(private var mContext: Context?, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, private var mForecast: Forecast, private var mThreadHandler: ThreadHandler) : Observable(), ForecastData {
-
+class SemiDayForecastDataController(private var mContext: Context?, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, private var mForecast: Forecast) : Observable<ForecastData>(), ForecastData {
     private var mTime: String = ""
+
     private var mIconUrl: String = ""
     private var mStatus: String = ""
     private var mHighOrLow: String = ""
     private var mTemp: String = ""
     private var mWindDescription: String = ""
-
     init {
-        mThreadHandler.Run("ForecastData", Runnable {
+        Observable.create(ObservableOnSubscribe<Void>{
             SetData(mForecast)
-        })
+        }).subscribe()
+    }
+
+    override fun subscribeActual(observer: Observer<in ForecastData>?) {
+        observer?.onNext(this)
     }
 
     internal fun SetData(inForecast: Forecast) {
@@ -38,8 +42,8 @@ class SemiDayForecastDataController(private var mContext: Context?, private var 
                 if (mContext != null && mContext!!.resources.getBoolean(R.bool.forceWrapForecasts) && !mTime.contains(" "))
                     mTime += "\n"
 
-                if(mForecast.GetIconUrl() != null)
-                    mIconUrl = mForecast.GetIconUrl()!!.replace("http://www.nws.noaa.gov/weather/images/fcicons", "http://www.mesonet.org/images/fcicons-android").replace(".jpg", "@4x.png")
+                if(mForecast.GetIconId() != null)
+                    mIconUrl = mForecast.GetIconId()!!.replace("http://www.nws.noaa.gov/weather/images/fcicons", "http://www.mesonet.org/images/fcicons-android").replace(".jpg", "@4x.png")
 
                 if(mForecast.GetStatus() != null)
                     mStatus = mForecast.GetStatus() + "\n"
@@ -100,9 +104,6 @@ class SemiDayForecastDataController(private var mContext: Context?, private var 
                     mWindDescription = "Wind " + directionDesc + " " + finalWindSpdValue + " " + unit
 
                 }
-
-                setChanged()
-                notifyObservers()
             }
 
         })
@@ -131,9 +132,5 @@ class SemiDayForecastDataController(private var mContext: Context?, private var 
 
     override fun GetWindDescription(): String {
         return mWindDescription
-    }
-
-    override fun GetObservable(): Observable {
-        return this
     }
 }
