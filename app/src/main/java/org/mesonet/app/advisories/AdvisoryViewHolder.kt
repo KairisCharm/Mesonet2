@@ -1,6 +1,5 @@
 package org.mesonet.app.advisories
 
-
 import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
@@ -11,26 +10,24 @@ import org.mesonet.app.R
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.AdvisoryViewHolderBinding
 import org.mesonet.app.webview.WebViewActivity
-import org.mesonet.dataprocessiFilenamevisories.AdvisoryDisplayListBuilder
+import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilder
 
 class AdvisoryViewHolder(inBinding: AdvisoryViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>, AdvisoryViewHolderBinding>(inBinding) {
 
 
-    override fun SetData(inData: Any?) {
-        if(inData != null && inData is Pair<*,*> && inData.first is AdvisoryDisplayListBuilder.AdvisoryDataType && inData.second is AdvisoryDisplayListBuilder.AdvisoryData) {
-            val binding = GetBinding()
+    override fun SetData(inData: Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>) {
+        val binding = GetBinding()
 
-            if(binding != null) {
-                val advisoryData = inData.second as AdvisoryDisplayListBuilder.AdvisoryData
-                binding.countyListTextView.text = advisoryData.Counties()
+        if(binding != null) {
+            val advisoryData = inData.second
+            binding.countyListTextView.text = advisoryData.Counties()
 
-                binding.root.setOnClickListener {
-                    val intent = Intent(binding.root.context, WebViewActivity::class.java)
-                    intent.putExtra(WebViewActivity.kTitle, advisoryData.AdvisoryType())
-                    intent.putExtra(WebViewActivity.kUrl, advisoryData.Url())
-                    intent.putExtra(WebViewActivity.kUseGoogleDocs, true)
-                    binding.root.context.startActivity(intent)
-                }
+            binding.root.setOnClickListener {
+                val intent = Intent(binding.root.context, WebViewActivity::class.java)
+                intent.putExtra(WebViewActivity.kTitle, advisoryData.AdvisoryType())
+                intent.putExtra(WebViewActivity.kUrl, advisoryData.Url())
+                intent.putExtra(WebViewActivity.kUseGoogleDocs, true)
+                binding.root.context.startActivity(intent)
             }
         }
     }

@@ -4,7 +4,7 @@ import android.view.ViewGroup
 
 import org.mesonet.app.baseclasses.RecyclerViewAdapter
 import org.mesonet.app.baseclasses.RecyclerViewHolder
-import org.mesonet.dataprocessiFilenamevisories.AdvisoryDisplayListBuilder
+import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilder
 
 
 class AdvisoriesRecyclerViewAdapter : RecyclerViewAdapter<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>, RecyclerViewHolder<Any, *>>() {

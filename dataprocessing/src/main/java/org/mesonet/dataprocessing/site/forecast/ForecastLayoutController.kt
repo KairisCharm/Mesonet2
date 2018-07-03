@@ -3,40 +3,47 @@ package org.mesonet.dataprocessing.site.forecast
 import android.content.Context
 import android.os.Build
 import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
+import io.reactivex.schedulers.Schedulers
 import org.mesonet.dataprocessing.R
 import org.mesonet.models.site.forecast.Forecast
 
 
 
-class ForecastLayoutController constructor(private var mContext: Context, private var mForecastDataObservable: Observable<ForecastData>): Observable<ForecastLayoutController.ForecastDisplayData>()
+class ForecastLayoutController constructor(private var mContext: Context, private var mForecastData: ForecastData)
 {
-    override fun subscribeActual(observer: Observer<in ForecastDisplayData>?) {
-        if(observer != null) {
-            mForecastDataObservable.map {
-                val forecastData = ForecastDisplayDataImpl()
-                forecastData.mImageUrl = it.GetIconUrl()
+    private var mForecastDataObservable = Observable.create(ObservableOnSubscribe<ForecastDisplayData>{
+        val forecastData = ForecastDisplayDataImpl()
+        forecastData.mImageUrl = mForecastData.GetIconUrl()
 
-                var colorResource = R.color.colorPrimary
+        var colorResource = R.color.colorPrimary
 
-                if (!it.GetHighOrLow().isEmpty()) {
-                    val highOrLow = Forecast.HighOrLow.valueOf(it.GetHighOrLow())
+        if (!mForecastData.GetHighOrLow().isEmpty()) {
+            val highOrLow = Forecast.HighOrLow.valueOf(mForecastData.GetHighOrLow())
 
-                    colorResource = when (highOrLow) {
-                        Forecast.HighOrLow.High -> R.color.forecastDayBackground
-                        Forecast.HighOrLow.Low -> R.color.forecastNightBackground
-                    }
-                }
-
-                forecastData.mBackgroundColor =
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                            mContext.resources.getColor(colorResource, mContext.theme)
-                        else
-                            mContext.resources.getColor(colorResource)
-
-                forecastData
-            }.subscribe(observer)
+            colorResource = when (highOrLow) {
+                Forecast.HighOrLow.High -> R.color.forecastDayBackground
+                Forecast.HighOrLow.Low -> R.color.forecastNightBackground
+            }
         }
+
+        forecastData.mForecastData = mForecastData
+
+        forecastData.mBackgroundColor =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                    mContext.resources.getColor(colorResource, mContext.theme)
+                else
+                    mContext.resources.getColor(colorResource)
+
+
+        it.onNext(forecastData)
+    }).subscribeOn(Schedulers.computation())
+
+
+    fun GetForecastObservable(): Observable<ForecastDisplayData>
+    {
+        return mForecastDataObservable
     }
 
 

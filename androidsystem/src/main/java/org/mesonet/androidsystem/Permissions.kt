@@ -6,74 +6,61 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import org.mesonet.core.PerActivity
-import org.mesonet.core.ThreadHandler
-
-import java.util.ArrayList
-import java.util.HashMap
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.schedulers.Schedulers
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class Permissions @Inject
-constructor(private var mThreadHandler: ThreadHandler) {
-  private val mPermissionsListeners = HashMap<String, MutableList<PermissionListener>>()
+constructor() {
+    private val mPermissionsObservers = HashMap<String, MutableList<Observer<Boolean>>>()
 
 
-  fun RequestPermission(inPermission: String, inListener: PermissionListener) {
-    mThreadHandler.Run("AndroidSystem", Runnable {
-      if (!mPermissionsListeners.containsKey(inPermission))
-        mPermissionsListeners[inPermission] = ArrayList()
+    fun RequestPermission(inContext: Context, inPermission: String): Observable<Boolean> {
+        return Observable.create(ObservableOnSubscribe<Boolean> {
+            synchronized(Permissions@this)
+            {
+                if (!mPermissionsObservers.containsKey(inPermission))
+                    mPermissionsObservers[inPermission] = ArrayList()
 
-      if (!mPermissionsListeners[inPermission]?.contains(inListener)!!)
-        mPermissionsListeners[inPermission]?.add(inListener)
+                if (!mPermissionsObservers[inPermission]!!.contains(it as Observer<*>))
+                    mPermissionsObservers[inPermission]!!.add(it as Observer<Boolean>)
 
-      val context = inListener.GetContext()
-      if (ContextCompat.checkSelfPermission(context, inPermission) != PackageManager.PERMISSION_GRANTED)
-      {
-        if(context is Activity) {
-          ActivityCompat.requestPermissions(context,
-                  arrayOf(inPermission),
-                  0)
-        }
-        else
-        {
-          inListener.PermissionDenied()
-        }
-      } else {
-        inListener.PermissionGranted()
-      }
-    })
-  }
-
-
-  fun ProcessPermissionResponse(inPermissions: Array<String>, inGrantResults: IntArray) {
-    mThreadHandler.Run("AndroidSystem", Runnable {
-      for (i in inPermissions.indices) {
-        if (mPermissionsListeners.containsKey(inPermissions[i])) {
-          val permissionListeners = mPermissionsListeners[inPermissions[i]]
-
-          val j = 0
-          if (permissionListeners != null) {
-            while (j < permissionListeners.size) {
-              if (inGrantResults[i] == PackageManager.PERMISSION_GRANTED)
-                permissionListeners.get(j).PermissionGranted()
-              else
-                permissionListeners.get(j).PermissionDenied()
-
-              permissionListeners.removeAt(j)
+                if (ContextCompat.checkSelfPermission(inContext, inPermission) != PackageManager.PERMISSION_GRANTED) {
+                    if (inContext is Activity) {
+                        ActivityCompat.requestPermissions(inContext,
+                                arrayOf(inPermission),
+                                0)
+                    } else {
+                        it.onNext(false)
+                    }
+                } else {
+                    it.onNext(false)
+                }
             }
-          }
-        }
-      }
-    })
-  }
+        }).observeOn(Schedulers.computation())
+    }
 
 
-  interface PermissionListener {
-    fun GetContext(): Context
-    fun PermissionGranted()
-    fun PermissionDenied()
-  }
+    fun ProcessPermissionResponse(inPermissions: Array<String>, inGrantResults: IntArray) {
+        Observable.create(ObservableOnSubscribe<Void> {
+            for (i in inPermissions.indices) {
+                if (mPermissionsObservers.containsKey(inPermissions[i])) {
+                    val permissionListeners = mPermissionsObservers[inPermissions[i]]
+
+                    val j = 0
+                    if (permissionListeners != null) {
+                        while (j < permissionListeners.size) {
+                            permissionListeners.get(j).onNext(inGrantResults[i] == PackageManager.PERMISSION_GRANTED)
+                            permissionListeners.removeAt(j)
+                        }
+                    }
+                }
+            }
+        }).subscribeOn(Schedulers.computation()).subscribe()
+    }
 }

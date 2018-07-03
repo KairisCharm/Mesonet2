@@ -9,10 +9,10 @@ interface Preferences {
     }
 
 
+    fun UnitPreferencesObservable(): Observable<UnitPreference>
     fun SetUnitPreference(inPreference: UnitPreference)
-    fun GetSelectedStid()
+    fun SelectedStidObservable(): Observable<String>
     fun SetSelectedStid(inStid: String)
-    fun GetSelectedRadar()
+    fun SelectedRadarObservable(): Observable<String>
     fun SetSelectedRadar(inRadarName: String)
-    fun GetUnitPreferencesObservable(): Observable<UnitPreference>
 }

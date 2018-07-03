@@ -31,259 +31,254 @@ import org.mesonet.dataprocessing.maps.MapsDataProvider
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import android.content.res.Configuration
 import android.view.Gravity
+import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import org.mesonet.app.contact.ContactActivity
 import org.mesonet.app.usersettings.UserSettingsActivity
-import java.util.*
+import org.mesonet.models.advisories.Advisory
+import java.util.concurrent.TimeUnit
 
 
-class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer {
+class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer<List<Advisory>> {
 
-  private val kSelectedTabId = "selectedTabId"
+    private val kSelectedTabId = "selectedTabId"
 
-  private var mBinding: MainActivityBinding? = null
+    private var mBinding: MainActivityBinding? = null
 
-  private var mActionBarDrawerToggle: ActionBarDrawerToggle? = null
-
-
-  @Inject
-  internal lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
-
-  @Inject
-  internal lateinit var mMapsDataProvider: MapsDataProvider
-
-  @Inject
-  internal lateinit var mMesonetSiteDataProvider: MesonetSiteDataController
+    private var mActionBarDrawerToggle: ActionBarDrawerToggle? = null
 
 
-  public override fun onCreate(inSavedInstanceState: Bundle?) {
+    @Inject
+    internal lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
 
-    super.onCreate(inSavedInstanceState)
+    @Inject
+    internal lateinit var mMapsDataProvider: MapsDataProvider
 
-    var selectedTab = R.id.mesonetOption
+    @Inject
+    internal lateinit var mMesonetSiteDataProvider: MesonetSiteDataController
 
-    if(inSavedInstanceState != null)
-      selectedTab = inSavedInstanceState.getInt(kSelectedTabId)
-
-    LoadBinding(selectedTab)
-
-    mAdvisoryDataProvider.addObserver(this)
-  }
+    private var mAdvisoryDisposable: Disposable? = null
 
 
-  public override fun onResume() {
-    super.onResume()
-    mAdvisoryDataProvider.StartUpdates()
-  }
+    public override fun onCreate(inSavedInstanceState: Bundle?) {
 
+        super.onCreate(inSavedInstanceState)
 
-  public override fun onPause() {
-    super.onPause()
-    mAdvisoryDataProvider.StopUpdates()
-  }
+        var selectedTab = R.id.mesonetOption
 
+        if (inSavedInstanceState != null)
+            selectedTab = inSavedInstanceState.getInt(kSelectedTabId)
 
+        LoadBinding(selectedTab)
 
-  private fun LoadBinding(inSelectedTab: Int)
-  {
-    var fragment: Fragment? = null
-
-    when (inSelectedTab) {
-      R.id.mesonetOption -> fragment = SiteOverviewFragment()
-
-      R.id.mapsOption -> fragment = MapListFragment()
-
-      R.id.radarOption -> fragment = RadarFragment()
-
-      R.id.advisoriesOption -> fragment = AdvisoriesFragment()
+        mAdvisoryDisposable = Observable.timer(1, TimeUnit.MINUTES).subscribe {
+            mAdvisoryDataProvider.observeOn(AndroidSchedulers.mainThread()).subscribe(this)
+        }
     }
 
-    if(fragment != null) {
-      val fragmentTransaction = supportFragmentManager.beginTransaction()
-      fragmentTransaction.replace(R.id.fragmentLayout, fragment)
-      fragmentTransaction.commit()
-    }
 
-    mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity)
 
-    mBinding!!.toolBar.inflateMenu(R.menu.ticker_menu)
-    mBinding!!.toolBar.setOnMenuItemClickListener(this)
+    private fun LoadBinding(inSelectedTab: Int) {
+        var fragment: Fragment? = null
 
-    setSupportActionBar(mBinding!!.toolBar)
+        when (inSelectedTab) {
+            R.id.mesonetOption -> fragment = SiteOverviewFragment()
 
-    val actionBar = supportActionBar
+            R.id.mapsOption -> fragment = MapListFragment()
 
-    if (actionBar != null) {
-      mActionBarDrawerToggle = object : ActionBarDrawerToggle(this, mBinding!!.drawer, mBinding!!.toolBar, R.string.app_name, R.string.app_name) {
-        override fun onDrawerClosed(drawerView: View) {
-          syncState()
+            R.id.radarOption -> fragment = RadarFragment()
+
+            R.id.advisoriesOption -> fragment = AdvisoriesFragment()
         }
 
-        override fun onDrawerOpened(drawerView: View) {
-          syncState()
+        if (fragment != null) {
+            val fragmentTransaction = supportFragmentManager.beginTransaction()
+            fragmentTransaction.replace(R.id.fragmentLayout, fragment)
+            fragmentTransaction.commit()
         }
-      }
 
-      mActionBarDrawerToggle!!.isDrawerIndicatorEnabled = true
-      actionBar.setDisplayHomeAsUpEnabled(true)
-      actionBar.setHomeButtonEnabled(true)
+        mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity)
 
-      mBinding!!.drawer.addDrawerListener(mActionBarDrawerToggle!!)
-      mBinding!!.drawerNavView.setNavigationItemSelectedListener(this)
-      mActionBarDrawerToggle!!.syncState()
+        mBinding!!.toolBar.inflateMenu(R.menu.ticker_menu)
+        mBinding!!.toolBar.setOnMenuItemClickListener(this)
+
+        setSupportActionBar(mBinding!!.toolBar)
+
+        val actionBar = supportActionBar
+
+        if (actionBar != null) {
+            mActionBarDrawerToggle = object : ActionBarDrawerToggle(this, mBinding!!.drawer, mBinding!!.toolBar, R.string.app_name, R.string.app_name) {
+                override fun onDrawerClosed(drawerView: View) {
+                    syncState()
+                }
+
+                override fun onDrawerOpened(drawerView: View) {
+                    syncState()
+                }
+            }
+
+            mActionBarDrawerToggle!!.isDrawerIndicatorEnabled = true
+            actionBar.setDisplayHomeAsUpEnabled(true)
+            actionBar.setHomeButtonEnabled(true)
+
+            mBinding!!.drawer.addDrawerListener(mActionBarDrawerToggle!!)
+            mBinding!!.drawerNavView.setNavigationItemSelectedListener(this)
+            mActionBarDrawerToggle!!.syncState()
+        }
+
+        mBinding!!.bottomNav.setOnNavigationItemSelectedListener { inItem ->
+            var fragment: Fragment? = null
+
+            when (inItem.itemId) {
+                R.id.mesonetOption -> fragment = SiteOverviewFragment()
+
+                R.id.mapsOption -> fragment = MapListFragment()
+
+                R.id.radarOption -> fragment = RadarFragment()
+
+                R.id.advisoriesOption -> fragment = AdvisoriesFragment()
+            }
+
+            if (fragment != null) {
+                val fragmentTransaction = supportFragmentManager.beginTransaction()
+                fragmentTransaction.replace(R.id.fragmentLayout, fragment)
+                fragmentTransaction.commit()
+            }
+
+            true
+        }
+
+        mBinding!!.bottomNav.itemIconTintList = null
+
+        val menuView = mBinding!!.bottomNav.getChildAt(0) as BottomNavigationMenuView
+
+
+        for (i in 0 until mBinding!!.bottomNav.menu.size()) {
+            val iconView = menuView.getChildAt(i).findViewById<View>(android.support.design.R.id.icon)
+            val layoutParams = iconView.layoutParams
+            val displayMetrics = resources.displayMetrics
+            layoutParams.height = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f, displayMetrics).toInt()
+            layoutParams.width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f, displayMetrics).toInt()
+            iconView.layoutParams = layoutParams
+        }
     }
 
-    mBinding!!.bottomNav.setOnNavigationItemSelectedListener { inItem ->
-      var fragment: Fragment? = null
 
-      when (inItem.itemId) {
-        R.id.mesonetOption -> fragment = SiteOverviewFragment()
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
 
-        R.id.mapsOption -> fragment = MapListFragment()
+        var selectedTab: Int = R.id.mesonetOption
 
-        R.id.radarOption -> fragment = RadarFragment()
+        if (mBinding != null)
+            selectedTab = mBinding?.bottomNav?.selectedItemId!!
 
-        R.id.advisoriesOption -> fragment = AdvisoriesFragment()
-      }
-
-      if (fragment != null) {
-        val fragmentTransaction = supportFragmentManager.beginTransaction()
-        fragmentTransaction.replace(R.id.fragmentLayout, fragment)
-        fragmentTransaction.commit()
-      }
-
-      true
+        LoadBinding(selectedTab)
     }
 
-    mBinding!!.bottomNav.itemIconTintList = null
 
-    val menuView = mBinding!!.bottomNav.getChildAt(0) as BottomNavigationMenuView
-
-
-    for (i in 0 until mBinding!!.bottomNav.menu.size()) {
-      val iconView = menuView.getChildAt(i).findViewById<View>(android.support.design.R.id.icon)
-      val layoutParams = iconView.layoutParams
-      val displayMetrics = resources.displayMetrics
-      layoutParams.height = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f, displayMetrics).toInt()
-      layoutParams.width = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 32f, displayMetrics).toInt()
-      iconView.layoutParams = layoutParams
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(kSelectedTabId, mBinding?.bottomNav?.selectedItemId!!)
+        super.onSaveInstanceState(outState)
     }
-  }
 
 
-  override fun onConfigurationChanged(newConfig: Configuration) {
-    super.onConfigurationChanged(newConfig)
-
-    var selectedTab: Int = R.id.mesonetOption
-
-    if(mBinding != null)
-      selectedTab = mBinding?.bottomNav?.selectedItemId!!
-
-    LoadBinding(selectedTab)
-  }
+    fun CloseKeyboard() {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(mBinding?.root?.windowToken, 0)
+    }
 
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.ticker_menu, menu)
+        return true
+    }
 
-  override fun onSaveInstanceState(outState: Bundle)
-  {
-    outState.putInt(kSelectedTabId, mBinding?.bottomNav?.selectedItemId!!)
-    super.onSaveInstanceState(outState)
-  }
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
-
-  fun CloseKeyboard()
-  {
-    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-    imm.hideSoftInputFromWindow(mBinding?.root?.windowToken, 0)
-  }
-
-
-  override fun onCreateOptionsMenu(menu: Menu): Boolean {
-    menuInflater.inflate(R.menu.ticker_menu, menu)
-    return true
-  }
-
-  override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
-    val intent = Intent(baseContext, WebViewActivity::class.java)
-    intent.putExtra(WebViewActivity.kTitle, "Ticker")
-    intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt")
-    startActivity(intent)
-
-    return super.onOptionsItemSelected(item)
-  }
-
-
-  public override fun onDestroy() {
-    mBinding!!.drawer.removeDrawerListener(mActionBarDrawerToggle!!)
-
-    mActionBarDrawerToggle = null
-
-    mAdvisoryDataProvider.StopUpdates()
-
-    super.onDestroy()
-  }
-
-
-  override fun onNavigationItemSelected(inMenuItem: MenuItem): Boolean {
-    when (inMenuItem.itemId) {
-      R.id.userSettings -> {
-        val userSettingsIntent = Intent(baseContext, UserSettingsActivity::class.java)
-
-        startActivity(userSettingsIntent)
-      }
-      R.id.contact -> {
-        val contactIntent = Intent(baseContext, ContactActivity::class.java)
-
-        startActivity(contactIntent)
-      }
-      R.id.about -> {
         val intent = Intent(baseContext, WebViewActivity::class.java)
-        intent.putExtra(WebViewActivity.kTitle, getString(R.string.AboutAndTermsOfUse))
-        intent.putExtra(WebViewActivity.kRaw, "file:///android_res/raw/about.html")
+        intent.putExtra(WebViewActivity.kTitle, "Ticker")
+        intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt")
         startActivity(intent)
-      }
-    }//            case R.id.metricUnits:
-    //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kMetric.name());
-    //                mPreferencesObservable.notifyObservers();
-    //                break;
-    //            case R.id.imperialUnits:
-    //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kImperial.name());
-    //                mPreferencesObservable.notifyObservers();
-    //                break;
 
-    mBinding?.drawer?.closeDrawer(Gravity.START)
-    return false
-  }
-
-  override fun onMenuItemClick(item: MenuItem): Boolean {
-    val intent = Intent(baseContext, WebViewActivity::class.java)
-    intent.putExtra(WebViewActivity.kTitle, "Ticker")
-    intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt")
-    startActivity(intent)
-    return false
-  }
+        return super.onOptionsItemSelected(item)
+    }
 
 
-  override fun NavigateToPage(inFragment: Fragment, inPushToBackStack: Boolean, @AnimRes inAnimationIn: Int, @AnimRes inAnimationOut: Int) {
-    val fragmentTransaction = supportFragmentManager.beginTransaction()
+    public override fun onDestroy() {
+        mBinding!!.drawer.removeDrawerListener(mActionBarDrawerToggle!!)
 
-    if (inAnimationIn != 0 || inAnimationOut != 0)
-      fragmentTransaction.setCustomAnimations(inAnimationIn, inAnimationOut)
+        mActionBarDrawerToggle = null
 
-    fragmentTransaction.replace(R.id.fragmentLayout, inFragment)
+        mAdvisoryDisposable?.dispose()
 
-    if (inPushToBackStack)
-      fragmentTransaction.addToBackStack(inFragment.javaClass.name)
-    fragmentTransaction.commit()
-  }
+        super.onDestroy()
+    }
 
 
-  override fun update(o: java.util.Observable, arg: Any?) {
-    runOnUiThread({
-      if (mAdvisoryDataProvider.GetCount() > 0)
-        mBinding!!.bottomNav.menu.getItem(3).icon = resources.getDrawable(R.drawable.advisory_badge, theme)
-      else
-        mBinding!!.bottomNav.menu.getItem(3).setIcon(R.drawable.advisories_image)
-    })
-  }
+    override fun onNavigationItemSelected(inMenuItem: MenuItem): Boolean {
+        when (inMenuItem.itemId) {
+            R.id.userSettings -> {
+                val userSettingsIntent = Intent(baseContext, UserSettingsActivity::class.java)
+
+                startActivity(userSettingsIntent)
+            }
+            R.id.contact -> {
+                val contactIntent = Intent(baseContext, ContactActivity::class.java)
+
+                startActivity(contactIntent)
+            }
+            R.id.about -> {
+                val intent = Intent(baseContext, WebViewActivity::class.java)
+                intent.putExtra(WebViewActivity.kTitle, getString(R.string.AboutAndTermsOfUse))
+                intent.putExtra(WebViewActivity.kRaw, "file:///android_res/raw/about.html")
+                startActivity(intent)
+            }
+        }//            case R.id.metricUnits:
+        //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kMetric.name());
+        //                mPreferencesObservable.notifyObservers();
+        //                break;
+        //            case R.id.imperialUnits:
+        //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kImperial.name());
+        //                mPreferencesObservable.notifyObservers();
+        //                break;
+
+        mBinding?.drawer?.closeDrawer(Gravity.START)
+        return false
+    }
+
+    override fun onMenuItemClick(item: MenuItem): Boolean {
+        val intent = Intent(baseContext, WebViewActivity::class.java)
+        intent.putExtra(WebViewActivity.kTitle, "Ticker")
+        intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt")
+        startActivity(intent)
+        return false
+    }
+
+
+    override fun NavigateToPage(inFragment: Fragment, inPushToBackStack: Boolean, @AnimRes inAnimationIn: Int, @AnimRes inAnimationOut: Int) {
+        val fragmentTransaction = supportFragmentManager.beginTransaction()
+
+        if (inAnimationIn != 0 || inAnimationOut != 0)
+            fragmentTransaction.setCustomAnimations(inAnimationIn, inAnimationOut)
+
+        fragmentTransaction.replace(R.id.fragmentLayout, inFragment)
+
+        if (inPushToBackStack)
+            fragmentTransaction.addToBackStack(inFragment.javaClass.name)
+        fragmentTransaction.commit()
+    }
+
+
+    override fun onComplete() {}
+    override fun onSubscribe(d: Disposable) {}
+    override fun onError(e: Throwable) {}
+
+    override fun onNext(t: List<Advisory>) {
+        if (t.isNotEmpty())
+            mBinding!!.bottomNav.menu.getItem(3).icon = resources.getDrawable(R.drawable.advisory_badge, theme)
+        else
+            mBinding!!.bottomNav.menu.getItem(3).setIcon(R.drawable.advisories_image)
+    }
 }

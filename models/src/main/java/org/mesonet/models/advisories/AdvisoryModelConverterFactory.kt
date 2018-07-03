@@ -19,34 +19,39 @@ class AdvisoryModelConverterFactory: Converter.Factory() {
         override fun convert(inValue: ResponseBody?): List<Advisory> {
             val result = ArrayList<Advisory>()
 
-            if(inValue != null) {
-                val splitList = String(inValue.bytes()).split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+            try {
+                if (inValue != null) {
+                    val splitList = String(inValue.bytes()).split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
-                var i = 0
-                while (i + 5 < splitList.size) {
-                    val advisory = AdvisoryModel()
+                    var i = 0
+                    while (i + 5 < splitList.size) {
+                        val advisory = AdvisoryModel()
 
-                    val splitType = splitList[i].substring(splitList[i].length - 4).split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+                        val splitType = splitList[i].substring(splitList[i].length - 4).split("\\.".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
-                    try {
-                        advisory.mAdvisoryType.mAdvisoryType = AdvisoryModel.AdvisoryType.valueOf(splitType[0])
-                        advisory.mAdvisoryType.mAdvisoryLevel = AdvisoryModel.AdvisoryLevel.valueOf(splitType[1])
-                    } catch (e: Exception) {
-                        e.printStackTrace()
+                        try {
+                            advisory.mAdvisoryType.mAdvisoryType = AdvisoryModel.AdvisoryType.valueOf(splitType[0])
+                            advisory.mAdvisoryType.mAdvisoryLevel = AdvisoryModel.AdvisoryLevel.valueOf(splitType[1])
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+
+                        i += 4
+
+                        advisory.mFilePath = splitList[i++]
+
+                        val splitCounties = splitList[i].split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+
+                        advisory.mCountyCodes = ArrayList()
+                        advisory.mCountyCodes!!.addAll(splitCounties)
+
+                        result.add(advisory)
+                        i++
                     }
-
-                    i += 4
-
-                    advisory.mFilePath = splitList[i++]
-
-                    val splitCounties = splitList[i].split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-
-                    advisory.mCountyCodes = ArrayList()
-                    advisory.mCountyCodes!!.addAll(splitCounties)
-
-                    result.add(advisory)
-                    i++
                 }
+            }
+            finally {
+                inValue?.close()
             }
 
             return result

@@ -1,7 +1,6 @@
 package org.mesonet.app.baseclasses
 
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.support.annotation.AnimRes
 import android.support.v4.app.Fragment
 import android.support.v7.app.AppCompatActivity
@@ -13,7 +12,6 @@ import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.support.HasSupportFragmentInjector
 import org.mesonet.androidsystem.Permissions
-import org.mesonet.core.ThreadHandler
 
 
 abstract class BaseActivity : AppCompatActivity(), HasSupportFragmentInjector {
@@ -23,8 +21,6 @@ abstract class BaseActivity : AppCompatActivity(), HasSupportFragmentInjector {
     @Inject
     internal lateinit var mPermissions: Permissions
 
-    @Inject
-    internal lateinit var mThreadHandler: ThreadHandler
 
 
     override fun supportFragmentInjector(): AndroidInjector<Fragment>? {
@@ -43,12 +39,6 @@ abstract class BaseActivity : AppCompatActivity(), HasSupportFragmentInjector {
         super.onCreate(savedInstanceState)
 
         AndroidInjection.inject(this)
-    }
-
-
-    override fun onDestroy() {
-        mThreadHandler.CloseThreads()
-        super.onDestroy()
     }
 
 

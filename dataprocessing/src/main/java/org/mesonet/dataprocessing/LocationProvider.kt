@@ -1,14 +1,16 @@
 package org.mesonet.dataprocessing
 
+import android.content.Context
 import android.location.Location
 import io.reactivex.Observable
 
 interface LocationProvider
 {
-    fun GetLocation(inLocationListener: LocationListener): Observable<Location>
+    fun GetLocation(inContext: Context): Observable<LocationResult>
 
-    interface LocationListener {
-        fun LastLocationFound(inLocation: Location?)
-        fun LocationUnavailable()
+
+    interface LocationResult
+    {
+        fun LocationResult(): Location?
     }
 }

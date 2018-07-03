@@ -11,6 +11,7 @@ import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.SelectSiteListener
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
 import org.mesonet.models.radar.RadarDetails
+import org.mesonet.models.radar.RadarDetailCreator
 
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException

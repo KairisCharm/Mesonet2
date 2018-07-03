@@ -16,6 +16,8 @@ import org.mesonet.app.widget.dependencyinjection.WidgetProviderLargeSubcomponen
 import org.mesonet.app.widget.dependencyinjection.WidgetProviderSubcomponent;
 import org.mesonet.dataprocessing.LocationProvider;
 import org.mesonet.dataprocessing.userdata.Preferences;
+import org.mesonet.models.radar.RadarDetailCreator;
+import org.mesonet.models.radar.RadarDetailModelCreator;
 
 import dagger.Binds;
 import dagger.Module;
@@ -65,6 +67,8 @@ abstract class ApplicationModule
     abstract AndroidInjector.Factory<? extends BroadcastReceiver>
     WidgetProviderLargeInjectorFactory(WidgetProviderLargeSubcomponent.Builder inBuilder);
 
+    @Binds
+    abstract RadarDetailCreator RadarDetailCreator(RadarDetailModelCreator inCreator);
 
     @Binds
     abstract Preferences Preferences(UserSettings inSettings);

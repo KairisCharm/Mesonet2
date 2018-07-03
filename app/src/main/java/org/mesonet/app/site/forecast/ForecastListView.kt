@@ -5,12 +5,12 @@ import android.databinding.DataBindingUtil
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import io.reactivex.android.schedulers.AndroidSchedulers
 import org.mesonet.app.R
 import org.mesonet.app.databinding.ForecastFragmentBinding
 import org.mesonet.dataprocessing.site.forecast.SemiDayForecastDataController
-import org.mesonet.core.ThreadHandler
 
-class ForecastListView(inActivity: Activity, inThreadHandler: ThreadHandler) : LinearLayout(inActivity) {
+class ForecastListView(inActivity: Activity) : LinearLayout(inActivity) {
 	private var mBinding: ForecastFragmentBinding? = null
 
 	init {
@@ -19,7 +19,7 @@ class ForecastListView(inActivity: Activity, inThreadHandler: ThreadHandler) : L
 		val totalForecastsCount = resources.getInteger(R.integer.forecastsPerPage)
 
 		for (i in 0 until totalForecastsCount) {
-			val forecastLayout = ForecastLayout(inActivity, inThreadHandler)
+			val forecastLayout = ForecastLayout(inActivity)
 			mBinding!!.layout.addView(forecastLayout)
 			forecastLayout.layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
 		}
@@ -29,7 +29,10 @@ class ForecastListView(inActivity: Activity, inThreadHandler: ThreadHandler) : L
 	internal fun SetSemiDayForecast(inForecastIndex: Int, inController: SemiDayForecastDataController) {
 		if (mBinding != null) {
 			if (inForecastIndex < mBinding!!.layout.childCount) {
-				(mBinding!!.layout.getChildAt(inForecastIndex) as ForecastLayout).SetData(inController)
+				inController.GetForecastDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
+					(mBinding!!.layout.getChildAt(inForecastIndex) as ForecastLayout).SetData(it)
+				}
+
 			}
 		}
 	}

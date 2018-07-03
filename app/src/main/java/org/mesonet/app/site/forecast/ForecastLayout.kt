@@ -5,49 +5,44 @@ import android.databinding.DataBindingUtil
 import android.view.LayoutInflater
 import android.widget.RelativeLayout
 import com.squareup.picasso.Picasso
+import io.reactivex.Observer
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 
 import org.mesonet.app.R
 import org.mesonet.app.databinding.ForecastLayoutBinding
 import org.mesonet.dataprocessing.site.forecast.ForecastData
 import org.mesonet.dataprocessing.site.forecast.ForecastLayoutController
-import org.mesonet.core.ThreadHandler
-
-import java.util.Observable
-import java.util.Observer
 
 
-class ForecastLayout(inActivity: Activity, private var mThreadHandler: ThreadHandler) : RelativeLayout(inActivity), Observer {
-    internal val mBinding: ForecastLayoutBinding
+
+class ForecastLayout(inActivity: Activity) : RelativeLayout(inActivity), Observer<ForecastLayoutController.ForecastDisplayData>
+{
+    internal val mBinding: ForecastLayoutBinding = DataBindingUtil.inflate(LayoutInflater.from(context), R.layout.forecast_layout, this, true)
     private val mActivity = inActivity
     private var mForecastImageUrl: String? = null
-
-
-    init {
-        mBinding = DataBindingUtil.inflate(LayoutInflater.from(context), R.layout.forecast_layout, this, true)
-        mBinding.forecastLayoutController = ForecastLayoutController(context, mThreadHandler)
-        mBinding.forecastLayoutController?.addObserver(this)
-    }
 
 
 
     internal fun SetData(inForecastData: ForecastData)
     {
-        mBinding.forecastLayoutController?.SetData(inForecastData)
+        ForecastLayoutController(context, inForecastData).GetForecastObservable().observeOn(AndroidSchedulers.mainThread())?.subscribe(this)
     }
 
 
+    override fun onComplete() {}
+    override fun onSubscribe(d: Disposable) {}
+    override fun onError(e: Throwable) {}
 
+    override fun onNext(t: ForecastLayoutController.ForecastDisplayData) {
+        mBinding.forecastDisplayData = t
+        mBinding.invalidateAll()
 
-    override fun update(observable: Observable, o: Any?) {
-        mActivity.runOnUiThread({
-            mBinding.invalidateAll()
+        val imageUrl = t.GetImageUrl()
 
-            val imageUrl = mBinding.forecastLayoutController?.GetImageUrl()
-
-            if(imageUrl != null && !imageUrl.isEmpty() && !imageUrl.equals(mForecastImageUrl)) {
-                mForecastImageUrl = imageUrl
-                Picasso.with(mActivity).load(imageUrl).into(mBinding.image)
-            }
-        })
+        if(!imageUrl.isEmpty() && imageUrl != mForecastImageUrl) {
+            mForecastImageUrl = imageUrl
+            Picasso.with(mActivity).load(imageUrl).into(mBinding.image)
+        }
     }
 }

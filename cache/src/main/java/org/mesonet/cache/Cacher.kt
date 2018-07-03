@@ -13,6 +13,7 @@ import io.realm.RealmModel
 import org.mesonet.cache.site.mesonetdata.MesonetRealmModule
 import javax.inject.Singleton
 import io.realm.RealmResults
+import java.util.concurrent.Executors
 
 
 @Singleton
@@ -20,6 +21,7 @@ class Cacher @Inject
 constructor(inContext: Context) {
 private var mRealm: Realm? = null
 
+    val mRealmScheduler = Schedulers.from(Executors.newSingleThreadExecutor())
 
     init {
         Observable.create(ObservableOnSubscribe<Void>{
@@ -34,7 +36,7 @@ private var mRealm: Realm? = null
 
             false
             }
-        }).subscribeOn(Schedulers.io()).subscribe()
+        }).subscribeOn(mRealmScheduler).subscribe()
     }
 
 
@@ -48,7 +50,7 @@ private var mRealm: Realm? = null
 
             false
             }
-        }).subscribeOn(Schedulers.io())
+        }).subscribeOn(mRealmScheduler)
     }
 
 
@@ -57,6 +59,6 @@ private var mRealm: Realm? = null
             synchronized(this@Cacher) {
                 it.onNext(mRealm!!.where(inClass).findAll())
             }
-        }).subscribeOn(Schedulers.io())
+        }).subscribeOn(mRealmScheduler)
     }
 }

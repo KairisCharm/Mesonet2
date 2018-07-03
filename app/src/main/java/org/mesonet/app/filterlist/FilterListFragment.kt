@@ -9,6 +9,11 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 
 import org.mesonet.app.BasicViewHolder
 import org.mesonet.app.MainActivity
@@ -21,14 +26,10 @@ import org.mesonet.dataprocessing.SelectSiteListener
 import org.mesonet.dataprocessing.filterlist.FilterListController
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
 
-import java.util.Observable
-import java.util.Observer
-
 import javax.inject.Inject
 
 
-class FilterListFragment : BaseFragment(), SelectSiteListener, FilterListController.ListFilterListener, Observer {
-
+class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableList<Pair<String, BasicListData>>> {
     private var mTextChangedListener: TextWatcher? = null
 
     private lateinit var mBinding: FilterListFragmentBinding
@@ -48,8 +49,6 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, FilterListControl
     @Inject
     internal lateinit var mFilterListController: FilterListController
 
-
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inflater, R.layout.filter_list_fragment, container, false)
 
@@ -63,16 +62,10 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, FilterListControl
         mBinding.siteSelectionToolbar.inflateMenu(R.menu.search_list_menu)
 
         mBinding.siteSelectionToolbar.menu.findItem(R.id.nearestLocation).setOnMenuItemClickListener {
-            mFilterListData.AllViewHolderData(object: FilterListDataProvider.FilterListDataListener{
-                override fun ListDataBuilt(inListData: Map<String, BasicListData>?) {
-                    if(activity != null && isAdded()) {
-                        activity?.runOnUiThread({
-                            mFilterListController.SortByNearest(mBinding.searchText.text.toString(), inListData, this@FilterListFragment)
-                        })
-                    }
-                }
-
-            })
+            mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe {
+                if(context != null)
+                    mFilterListController.SortByNearest(context!!, mBinding.searchText.text.toString(), it.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this)
+            }
             false
         }
 
@@ -90,44 +83,30 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, FilterListControl
             }
 
             override fun onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
-                mFilterListData.AllViewHolderData(object: FilterListDataProvider.FilterListDataListener{
-                    override fun ListDataBuilt(inListData: Map<String, BasicListData>?) {
-                        if(activity != null && isAdded()) {
-                            activity?.runOnUiThread({
-                                mFilterListController.FillList(mBinding.searchText.text.toString(), inListData, this@FilterListFragment)
-                            })
-                        }
-                    }
-                })
-            }
-
-            override fun afterTextChanged(editable: Editable) {
-
-            }
-        }
-
-        mFilterListData.GetDataObservable().addObserver(this)
-
-        mFilterListData.AllViewHolderData(object: FilterListDataProvider.FilterListDataListener{
-            override fun ListDataBuilt(inListData: Map<String, BasicListData>?) {
-                if(activity != null && isAdded()) {
-                    activity?.runOnUiThread({
-                        if (inListData != null && inListData.containsKey(mFilterListData.CurrentSelection()))
-                            mBinding.searchText.setText(inListData[mFilterListData.CurrentSelection()]?.GetName())
-                        mBinding.searchText.addTextChangedListener(mTextChangedListener)
-                        mFilterListController.FillList(mBinding.searchText.text.toString(), inListData, this@FilterListFragment)
-                    })
+                mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe {
+                    if(context != null)
+                        mFilterListController.TryGetLocationAndFillListObservable(context!!, mBinding.searchText.text.toString(), it.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
                 }
             }
 
-        })
+            override fun afterTextChanged(editable: Editable) {
+            }
+        }
+
+        mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe{
+            if (it.first.containsKey(mFilterListData.CurrentSelection()))
+                mBinding.searchText.setText(it.first[mFilterListData.CurrentSelection()]?.GetName())
+            mBinding.searchText.addTextChangedListener(mTextChangedListener)
+            if(context != null)
+                mFilterListController.TryGetLocationAndFillListObservable(context!!, mBinding.searchText.text.toString(), it.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
+        }
 
         return mBinding.root
     }
 
 
+
     override fun onDestroyView() {
-        mFilterListData.GetDataObservable().deleteObserver(this)
         mBinding.searchText.removeTextChangedListener(mTextChangedListener)
         mTextChangedListener = null
         super.onDestroyView()
@@ -135,12 +114,10 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, FilterListControl
 
 
     override fun SetResult(inResult: String) {
-        if(activity != null && isAdded()) {
-            activity?.runOnUiThread({
-                Close()
-                mSelectedListener.SetResult(inResult)
-            })
-        }
+        Observable.create(ObservableOnSubscribe<Void> {
+            Close()
+            mSelectedListener.SetResult(inResult)
+        }).observeOn(AndroidSchedulers.mainThread()).subscribe()
     }
 
 
@@ -151,27 +128,12 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, FilterListControl
     }
 
 
+    override fun onComplete() {}
+    override fun onSubscribe(d: Disposable) {}
+    override fun onError(e: Throwable) {}
 
-    override fun update(observable: Observable, o: Any?) {
-        mFilterListData.AllViewHolderData(object: FilterListDataProvider.FilterListDataListener{
-            override fun ListDataBuilt(inListData: Map<String, BasicListData>?) {
-                if(activity != null && isAdded()) {
-                    activity?.runOnUiThread({
-                        mFilterListController.FillList(mBinding.searchText.text.toString(), inListData,this@FilterListFragment)
-                    })
-                }
-            }
-        })
-    }
-
-
-    override fun ListFiltered(inFilteredResults: MutableList<Pair<String, BasicListData>>) {
-        if(activity != null && isAdded())
-        {
-            activity?.runOnUiThread({
-                mBinding.searchList.SetItems(inFilteredResults)
-            })
-        }
+    override fun onNext(t: MutableList<Pair<String, BasicListData>>) {
+        mBinding.searchList.SetItems(t)
     }
 
 
@@ -180,7 +142,7 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, FilterListControl
     }
 
 
-    private inner class FilterListAdapter : RecyclerViewAdapter<Pair<String, String>, BasicViewHolder>() {
+    private inner class FilterListAdapter : RecyclerViewAdapter<Pair<String, BasicListData>, BasicViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BasicViewHolder {
             return BasicViewHolder(parent, this@FilterListFragment)
         }

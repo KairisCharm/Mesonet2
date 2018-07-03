@@ -2,6 +2,7 @@ package org.mesonet.dataprocessing.site.forecast
 
 import android.content.Context
 import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
@@ -21,33 +22,52 @@ class FiveDayForecastDataController @Inject constructor(private var mMesonetSite
                                                         private var mPreferences: Preferences,
                                                         private var mUnitConverter: UnitConverter,
                                                         private var mContext: Context,
-                                                        private var mDataDownloader: DataDownloader) : Observable<List<SemiDayForecastDataController>>(), Observer<String> {
+                                                        private var mDataDownloader: DataDownloader) : Observer<String> {
 
 
     private var mSemiDayForecasts: MutableList<SemiDayForecastDataController> = ArrayList()
 
     private var mCurrentSite: String? = null
 
+    private var mDataObservable = Observable.create(ObservableOnSubscribe<List<SemiDayForecastDataController>>{observer ->
+        mDataDownloader.GetForecast(mMesonetSiteDataController.CurrentSelection()).observeOn(Schedulers.computation()).subscribe(object: Observer<List<Forecast>>
+        {
+            override fun onComplete() {
+            }
+
+            override fun onSubscribe(d: Disposable) {
+            }
+
+            override fun onNext(t: List<Forecast>) {
+                SetData(t)
+
+                observer.onNext(mSemiDayForecasts)
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+
+        })
+    }).subscribeOn(Schedulers.computation())
+
     init {
-        mMesonetSiteDataController.observeOn(Schedulers.computation()).subscribe(this)
+        mMesonetSiteDataController.GetCurrentSelectionObservable().observeOn(Schedulers.computation()).subscribe(this)
     }
 
 
-    override fun subscribeActual(observer: Observer<in List<SemiDayForecastDataController>>?) {
-        mDataDownloader.GetForecast(mMesonetSiteDataController.CurrentSelection()).observeOn(Schedulers.computation()).subscribe{
-            SetData(it)
-
-            observer?.onNext(mSemiDayForecasts)
-        }
+    fun GetForecastDataObservable(): Observable<List<SemiDayForecastDataController>>
+    {
+        return mDataObservable
     }
 
 
     override fun onComplete() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
     }
 
     override fun onSubscribe(d: Disposable) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
     }
 
     override fun onNext(t: String) {
@@ -55,12 +75,12 @@ class FiveDayForecastDataController @Inject constructor(private var mMesonetSite
         {
             mCurrentSite = mMesonetSiteDataController.CurrentSelection()
             mSemiDayForecasts = ArrayList()
-            subscribe()
+            mDataObservable.subscribe()
         }
     }
 
     override fun onError(e: Throwable) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
     }
 
 
@@ -70,13 +90,11 @@ class FiveDayForecastDataController @Inject constructor(private var mMesonetSite
 
             for (i in inForecast.indices) {
                 if(mSemiDayForecasts.size <= i)
-                    mSemiDayForecasts.add(SemiDayForecastDataController(mContext, mPreferences, mUnitConverter, inForecast[i]))
+                    mSemiDayForecasts.add(SemiDayForecastDataController(mContext, mPreferences, mUnitConverter, inForecast[i], mDataDownloader))
                 else
                     mSemiDayForecasts[i].SetData(inForecast[i])
             }
         }
-
-        subscribe()
     }
 
 

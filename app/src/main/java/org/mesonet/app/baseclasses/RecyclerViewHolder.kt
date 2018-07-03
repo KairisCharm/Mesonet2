@@ -4,10 +4,10 @@ import android.databinding.ViewDataBinding
 import android.support.v7.widget.RecyclerView
 
 
-abstract class RecyclerViewHolder<in TData : Any?, out TViewDataBinding : ViewDataBinding>(protected var mBinding: ViewDataBinding) : RecyclerView.ViewHolder(mBinding.root) {
+abstract class RecyclerViewHolder<in TData, out TViewDataBinding : ViewDataBinding>(protected var mBinding: ViewDataBinding) : RecyclerView.ViewHolder(mBinding.root) {
 
 
-    abstract internal fun SetData(inData: Any?)
+    abstract internal fun SetData(inData: TData)
 
 
     internal fun GetBinding(): TViewDataBinding? {

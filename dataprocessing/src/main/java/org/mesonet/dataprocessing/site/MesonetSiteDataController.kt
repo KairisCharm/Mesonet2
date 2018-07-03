@@ -1,11 +1,13 @@
 package org.mesonet.dataprocessing.site
 
 
+import android.content.Context
 import android.location.Location
 import com.google.gson.Gson
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.cache.site.SiteCache
 import org.mesonet.dataprocessing.BasicListData
@@ -27,10 +29,11 @@ import javax.inject.Singleton
 
 @Singleton
 class MesonetSiteDataController @Inject
-constructor(private var mLocationProvider: LocationProvider, private var mCache: SiteCache, private var mPreferences: Preferences): Observable<String>(), FilterListDataProvider, SelectSiteListener {
-
-    private val mDataDownloader: DataDownloader
-
+constructor(internal var mLocationProvider: LocationProvider,
+            internal var mCache: SiteCache,
+            internal var mPreferences: Preferences,
+            internal var mContext: Context,
+            internal val mDataDownloader: DataDownloader): FilterListDataProvider, SelectSiteListener {
     private var mMesonetSiteList: MesonetSiteList? = null
 
     private var mFavorites: MutableList<String>? = ArrayList()
@@ -40,9 +43,12 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
     private var mCurrentStationName = ""
     private var mCurrentIsFavorite = false
 
+    private var mCurrentSelectionObservable = Observable.create(ObservableOnSubscribe<String> {
+        it.onNext(mCurrentSelection)
+    }).subscribeOn(Schedulers.computation())
+
 
     init {
-        mDataDownloader = DataDownloader()
         Observable.create (ObservableOnSubscribe<Void>{
             mCache.GetSites().subscribe {
                     if (mMesonetSiteList == null) {
@@ -58,18 +64,19 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
                             if (mFavorites == null)
                                 mFavorites = ArrayList()
 
-                            LoadData()
+                            LoadData(mContext)
                     }
 
             }
 
-            LoadData()
+            LoadData(mContext)
         }).subscribe()
     }
 
 
-    override fun subscribeActual(observer: Observer<in String>?) {
-        observer?.onNext(mCurrentSelection)
+    fun GetCurrentSelectionObservable(): Observable<String>
+    {
+        return mCurrentSelectionObservable
     }
 
 
@@ -119,7 +126,7 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
 
         mCurrentIsFavorite = IsFavorite(mCurrentSelection)
 
-        subscribe()
+        mCurrentSelectionObservable.subscribe()
     }
 
 
@@ -226,7 +233,7 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
         if (mFavorites != null && mFavorites!!.contains(inStid)) {
             mFavorites!!.remove(inStid)
             mCache.SaveFavorites(mFavorites!!)
-            if(inStid.equals(mCurrentSelection))
+            if(inStid == mCurrentSelection)
                 mCurrentIsFavorite = IsFavorite(mCurrentSelection)
         }
     }
@@ -242,38 +249,48 @@ constructor(private var mLocationProvider: LocationProvider, private var mCache:
     }
 
 
-    internal fun LoadData() {
-        mPreferences.GetSelectedStid(object: Preferences.StidListener{
-            override fun StidFound(inStidPreference: String) {
-                mCurrentSelection = inStidPreference
-                mCache.GetSites().subscribe {
-                        if (mMesonetSiteList == null || mMesonetSiteList!!.size == 0)
-                            SetData(it)
-
-                        if(mCurrentSelection.isEmpty()) {
-                            mLocationProvider.GetLocation(object : LocationProvider.LocationListener {
-                                override fun LastLocationFound(inLocation: Location?) {
-                                    mCurrentSelection = GetNearestSite(inLocation)
-                                    mPreferences.SetSelectedStid(mCurrentSelection)
-
-                                    FinalizeSelection()
-                                }
-
-                                override fun LocationUnavailable() {
-                                    mCurrentSelection = "nrmn"
-                                    FinalizeSelection()
-                                }
-                            })
-                        }
-                        else
-                            FinalizeSelection()
-                }
-                mDataDownloader.GetMesonetSites().observeOn(Schedulers.computation()).subscribe{
+    internal fun LoadData(inContext: Context) {
+        mPreferences.SelectedStidObservable().subscribe { stid ->
+            mCurrentSelection = stid
+            mCache.GetSites().subscribe {
+                if (mMesonetSiteList == null || mMesonetSiteList!!.size == 0)
                     SetData(it)
+
+                if(mCurrentSelection.isEmpty()) {
+                    mLocationProvider.GetLocation(inContext).observeOn(Schedulers.computation()).subscribe{
+
+                        mCurrentSelection = "nrmn"
+
+                        if(it.LocationResult() != null)
+                            mCurrentSelection = GetNearestSite(it.LocationResult())
+
+                        mPreferences.SetSelectedStid(mCurrentSelection)
+
+                        FinalizeSelection()
+                    }
                 }
+                else
+                    FinalizeSelection()
             }
 
-        })
+            mDataDownloader.GetMesonetSites().observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetSiteList> {
+                override fun onComplete() {
+
+                }
+
+                override fun onSubscribe(d: Disposable) {
+
+                }
+
+                override fun onNext(t: MesonetSiteList) {
+                    SetData(t)
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
+        }
     }
 
 

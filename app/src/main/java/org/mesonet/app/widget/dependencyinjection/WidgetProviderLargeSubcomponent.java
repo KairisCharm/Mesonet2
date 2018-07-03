@@ -1,6 +1,5 @@
 package org.mesonet.app.widget.dependencyinjection;
 
-import org.mesonet.app.WidgetProvider;
 import org.mesonet.app.widget.WidgetProviderLarge;
 import org.mesonet.core.PerActivity;
 

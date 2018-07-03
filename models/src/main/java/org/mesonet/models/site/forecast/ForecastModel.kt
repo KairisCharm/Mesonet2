@@ -22,8 +22,8 @@ class ForecastModel : Forecast
         return mTemp
     }
 
-    override fun GetIconId(): String? {
-        return mIconUrl?.removePrefix("http://www.nws.noaa.gov/weather/images/fcicons")?.removeSuffix(".jpg")
+    override fun GetIconUrl(): String? {
+        return mIconUrl
     }
 
     override fun GetStatus(): String? {

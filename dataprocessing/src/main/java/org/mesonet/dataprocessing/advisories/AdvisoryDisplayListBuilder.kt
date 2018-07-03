@@ -15,7 +15,7 @@ class AdvisoryDisplayListBuilder @Inject constructor() {
         kHeader, kContent
     }
 
-    fun BuildList(inOriginalList: ArrayList<Advisory>?): Observable<in ArrayList<Pair<AdvisoryDataType, AdvisoryData>>> {
+    fun BuildList(inOriginalList: MutableList<Advisory>?): Observable<in ArrayList<Pair<AdvisoryDataType, AdvisoryData>>> {
         return Observable.create (ObservableOnSubscribe<ArrayList<Pair<AdvisoryDataType, AdvisoryData>>>{
             val endResult = java.util.ArrayList<Pair<AdvisoryDataType, AdvisoryData>>()
 
@@ -70,7 +70,7 @@ class AdvisoryDisplayListBuilder @Inject constructor() {
     }
 
 
-    internal fun Sort(inOriginal: ArrayList<Advisory>?): ArrayList<Advisory>? {
+    internal fun Sort(inOriginal: MutableList<Advisory>?): ArrayList<Advisory>? {
         if (inOriginal == null)
             return null
 

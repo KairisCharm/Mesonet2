@@ -29,7 +29,7 @@ constructor() {
 
 
     fun GetSites(): Observable<MesonetSiteList> {
-        return mCacher.FindAll(SiteRealmModel::class.java).observeOn(Schedulers.computation()).map{
+        return mCacher.FindAll(SiteRealmModel::class.java).map{
             mConverter.SitesFromRealmModels(it)
         }
     }
@@ -43,7 +43,7 @@ constructor() {
 
 
     fun GetFavorites(): Observable<MutableList<String>> {
-        return mCacher.FindAll(FavoriteSiteRealmModel::class.java).observeOn(Schedulers.computation()).map {
+        return mCacher.FindAll(FavoriteSiteRealmModel::class.java).map {
             mConverter.FavoriteFromRealmModels(it)
         }
     }

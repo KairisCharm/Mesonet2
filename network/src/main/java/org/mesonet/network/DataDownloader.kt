@@ -12,11 +12,10 @@ import org.mesonet.models.radar.*
 import org.mesonet.models.site.MesonetSiteList
 import org.mesonet.models.site.MesonetSiteListModel
 import org.mesonet.models.site.forecast.Forecast
-import org.mesonet.models.site.forecast.ForecastModel
 import org.mesonet.models.site.forecast.ForecastModelConverterFactory
 import org.mesonet.models.site.mesonetdata.MesonetData
-import org.mesonet.models.site.mesonetdata.MesonetModel
 import org.mesonet.models.site.mesonetdata.MesonetModelConverterFactory
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
@@ -30,12 +29,36 @@ import javax.inject.Singleton
 @Singleton
 class DataDownloader @Inject constructor()
 {
-    private val mRetrofitService = Retrofit.Builder()
+    private val mJsonRetrofitService = Retrofit.Builder()
             .baseUrl("http://www.mesonet.org")
             .addConverterFactory(GsonConverterFactory.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .build()
+            .create(MesonetService::class.java)
+
+    private val mMesonetDataRetrofitService = Retrofit.Builder()
+            .baseUrl("http://www.mesonet.org")
             .addConverterFactory(MesonetModelConverterFactory())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .build()
+            .create(MesonetService::class.java)
+
+    private val mForecastRetrofitService = Retrofit.Builder()
+            .baseUrl("http://www.mesonet.org")
             .addConverterFactory(ForecastModelConverterFactory())
-            .addConverterFactory(RadarImageModelConverterFactory())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .build()
+            .create(MesonetService::class.java)
+
+    private val mRadarHistoryRetrofitService = Retrofit.Builder()
+            .baseUrl("http://www.mesonet.org")
+            .addConverterFactory(RadarHistoryModelConverterFactory())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .build()
+            .create(MesonetService::class.java)
+
+    private val mAdvisoryRetrofitService = Retrofit.Builder()
+            .baseUrl("http://www.mesonet.org")
             .addConverterFactory(AdvisoryModelConverterFactory())
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .build()
@@ -43,7 +66,7 @@ class DataDownloader @Inject constructor()
 
     fun GetMesonetSites(): Observable<MesonetSiteList>
     {
-        return mRetrofitService.GetMesonetSites()
+        return mJsonRetrofitService.GetMesonetSites()
                 .map { it as MesonetSiteList }
                 .subscribeOn(Schedulers.io())
     }
@@ -51,20 +74,26 @@ class DataDownloader @Inject constructor()
 
     fun GetMesonetData(inStid: String): Observable<MesonetData>
     {
-        return mRetrofitService.GetMesonetData(inStid).subscribeOn(Schedulers.computation())
+        return mMesonetDataRetrofitService.GetMesonetData(inStid).subscribeOn(Schedulers.computation())
     }
 
 
     fun GetForecast(inStid: String): Observable<List<Forecast>>
     {
-        return mRetrofitService.GetForecast(inStid).subscribeOn(Schedulers.io())
+        return mForecastRetrofitService.GetForecast(inStid).subscribeOn(Schedulers.io())
+    }
+
+
+    fun GetForecastImage(inFileName: String): String
+    {
+        return mJsonRetrofitService.GetForecastIcon(inFileName).request().url().toString()
     }
 
 
 
     fun GetMaps(): Observable<MapsList>
     {
-        return mRetrofitService.GetMaps()
+        return mJsonRetrofitService.GetMaps()
                 .map{ it as MapsList }
                 .subscribeOn(Schedulers.io())
     }
@@ -72,13 +101,13 @@ class DataDownloader @Inject constructor()
 
     fun GetRadarHistory(inRadarId: String): Observable<List<RadarImageInfo>>
     {
-        return mRetrofitService.GetRadarHistory(inRadarId).subscribeOn(Schedulers.io())
+        return mRadarHistoryRetrofitService.GetRadarHistory(inRadarId).subscribeOn(Schedulers.io())
     }
 
 
-    fun GetAdvisoriesList(): Observable<List<Advisory>>
+    fun GetAdvisoriesList(): Observable<MutableList<Advisory>>
     {
-        return mRetrofitService.GetAdvisoriesList().map { it as List<Advisory> }.subscribeOn(Schedulers.io())
+        return mJsonRetrofitService.GetAdvisoriesList().map { it as MutableList<Advisory> }.subscribeOn(Schedulers.io())
     }
 
 
@@ -184,8 +213,8 @@ class DataDownloader @Inject constructor()
         fun GetForecast(@Path("stid") inStid: String): Observable<List<Forecast>>
 
 
-        @GET("/images/fcicons-android/{imageId}@4.png")
-        fun GetForecastIcon(@Path("imageId") inImageId: String): Observable<Bitmap>
+        @GET("/images/fcicons-android/{imageId}@4x.png")
+        fun GetForecastIcon(@Path("imageId") inImageId: String): Call<Bitmap>
 
 
         @GET("/data/public/mesonet/meteograms/{stid}")

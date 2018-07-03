@@ -5,7 +5,7 @@ import android.content.Context
 
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
+import io.reactivex.schedulers.Schedulers
 import org.mesonet.core.DefaultUnits
 import java.util.Locale
 
@@ -14,123 +14,137 @@ import org.mesonet.dataprocessing.R
 
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.site.forecast.Forecast
-class SemiDayForecastDataController(private var mContext: Context?, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, private var mForecast: Forecast) : Observable<ForecastData>(), ForecastData {
-    private var mTime: String = ""
+import org.mesonet.network.DataDownloader
 
-    private var mIconUrl: String = ""
-    private var mStatus: String = ""
-    private var mHighOrLow: String = ""
-    private var mTemp: String = ""
-    private var mWindDescription: String = ""
+
+class SemiDayForecastDataController(private var mContext: Context?, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, inForecast: Forecast, val mDataDownloader: DataDownloader){
+
+    var mForecastData = ForecastDataImpl()
+
+    val mDataObservable = Observable.create(ObservableOnSubscribe<ForecastData> {
+        it.onNext(mForecastData)
+    }).subscribeOn(Schedulers.computation())
+
     init {
         Observable.create(ObservableOnSubscribe<Void>{
-            SetData(mForecast)
-        }).subscribe()
+            SetData(inForecast)
+        }).subscribeOn(Schedulers.computation()).subscribe()
     }
 
-    override fun subscribeActual(observer: Observer<in ForecastData>?) {
-        observer?.onNext(this)
+
+    fun GetForecastDataObservable(): Observable<ForecastData>
+    {
+        return mDataObservable
     }
 
     internal fun SetData(inForecast: Forecast) {
-        mForecast = inForecast
-        mPreferences.GetUnitPreference(object: Preferences.UnitPreferenceListener{
-            override fun UnitPreferenceFound(inUnitPreference: Preferences.UnitPreference) {
-                if(mForecast.GetTime() != null)
-                    mTime = mForecast.GetTime()!!
+        mPreferences.UnitPreferencesObservable().subscribe {
+            val result = ForecastDataImpl()
+            if (inForecast.GetTime() != null)
+                result.mTime = inForecast.GetTime()!!
 
-                if (mContext != null && mContext!!.resources.getBoolean(R.bool.forceWrapForecasts) && !mTime.contains(" "))
-                    mTime += "\n"
+            if (mContext != null && mContext!!.resources.getBoolean(R.bool.forceWrapForecasts) && !result.mTime.contains(" "))
+                result.mTime += "\n"
 
-                if(mForecast.GetIconId() != null)
-                    mIconUrl = mForecast.GetIconId()!!.replace("http://www.nws.noaa.gov/weather/images/fcicons", "http://www.mesonet.org/images/fcicons-android").replace(".jpg", "@4x.png")
+            if (inForecast.GetIconUrl() != null)
+                result.mIconUrl = mDataDownloader.GetForecastImage(inForecast.GetIconUrl()!!.removePrefix("http://www.nws.noaa.gov/weather/images/fcicons/").removeSuffix(".jpg"))
 
-                if(mForecast.GetStatus() != null)
-                    mStatus = mForecast.GetStatus() + "\n"
+            if (inForecast.GetStatus() != null)
+                result.mStatus = inForecast.GetStatus() + "\n"
 
-                if(mForecast.GetHighOrLow() != null)
-                    mHighOrLow = mForecast.GetHighOrLow()!!.name
+            if (inForecast.GetHighOrLow() != null)
+                result.mHighOrLow = inForecast.GetHighOrLow()!!.name
 
-                var tempUnits: DefaultUnits.TempUnits = DefaultUnits.TempUnits.kCelsius
+            var tempUnits: DefaultUnits.TempUnits = DefaultUnits.TempUnits.kCelsius
 
-                if (inUnitPreference == Preferences.UnitPreference.kImperial)
-                    tempUnits = DefaultUnits.TempUnits.kFahrenheit
+            if (it == Preferences.UnitPreference.kImperial)
+                tempUnits = DefaultUnits.TempUnits.kFahrenheit
 
-                var unit = ""
+            var unit = ""
 
-                when (tempUnits) {
-                    DefaultUnits.TempUnits.kCelsius -> unit = "C"
-                    DefaultUnits.TempUnits.kFahrenheit -> unit = "F"
+            when (tempUnits) {
+                DefaultUnits.TempUnits.kCelsius -> unit = "C"
+                DefaultUnits.TempUnits.kFahrenheit -> unit = "F"
+            }
+
+            if (mUnitConverter == null)
+                result.mTemp = ""
+
+            var value = mUnitConverter!!.GetTempInPreferredUnits(inForecast.GetTemp(), inForecast, tempUnits)!!.toInt()
+
+            result.mTemp = String.format(Locale.getDefault(), "%d", value) + "°" + unit
+
+            if (inForecast.GetWindMin() == null)
+                result.mWindDescription = "Calm\n"
+            else {
+                var speedUnits: DefaultUnits.SpeedUnits = DefaultUnits.SpeedUnits.kMps
+
+                if (it == Preferences.UnitPreference.kImperial)
+                    speedUnits = DefaultUnits.SpeedUnits.kMph
+
+                unit = ""
+
+                when (speedUnits) {
+                    DefaultUnits.SpeedUnits.kMps -> unit = "mps"
+                    DefaultUnits.SpeedUnits.kMph -> unit = "mph"
+                    DefaultUnits.SpeedUnits.kKmph -> unit = "kmph"
                 }
 
                 if (mUnitConverter == null)
-                    mTemp = ""
+                    result.mWindDescription = ""
 
-                var value = mUnitConverter!!.GetTempInPreferredUnits(mForecast.GetTemp(), mForecast, tempUnits)!!.toInt()
+                var directionDesc = ""
 
-                mTemp = String.format(Locale.getDefault(), "%d", value) + "°" + unit
+                if(inForecast.GetWindDirectionStart() != null) {
+                    directionDesc = inForecast.GetWindDirectionStart()!!.name
 
-                if (mForecast.GetWindMin() == null)
-                    mWindDescription = "Calm\n"
+                    if (inForecast.GetWindDirectionStart()!! != inForecast.GetWindDirectionEnd())
+                        directionDesc += "-" + inForecast.GetWindDirectionEnd()
 
-                else {
-                    var speedUnits: DefaultUnits.SpeedUnits = DefaultUnits.SpeedUnits.kMps
-
-                    if (inUnitPreference == Preferences.UnitPreference.kImperial)
-                        speedUnits = DefaultUnits.SpeedUnits.kMph
-
-                    unit = ""
-
-                    when (speedUnits) {
-                        DefaultUnits.SpeedUnits.kMps -> unit = "mps"
-                        DefaultUnits.SpeedUnits.kMph -> unit = "mph"
-                    }
-
-                    if (mUnitConverter == null)
-                        mWindDescription = ""
-
-                    var directionDesc = mForecast.GetWindDirectionStart()!!.name
-
-                    if(!(mForecast.GetWindDirectionStart()!!.equals(mForecast.GetWindDirectionEnd())))
-                        directionDesc += "-" + mForecast.GetWindDirectionEnd()
-
-                    value = mUnitConverter!!.GetSpeedInPreferredUnits(mForecast.GetWindMin(), mForecast, speedUnits)!!.toInt()
-                    val value2 = mUnitConverter!!.GetSpeedInPreferredUnits(mForecast.GetWindMax(), mForecast, speedUnits)!!.toInt()
+                    value = mUnitConverter!!.GetSpeedInPreferredUnits(inForecast.GetWindMin(), inForecast, speedUnits)!!.toInt()
+                    val value2 = mUnitConverter!!.GetSpeedInPreferredUnits(inForecast.GetWindMax(), inForecast, speedUnits)!!.toInt()
 
                     var finalWindSpdValue = value.toString()
-                    if(!value.equals(value2))
-                        finalWindSpdValue += "-" + value2
+                    if (value != value2)
+                        finalWindSpdValue += "-$value2"
 
-                    mWindDescription = "Wind " + directionDesc + " " + finalWindSpdValue + " " + unit
-
+                    result.mWindDescription = "Wind $directionDesc $finalWindSpdValue $unit"
                 }
+
+                mForecastData = result
             }
-
-        })
+        }
     }
 
-    override fun GetTime(): String {
-        return mTime
-    }
+    class ForecastDataImpl(internal var mTime: String = "",
+                           internal var mIconUrl: String = "",
+                           internal var mStatus: String = "",
+                           internal var mHighOrLow: String = "",
+                           internal var mTemp: String = "",
+                           internal var mWindDescription: String = ""): ForecastData {
+        override fun GetTime(): String {
+            return mTime
+        }
 
-    override fun GetIconUrl(): String {
-        return mIconUrl
-    }
+        override fun GetIconUrl(): String {
+            return mIconUrl
+        }
 
-    override fun GetStatus(): String {
-        return mStatus
-    }
+        override fun GetStatus(): String {
+            return mStatus
+        }
 
-    override fun GetHighOrLow(): String {
-        return mHighOrLow
-    }
+        override fun GetHighOrLow(): String {
+            return mHighOrLow
+        }
 
-    override fun GetTemp(): String {
-        return mTemp
-    }
+        override fun GetTemp(): String {
+            return mTemp
+        }
 
 
-    override fun GetWindDescription(): String {
-        return mWindDescription
+        override fun GetWindDescription(): String {
+            return mWindDescription
+        }
     }
 }

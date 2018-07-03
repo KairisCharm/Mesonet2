@@ -1,12 +1,13 @@
 package org.mesonet.app.baseclasses
 
+import android.databinding.ViewDataBinding
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 
 import java.util.ArrayList
 
 
-abstract class RecyclerViewAdapter<TData : Any?, TRecyclerViewHolder : RecyclerViewHolder<*, *>> : RecyclerView.Adapter<TRecyclerViewHolder>() {
+abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHolder<TData, ViewDataBinding>> : RecyclerView.Adapter<TRecyclerViewHolder>() {
     protected var mUsePagination = false
     protected var mDataItems: MutableList<TData>? = ArrayList()
     protected var mRecyclerView: RecyclerView? = null

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import io.reactivex.android.schedulers.AndroidSchedulers
 
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseActivity
@@ -15,7 +16,11 @@ import org.mesonet.dataprocessing.maps.MapsDataProvider
 import javax.inject.Inject
 
 
-class MapListFragment : BaseFragment() {
+class MapListFragment : BaseFragment()
+{
+    companion object {
+        val kMapGroupFullList = "mapGroupFullList"
+    }
 
     private lateinit var mBinding: MapListFragmentBinding
 
@@ -29,36 +34,29 @@ class MapListFragment : BaseFragment() {
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.map_list_fragment, inParent, false)
 
-        mBinding.mapList.setAdapter(MapsRecyclerViewAdapter(mActivity))
+        var group: MapsDataProvider.MapFullGroupDisplayData? = null
 
-        var selectedGroup: Int? = null
+        if (arguments != null && arguments!!.containsKey(kMapGroupFullList))
+            group = arguments!!.getSerializable(kMapGroupFullList) as MapsDataProvider.MapFullGroupDisplayData
 
-        if (arguments != null && arguments!!.containsKey(kSelectedGroup))
-            selectedGroup = arguments!!.getInt(kSelectedGroup)
+        if(group == null) {
+            mBinding.mapList.setAdapter(MapsGroupRecyclerViewAdapter(mActivity))
 
-        mDataProvider.Download(selectedGroup, object : MapsDataProvider.MapsListListener {
-            override fun ListLoaded(inMapsList: MutableList<Any>?, inGroupName: String?) {
-                if(activity != null && isAdded()) {
-                    activity?.runOnUiThread({
-                        mBinding.progressBar.visibility = View.GONE
-                        if (inMapsList != null) {
-                            if (inGroupName != null && !inGroupName.isEmpty()) {
-                                mBinding.groupNameToolbar.title = inGroupName
-                                mBinding.groupNameToolbar.visibility = View.VISIBLE
-                            }
-                            mBinding.mapList.SetItems(inMapsList)
-                        }
-                        if(inMapsList == null || inMapsList.size == 0)
-                            mBinding.emptyListText.visibility = View.VISIBLE
-                    })
+            mDataProvider.observeOn(AndroidSchedulers.mainThread()).subscribe {
+                if (it.isEmpty())
+                    mBinding.emptyListText.visibility = View.VISIBLE
+                else {
+                    mBinding.emptyListText.visibility = View.GONE
+                    mBinding.mapList.SetItems(it)
                 }
             }
-        })
+        }
+        else
+        {
+            mBinding.mapList.setAdapter(MapsSectionRecyclerViewAdapter())
+            mBinding.mapList.SetItems(ArrayList(group.GetSections().values))
+        }
 
         return mBinding.root
-    }
-
-    companion object {
-        val kSelectedGroup = "selectedSection"
     }
 }

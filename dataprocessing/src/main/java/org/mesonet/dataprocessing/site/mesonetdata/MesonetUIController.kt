@@ -1,7 +1,7 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
 import io.reactivex.Observable
-import io.reactivex.Observer
+import io.reactivex.ObservableOnSubscribe
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.dataprocessing.userdata.Preferences
 
@@ -16,155 +16,166 @@ import javax.inject.Singleton
 
 @Singleton
 class MesonetUIController @Inject
-constructor(private var mDataController: MesonetDataController, private var mPreferences: Preferences) : Observable<MesonetUIController.MesonetDisplayFields>()
+constructor(private var mDataController: MesonetDataController, private var mPreferences: Preferences)
 {
-    override fun subscribeActual(observer: Observer<in MesonetDisplayFields>?) {
-        if(observer != null) {
-            mPreferences.GetUnitPreferencesObservable().observeOn(Schedulers.computation()).subscribe { unitPreference ->
-                mDataController.observeOn(Schedulers.computation()).map {
-                    val displayFields = MesonetDisplayFieldsImpl()
-                    val formattedString = "Observed at %s"
+    private var mUIObservable = Observable.create(ObservableOnSubscribe<MesonetDisplayFields> {observer ->
+        mPreferences.UnitPreferencesObservable().observeOn(Schedulers.computation()).subscribe { unitPreference ->
+            mDataController.GetDataObservable().observeOn(Schedulers.computation()).map {
+                val displayFields = MesonetDisplayFieldsImpl()
+                val formattedString = "Observed at %s"
 
-                    val time = mDataController.ProcessTime()
+                displayFields.mStationName = mDataController.GetStationName()
 
-                    if (time == null)
-                        displayFields.mTimeString = String.format(formattedString, "-:-")
-                    else {
-                        val dateFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                        dateFormat.timeZone = TimeZone.getTimeZone("America/Chicago")
+                val time = mDataController.ProcessTime()
 
-                        displayFields.mTimeString = String.format(formattedString, dateFormat.format(time))
+                if (time == null)
+                    displayFields.mTimeString = String.format(formattedString, "-:-")
+                else {
+                    val dateFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+                    dateFormat.timeZone = TimeZone.getTimeZone("America/Chicago")
+
+                    displayFields.mTimeString = String.format(formattedString, dateFormat.format(time))
+                }
+
+                val temp = mDataController.ProcessTemp(unitPreference)
+
+                if (temp == null)
+                    displayFields.mAirTempString = "-"
+                else
+                    displayFields.mAirTempString = String.format(Locale.getDefault(), "%.0f", temp) + "°"
+
+                val apparentTemp = mDataController.ProcessApparentTemp(unitPreference)
+
+                if (apparentTemp == null)
+                    displayFields.mApparentTempString = "-"
+                else {
+                    var unit = ""
+
+                    when (unitPreference) {
+                        Preferences.UnitPreference.kMetric -> unit = "C"
+                        Preferences.UnitPreference.kImperial -> unit = "F"
                     }
 
-                    val temp = mDataController.ProcessTemp(unitPreference)
+                    displayFields.mApparentTempString = String.format(Locale.getDefault(), "%.0f", apparentTemp) + "°" + unit
+                }
 
-                    if (temp == null)
-                        displayFields.mAirTempString = "-"
-                    else
-                        displayFields.mAirTempString = String.format(Locale.getDefault(), "%.0f", temp) + "°"
+                val dewPoint = mDataController.ProcessDewpoint(unitPreference)
 
-                    val apparentTemp = mDataController.ProcessApparentTemp(unitPreference)
+                if (dewPoint == null)
+                    displayFields.mDewPointString = "-"
+                else {
+                    var unit = ""
 
-                    if (apparentTemp == null)
-                        displayFields.mApparentTempString = "-"
-                    else {
-                        var unit = ""
+                    when (unitPreference) {
+                        Preferences.UnitPreference.kMetric -> unit = "C"
+                        Preferences.UnitPreference.kImperial -> unit = "F"
+                    }
 
-                        when (unitPreference) {
-                            Preferences.UnitPreference.kMetric -> unit = "C"
-                            Preferences.UnitPreference.kImperial -> unit = "F"
+                    displayFields.mDewPointString = String.format(Locale.getDefault(), "%.0f", dewPoint) + "°" + unit
+                }
+
+                val windSpd = mDataController.ProcessWindSpd(unitPreference)
+                val direction = mDataController.ProcessWindDirection()
+
+                if (windSpd == null || direction == null)
+                    displayFields.mWindString = "-"
+                else {
+                    var unit = ""
+
+                    when (unitPreference) {
+                        Preferences.UnitPreference.kMetric -> unit = "mps"
+                        Preferences.UnitPreference.kImperial -> unit = "mph"
+                    }
+
+                    displayFields.mWindString = direction.name + " at " + String.format(Locale.getDefault(), "%.0f", windSpd) + " " + unit
+                }
+
+                val rain24h = mDataController.Process24HrRain(unitPreference)
+
+                if (rain24h == null)
+                    displayFields.m24HrRainfallString = "-"
+                else {
+                    var unit = ""
+
+                    when (unitPreference) {
+                        Preferences.UnitPreference.kMetric -> unit = "mm"
+                        Preferences.UnitPreference.kImperial -> unit = "in"
+                    }
+
+                    displayFields.m24HrRainfallString = String.format(Locale.getDefault(), "%.2f", rain24h) + " " + unit
+                }
+
+                val humidity = mDataController.ProcessHumidity()
+
+                if (humidity == null)
+                    displayFields.mHumidityString = "-"
+                else
+                    displayFields.mHumidityString = humidity.toString() + "%"
+
+                val windGusts = mDataController.ProcessMaxWind(unitPreference)
+
+                if (windGusts == null)
+                    displayFields.mWindGustsString = "-"
+                else {
+                    var unit = ""
+
+                    when (unitPreference) {
+                        Preferences.UnitPreference.kMetric -> unit = "mps"
+                        Preferences.UnitPreference.kImperial -> unit = "mph"
+                    }
+
+                    displayFields.mWindGustsString = String.format(Locale.getDefault(), "%.0f", windGusts) + " " + unit
+                }
+
+                val pressure = mDataController.ProcessPressure(unitPreference)
+
+                if (pressure == null)
+                    displayFields.mPressureString = "-"
+                else {
+                    var unit = ""
+                    var format = ""
+
+                    when (unitPreference) {
+                        Preferences.UnitPreference.kMetric -> {
+                            unit = "mb"
+                            format = "%.1f"
                         }
-
-                        displayFields.mApparentTempString = String.format(Locale.getDefault(), "%.0f", apparentTemp) + "°" + unit
-                    }
-
-                    val dewPoint = mDataController.ProcessDewpoint(unitPreference)
-
-                    if (dewPoint == null)
-                        displayFields.mDewpointString = "-"
-                    else {
-                        var unit = ""
-
-                        when (unitPreference) {
-                            Preferences.UnitPreference.kMetric -> unit = "C"
-                            Preferences.UnitPreference.kImperial -> unit = "F"
+                        Preferences.UnitPreference.kImperial -> {
+                            unit = "inHg"
+                            format = "%.2f"
                         }
-
-                        displayFields.mDewpointString = String.format(Locale.getDefault(), "%.0f", dewPoint) + "°" + unit
                     }
 
-                    val windSpd = mDataController.ProcessWindSpd(unitPreference)
-                    val direction = mDataController.ProcessWindDirection()
+                    displayFields.mPressureString = String.format(Locale.getDefault(), format, pressure) + " " + unit
+                }
 
-                    if (windSpd == null || direction == null)
-                        displayFields.mWindString = "-"
-                    else {
-                        var unit = ""
-
-                        when (unitPreference) {
-                            Preferences.UnitPreference.kMetric -> unit = "mps"
-                            Preferences.UnitPreference.kImperial -> unit = "mph"
-                        }
-
-                        displayFields.mWindString = direction.name + " at " + String.format(Locale.getDefault(), "%.0f", windSpd) + " " + unit
-                    }
-
-                    val rain24h = mDataController.Process24HrRain(unitPreference)
-
-                    if (rain24h == null)
-                        displayFields.m24HrRainfallString = "-"
-                    else {
-                        var unit = ""
-
-                        when (unitPreference) {
-                            Preferences.UnitPreference.kMetric -> unit = "mm"
-                            Preferences.UnitPreference.kImperial -> unit = "in"
-                        }
-
-                        displayFields.m24HrRainfallString = String.format(Locale.getDefault(), "%.2f", rain24h) + " " + unit
-                    }
-
-                    val humidity = mDataController.ProcessHumidity()
-
-                    if (humidity == null)
-                        displayFields.mHumidityString = "-"
-                    else
-                        displayFields.mHumidityString = humidity.toString() + "%"
-
-                    val windGusts = mDataController.ProcessMaxWind(unitPreference)
-
-                    if (windGusts == null)
-                        displayFields.mWindGustsString = "-"
-                    else {
-                        var unit = ""
-
-                        when (unitPreference) {
-                            Preferences.UnitPreference.kMetric -> unit = "mps"
-                            Preferences.UnitPreference.kImperial -> unit = "mph"
-                        }
-
-                        displayFields.mWindGustsString = String.format(Locale.getDefault(), "%.0f", windGusts) + " " + unit
-                    }
-
-                    val pressure = mDataController.ProcessPressure(unitPreference)
-
-                    if (pressure == null)
-                        displayFields.mPressureString = "-"
-                    else {
-                        var unit = ""
-                        var format = ""
-
-                        when (unitPreference) {
-                            Preferences.UnitPreference.kMetric -> {
-                                unit = "mb"
-                                format = "%.1f"
-                            }
-                            Preferences.UnitPreference.kImperial -> {
-                                unit = "inHg"
-                                format = "%.2f"
-                            }
-                        }
-
-                        displayFields.mPressureString = String.format(Locale.getDefault(), format, pressure) + " " + unit
-                    }
-
-                    displayFields as MesonetDisplayFields
-                }.subscribe(observer)
-            }
+                displayFields as MesonetDisplayFields
+            }.subscribe{observer.onNext(it)}
         }
+    }).subscribeOn(Schedulers.computation())
+
+
+
+    fun GetDisplayFieldsObservable(): Observable<MesonetDisplayFields>
+    {
+        return mUIObservable
     }
 
 
 
-    private class MesonetDisplayFieldsImpl(internal var mTimeString: String = "Observed at -:-",
-                                         internal var mAirTempString: String = "-",
-                                         internal var mApparentTempString: String = "-",
-                                         internal var mDewpointString: String = "-",
-                                         internal var mWindString: String = "-",
-                                         internal var m24HrRainfallString: String = "-",
-                                         internal var mHumidityString: String = "-",
-                                         internal var mWindGustsString: String = "-",
-                                         internal var mPressureString: String = "-") : MesonetDisplayFields {
+    private class MesonetDisplayFieldsImpl(internal var mStationName: String = "",
+                                           internal var mTimeString: String = "Observed at -:-",
+                                           internal var mAirTempString: String = "-",
+                                           internal var mApparentTempString: String = "-",
+                                           internal var mDewPointString: String = "-",
+                                           internal var mWindString: String = "-",
+                                           internal var m24HrRainfallString: String = "-",
+                                           internal var mHumidityString: String = "-",
+                                           internal var mWindGustsString: String = "-",
+                                           internal var mPressureString: String = "-") : MesonetDisplayFields {
+        override fun GetStationName(): String {
+            return mStationName
+        }
 
         override fun GetAirTempString(): String {
             return mAirTempString
@@ -177,7 +188,7 @@ constructor(private var mDataController: MesonetDataController, private var mPre
 
 
         override fun GetDewpointString(): String {
-            return mDewpointString
+            return mDewPointString
         }
 
 
@@ -214,6 +225,7 @@ constructor(private var mDataController: MesonetDataController, private var mPre
 
     interface MesonetDisplayFields
     {
+        fun GetStationName(): String
         fun GetAirTempString(): String
         fun GetApparentTempString(): String
         fun GetDewpointString(): String

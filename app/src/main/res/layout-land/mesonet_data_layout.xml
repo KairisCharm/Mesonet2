@@ -5,8 +5,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
         <variable
-            name="uiController"
-            type="org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController"/>
+            name="displayFields"
+            type="org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController.MesonetDisplayFields"/>
     </data>
 
     <RelativeLayout
@@ -42,7 +42,7 @@
                         android:autoSizeTextType="uniform"
                         app:autoSizeTextType="uniform"
                         android:textColor="@color/lightTextColor"
-                        android:text="@{uiController.GetTimeString()}"
+                        android:text="@{displayFields.GetTimeString()}"
                         android:textAllCaps="true"
                         android:textStyle="bold"
                         tools:text="Observed at 9:40 PM"/>
@@ -51,7 +51,7 @@
                         android:id="@+id/current_tair"
                         android:layout_width="match_parent"
                         android:layout_height="80dp"
-                        android:text="@{uiController.GetAirTempString()}"
+                        android:text="@{displayFields.GetAirTempString()}"
                         android:textColor="@color/whiteTextColor"
                         app:autoSizeTextType="uniform"
                         android:layout_below="@id/readingTime"
@@ -68,7 +68,7 @@
                         android:layout_alignParentBottom="true"
                         android:autoSizeTextType="uniform"
                         app:autoSizeTextType="uniform"
-                        android:text="@{uiController.GetApparentTempString()}"
+                        android:text="@{displayFields.GetApparentTempString()}"
                         tools:text="45°F"/>
 
                     <TextView
@@ -116,7 +116,7 @@
                             android:textColor="@color/whiteTextColor"
                             android:autoSizeTextType="uniform"
                             app:autoSizeTextType="uniform"
-                            android:text="@{uiController.GetDewpointString()}"
+                            android:text="@{displayFields.GetDewpointString()}"
                             tools:text="45°F"/>
 
                     </LinearLayout>
@@ -144,7 +144,7 @@
                             android:textColor="@color/whiteTextColor"
                             android:autoSizeTextType="uniform"
                             app:autoSizeTextType="uniform"
-                            android:text="@{uiController.GetWindString()}"
+                            android:text="@{displayFields.GetWindString()}"
                             tools:text="W at 4 mph"/>
 
                     </LinearLayout>
@@ -170,7 +170,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="30dp"
                             android:textColor="@color/whiteTextColor"
-                            android:text="@{uiController.Get24HrRainfallString()}"
+                            android:text="@{displayFields.Get24HrRainfallString()}"
                             android:autoSizeTextType="uniform"
                             app:autoSizeTextType="uniform"
                             tools:text="0.00 in"/>
@@ -211,7 +211,7 @@
                             android:textColor="@color/whiteTextColor"
                             android:autoSizeTextType="uniform"
                             app:autoSizeTextType="uniform"
-                            android:text="@{uiController.GetHumidityString()}"
+                            android:text="@{displayFields.GetHumidityString()}"
                             tools:text="45°F"/>
 
                     </LinearLayout>
@@ -239,7 +239,7 @@
                             android:textColor="@color/whiteTextColor"
                             android:autoSizeTextType="uniform"
                             app:autoSizeTextType="uniform"
-                            android:text="@{uiController.GetWindGustsString()}"
+                            android:text="@{displayFields.GetWindGustsString()}"
                             tools:text="W at 4 mph"/>
 
                     </LinearLayout>
@@ -265,7 +265,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="30dp"
                             android:textColor="@color/whiteTextColor"
-                            android:text="@{uiController.GetPressureString()}"
+                            android:text="@{displayFields.GetPressureString()}"
                             android:autoSizeTextType="uniform"
                             app:autoSizeTextType="uniform"
                             tools:text="0.00 in"/>

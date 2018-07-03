@@ -13,6 +13,7 @@ import android.net.Uri
 import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.support.v4.content.ContextCompat
+import io.reactivex.android.schedulers.AndroidSchedulers
 import org.mesonet.androidsystem.Permissions
 
 
@@ -49,28 +50,17 @@ class ContactActivity: BaseActivity()
         }
 
         binding.phoneButton.setOnClickListener {
-            mPermissions.RequestPermission(Manifest.permission.CALL_PHONE, object: Permissions.PermissionListener{
-                override fun GetContext(): Activity {
-                    return this@ContactActivity
-                }
+            mPermissions.RequestPermission(this, Manifest.permission.CALL_PHONE).observeOn(AndroidSchedulers.mainThread()).subscribe {
+                if(it && ContextCompat.checkSelfPermission(this@ContactActivity, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        startActivity(Intent(Intent.ACTION_CALL, Uri.parse("tel:4053252541")))
+                    }
+                    catch (e: Exception)
+                    {
 
-                override fun PermissionGranted() {
-                    if(ContextCompat.checkSelfPermission(this@ContactActivity, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
-                        try {
-                            startActivity(Intent(Intent.ACTION_CALL, Uri.parse("tel:4053252541")))
-                        }
-                        catch (e: Exception)
-                        {
-
-                        }
                     }
                 }
-
-                override fun PermissionDenied() {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-                }
-
-            })
+            }
         }
 
         binding.addressButton.setOnClickListener {

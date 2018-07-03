@@ -5,8 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools">
     <data>
         <variable
-            name="forecastLayoutController"
-            type="org.mesonet.dataprocessing.site.forecast.ForecastLayoutController"/>
+            name="forecastDisplayData"
+            type="org.mesonet.dataprocessing.site.forecast.ForecastLayoutController.ForecastDisplayData"/>
     </data>
     <RelativeLayout
         android:layout_width="match_parent"
@@ -18,10 +18,10 @@
         <android.support.v7.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            card_view:cardBackgroundColor="@{forecastLayoutController.GetBackgroundColor()}"
+            card_view:cardBackgroundColor="@{forecastDisplayData.GetBackgroundColor()}"
             card_view:cardElevation="4dp"
             card_view:cardUseCompatPadding="true"
-            app:cardBackgroundColor="@{forecastLayoutController.GetBackgroundColor()}"
+            app:cardBackgroundColor="@{forecastDisplayData.GetBackgroundColor()}"
             app:cardElevation="4dp"
             app:cardUseCompatPadding="true">
 
@@ -41,7 +41,7 @@
                     android:gravity="top|center_horizontal"
                     android:autoSizeTextType="uniform"
                     app:autoSizeTextType="uniform"
-                    android:text="@{forecastLayoutController.GetData().GetTime()}"
+                    android:text="@{forecastDisplayData.GetData().GetTime()}"
                     android:textColor="@color/lightTextColor"
                     android:textAllCaps="true"
                     android:textStyle="bold"/>
@@ -66,7 +66,7 @@
                         android:textColor="@color/lightTextColor"
                         android:textAllCaps="true"
                         android:textStyle="bold"
-                        android:text="@{forecastLayoutController.GetData().GetHighOrLow()}"
+                        android:text="@{forecastDisplayData.GetData().GetHighOrLow()}"
                         tools:text="HIGH"/>
 
                     <TextView
@@ -76,7 +76,7 @@
                         android:layout_marginStart="4dp"
                         android:textColor="@color/whiteTextColor"
                         app:autoSizeTextType="uniform"
-                        android:text="@{forecastLayoutController.GetData().GetTemp()}"/>
+                        android:text="@{forecastDisplayData.GetData().GetTemp()}"/>
                 </LinearLayout>
 
                 <TextView
@@ -87,7 +87,7 @@
                     android:autoSizeTextType="uniform"
                     app:autoSizeTextType="uniform"
                     android:textColor="@color/lightTextColor"
-                    android:text="@{forecastLayoutController.GetData().GetStatus()}"
+                    android:text="@{forecastDisplayData.GetData().GetStatus()}"
                     android:minLines="2"
                     android:maxLines="2"/>
 
@@ -99,7 +99,7 @@
                     android:autoSizeTextType="uniform"
                     app:autoSizeTextType="uniform"
                     android:textColor="@color/whiteTextColor"
-                    android:text="@{forecastLayoutController.GetData().GetWindDescription()}"
+                    android:text="@{forecastDisplayData.GetData().GetWindDescription()}"
                     android:textSize="16sp"
                     android:minLines="2"
                     android:maxLines="2"/>

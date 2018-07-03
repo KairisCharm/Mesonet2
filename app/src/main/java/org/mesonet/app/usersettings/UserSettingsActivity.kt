@@ -23,16 +23,13 @@ class UserSettingsActivity: BaseActivity()
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.user_settings_activity)
 
-        mPreferences.GetUnitPreference(object: Preferences.UnitPreferenceListener{
-            override fun UnitPreferenceFound(inUnitPreference: Preferences.UnitPreference) {
-                when(inUnitPreference)
-                {
-                    Preferences.UnitPreference.kImperial -> mBinding.imperialButton.isChecked = true
-                    Preferences.UnitPreference.kMetric -> mBinding.metricButton.isChecked = true
-                }
+        mPreferences.UnitPreferencesObservable().subscribe {
+            when(it)
+            {
+                Preferences.UnitPreference.kImperial -> mBinding.imperialButton.isChecked = true
+                Preferences.UnitPreference.kMetric -> mBinding.metricButton.isChecked = true
             }
-
-        })
+        }
 
         mBinding.unitsRadioGroup.setOnCheckedChangeListener(object: RadioGroup.OnCheckedChangeListener{
             override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {

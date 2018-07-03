@@ -21,14 +21,13 @@ import kotlin.collections.ArrayList
 
 
 class RadarDataController @Inject
-constructor(private var mSiteDataProvider: RadarSiteDataProvider) : Observable<Void>(), Observer<Pair<Map<String, RadarDetails>, String>> {
+constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
+            internal var mDataDownloader: DataDownloader) : Observable<Void>(), Observer<Pair<Map<String, RadarDetails>, String>> {
 
 
     private var mRadarImageInfo: List<RadarImageInfo> = ArrayList()
     private var mCurrentRadar = ""
 
-    @Inject
-    lateinit private var mDataDownloader: DataDownloader
 
 
     init {
