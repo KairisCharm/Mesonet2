@@ -245,7 +245,7 @@ constructor(internal var mLocationProvider: LocationProvider,
             mPreferences.SetSelectedStid(inResult)
 
             FinalizeSelection()
-        })
+        }).subscribe()
     }
 
 

@@ -22,9 +22,10 @@ class MapsGroupViewHolder(private val mBaseActivity: BaseActivity, inBinding: Ma
     override fun SetData(inData: MapsDataProvider.MapAbbreviatedGroupDisplayData) {
         val binding = GetBinding()
 
+        binding?.header?.headerText?.text = inData.GetTitle()
         binding?.productRecyclerView?.GetAdapter()!!.SetItems(inData.GetProducts())
 
-        if (inData.GetProducts().size > inData.GetGroupDisplayLimit())
+        if (inData.GetFullListSize() > inData.GetGroupDisplayLimit())
             binding.viewAllLayout.visibility = View.VISIBLE
         else
             binding.viewAllLayout.visibility = View.GONE

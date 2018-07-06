@@ -238,7 +238,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     override fun Close() {
         Observable.create(ObservableOnSubscribe<Void> {
             RevealView(mBinding!!.mesonetDataContainer?.siteToolbar!!)
-        }).subscribeOn(AndroidSchedulers.mainThread())
+        }).subscribeOn(AndroidSchedulers.mainThread()).subscribe()
     }
 
     override fun onMenuItemClick(menuItem: MenuItem): Boolean {

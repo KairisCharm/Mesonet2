@@ -229,7 +229,7 @@ class DataDownloader @Inject constructor()
         fun GetRadarHistory(@Path("site") inSite: String): Observable<List<RadarImageInfo>>
 
 
-        @GET("/data/public/noaa/wwa/mobile-ok.txt")
+        @GET("/data/public/noaa/wwa/mobile.txt")
         fun GetAdvisoriesList(): Observable<ArrayList<AdvisoryModel>>
     }
 }

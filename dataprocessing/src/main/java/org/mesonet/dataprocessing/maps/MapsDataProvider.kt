@@ -3,6 +3,7 @@ package org.mesonet.dataprocessing.maps
 import android.os.Parcel
 import android.os.Parcelable
 import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.models.maps.MapsList
@@ -13,7 +14,7 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 
-class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDownloader): Observable<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>>()
+class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDownloader)
 {
     companion object {
         val kAbbreviatedDisplayLimit = 4
@@ -26,33 +27,39 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
     private var mMapsList: MapsList? = null
 
 
-    init {
-        subscribeOn(Schedulers.computation())
-    }
-
-
-    override fun subscribeActual(inObserver: Observer<in MutableList<MapAbbreviatedGroupDisplayData>>) {
+    var mMapsListObservable = Observable.create(ObservableOnSubscribe<MutableList<MapAbbreviatedGroupDisplayData>> {subscriber ->
         if(mMapsList != null)
-            inObserver.onNext(LoadMapsList(mMapsList))
+            subscriber.onNext(LoadMapsList(mMapsList))
 
-        if((mLastUpdate - Date().time) > 300000) {
-            mDataDownloader.GetMaps().observeOn(Schedulers.computation()).map {
+        if(mLastUpdate == 0L || (mLastUpdate - Date().time) > 300000) {
+            (mDataDownloader.GetMaps().observeOn(Schedulers.computation()).map {
+                mLastUpdate = Date().time
                 mMapsList = it
-                LoadMapsList(mMapsList)
-            }.subscribe(inObserver)
+                val result = LoadMapsList(mMapsList)
+                subscriber.onNext(result)
+                result
+            }).subscribe()
         }
+    }).subscribeOn(Schedulers.computation())
+
+
+    fun GetMapsListObservable(): Observable<MutableList<MapAbbreviatedGroupDisplayData>>
+    {
+        return mMapsListObservable
     }
 
 
     internal fun LoadMapsList(inMapsList: MapsList?): MutableList<MapAbbreviatedGroupDisplayData>
     {
+        val uncategorizedKey = "uncategorized"
+
         val allGroups = inMapsList?.GetMain()
         val allSections = inMapsList?.GetSections()
         val allProducts = inMapsList?.GetProducts()
 
         var groupsWithSectionsWithGoodProducts = ArrayList<MapFullGroupDisplayDataImpl>()
-        var sectionsWithGoodProducts = HashMap<String, MapFullGroupDisplayDataImpl.MapGroupSectionImpl>()
-        var goodProducts = HashMap<String, MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl>()
+        var sectionsWithGoodProducts = LinkedHashMap<String, MapFullGroupDisplayDataImpl.MapGroupSectionImpl>()
+        var goodProducts = LinkedHashMap<String, MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl>()
 
         var abbreviatedGroups = ArrayList<MapAbbreviatedGroupDisplayData>()
 
@@ -61,7 +68,7 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
 
         if(allProducts != null)
         {
-            goodProducts = HashMap(allProducts.filter { !it.value.GetUrl().isNullOrBlank() }.mapValues {
+            goodProducts = LinkedHashMap(allProducts.filter { !it.value.GetUrl().isNullOrBlank() }.mapValues {
                 MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(it.value.GetTitle(), null, it.value.GetUrl())
             })
 
@@ -71,11 +78,11 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
         if(goodProducts.isNotEmpty())
         {
             if(allSections != null) {
-                sectionsWithGoodProducts = HashMap(allSections.filter { it.value.GetProducts().intersect(goodProducts.keys).isNotEmpty()}
+                sectionsWithGoodProducts.putAll( LinkedHashMap(allSections.filter { it.value.GetProducts().intersect(goodProducts.keys).isNotEmpty()}
                                                               .mapValues {
                                                                   MapFullGroupDisplayDataImpl.MapGroupSectionImpl(it.value.GetTitle(), HashMap(it.value.GetProducts().filter { goodProducts.keys.contains(it) }
                                                                                                                                                                             .associate { it to goodProducts[it]!!}))
-                                                              })
+                                                              }))
 
                 sectionsWithGoodProducts.forEach{ orphanedGoodProducts.removeAll(it.value.GetProducts().keys) }
             }
@@ -85,8 +92,19 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
         {
             if(allGroups != null)
             {
-                groupsWithSectionsWithGoodProducts = ArrayList(allGroups.filter { it.GetSections().intersect(sectionsWithGoodProducts.keys).isNotEmpty() }.map {
-                    MapFullGroupDisplayDataImpl(it.GetTitle(), HashMap(it.GetSections().filter{sectionsWithGoodProducts.keys.contains(it)}.associate { it to sectionsWithGoodProducts[it]!! }))
+                val sortedSections = sectionsWithGoodProducts.toSortedMap(kotlin.Comparator { o1, o2 ->
+                    var result = 0
+
+                    if((sectionsWithGoodProducts[o1]!!.GetTitle() == null || sectionsWithGoodProducts[o1]!!.GetTitle()!!.isBlank()) && !(sectionsWithGoodProducts[o2]!!.GetTitle() == null || sectionsWithGoodProducts[o2]!!.GetTitle()!!.isBlank()))
+                        result = -1
+
+                    if(!(sectionsWithGoodProducts[o1]!!.GetTitle() == null || sectionsWithGoodProducts[o1]!!.GetTitle()!!.isBlank()) && (sectionsWithGoodProducts[o2]!!.GetTitle() == null || sectionsWithGoodProducts[o2]!!.GetTitle()!!.isBlank()))
+                        result = 1
+
+                    result
+                })
+                groupsWithSectionsWithGoodProducts = ArrayList(allGroups.filter { it.GetSections().intersect(sortedSections.keys).isNotEmpty() }.map {
+                    MapFullGroupDisplayDataImpl(it.GetTitle(), HashMap(it.GetSections().filter{sortedSections.keys.contains(it)}.associate { it to sortedSections[it]!! }))
                 })
 
                 groupsWithSectionsWithGoodProducts.forEach{ orphanedSectionsWithGoodProducts.removeAll(it.GetSections().keys)}
@@ -95,7 +113,6 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
 
         if(orphanedGoodProducts.isNotEmpty())
         {
-            val uncategorizedKey = "uncategorized"
             sectionsWithGoodProducts[uncategorizedKey] = MapFullGroupDisplayDataImpl.MapGroupSectionImpl("", HashMap(orphanedGoodProducts.associate { it to goodProducts[it]!! }))
             orphanedSectionsWithGoodProducts.add(uncategorizedKey)
         }
@@ -105,23 +122,24 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
             groupsWithSectionsWithGoodProducts.add(MapFullGroupDisplayDataImpl("Uncategorized", HashMap(orphanedSectionsWithGoodProducts.associate { it to sectionsWithGoodProducts[it]!! })))
         }
 
+
         for(group in groupsWithSectionsWithGoodProducts)
         {
+            var totalProducts = 0
             val groupProducts = ArrayList<MapFullGroupDisplayData.MapGroupSection.MapsProduct>()
 
             for(section in group.GetSections())
             {
+                totalProducts += section.value.GetProducts().size
                 for(product in section.value.GetProducts()) {
-                    groupProducts.add(MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(product.value.GetTitle(), section.value.GetTitle(), product.value.GetImageUrl()))
                     if (groupProducts.size >= kAbbreviatedDisplayLimit)
                         break
-                }
 
-                if (groupProducts.size >= kAbbreviatedDisplayLimit)
-                    break
+                    groupProducts.add(MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(product.value.GetTitle(), section.value.GetTitle(), product.value.GetImageUrl()))
+                }
             }
 
-            abbreviatedGroups.add(MapAbbreviatedGroupDisplayDataImpl(group.GetTitle(), groupProducts, group))
+            abbreviatedGroups.add(MapAbbreviatedGroupDisplayDataImpl(group.GetTitle(), groupProducts.size, groupProducts, group))
         }
 
         return abbreviatedGroups
@@ -130,9 +148,14 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
 
 
     class MapAbbreviatedGroupDisplayDataImpl(var mTitle: String? = null,
-                                                     var mProducts: MutableList<MapFullGroupDisplayData.MapGroupSection.MapsProduct> = ArrayList(),
-                                                     var mMapFullGroupDisplayData: MapFullGroupDisplayData): MapAbbreviatedGroupDisplayData
+                                             var mFullListSize: Int,
+                                             var mProducts: MutableList<MapFullGroupDisplayData.MapGroupSection.MapsProduct> = ArrayList(),
+                                             var mMapFullGroupDisplayData: MapFullGroupDisplayData): MapAbbreviatedGroupDisplayData
     {
+        override fun GetFullListSize(): Int {
+            return mFullListSize
+        }
+
         override fun GetTitle(): String?
         {
             return mTitle
@@ -276,6 +299,7 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
     interface MapAbbreviatedGroupDisplayData
     {
         fun GetTitle(): String?
+        fun GetFullListSize(): Int
         fun GetProducts(): MutableList<MapFullGroupDisplayData.MapGroupSection.MapsProduct>
         fun GetMapFullGroupDisplayData(): MapFullGroupDisplayData
         fun GetGroupDisplayLimit(): Int

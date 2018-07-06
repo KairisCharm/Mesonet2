@@ -37,12 +37,13 @@ class MapListFragment : BaseFragment()
         var group: MapsDataProvider.MapFullGroupDisplayData? = null
 
         if (arguments != null && arguments!!.containsKey(kMapGroupFullList))
-            group = arguments!!.getSerializable(kMapGroupFullList) as MapsDataProvider.MapFullGroupDisplayData
+            group = arguments!!.getParcelable(kMapGroupFullList) as MapsDataProvider.MapFullGroupDisplayData
 
         if(group == null) {
             mBinding.mapList.setAdapter(MapsGroupRecyclerViewAdapter(mActivity))
 
-            mDataProvider.observeOn(AndroidSchedulers.mainThread()).subscribe {
+            mDataProvider.GetMapsListObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
+                mBinding.progressBar.visibility = View.GONE
                 if (it.isEmpty())
                     mBinding.emptyListText.visibility = View.VISIBLE
                 else {
@@ -53,6 +54,7 @@ class MapListFragment : BaseFragment()
         }
         else
         {
+            mBinding.progressBar.visibility = View.GONE
             mBinding.mapList.setAdapter(MapsSectionRecyclerViewAdapter())
             mBinding.mapList.SetItems(ArrayList(group.GetSections().values))
         }
