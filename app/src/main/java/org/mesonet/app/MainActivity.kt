@@ -73,8 +73,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         LoadBinding(selectedTab)
 
-        mAdvisoryDisposable = Observable.timer(1, TimeUnit.MINUTES).subscribe {
-            mAdvisoryDataProvider.observeOn(AndroidSchedulers.mainThread()).subscribe(this)
+        mAdvisoryDisposable = Observable.interval(0,1, TimeUnit.MINUTES).subscribe {
+             mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(this)
         }
     }
 

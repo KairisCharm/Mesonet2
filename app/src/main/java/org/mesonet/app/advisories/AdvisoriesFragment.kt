@@ -36,8 +36,8 @@ class AdvisoriesFragment : BaseFragment(), Observer<MutableList<Advisory>> {
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View? {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.advisories_fragment, inParent, false)
 
-        mDisposable = Observable.timer(1, TimeUnit.MINUTES).observeOn(AndroidSchedulers.mainThread()).subscribe {
-            mAdvisoryDataProvider.subscribe(this)
+        mDisposable = Observable.interval(0,1, TimeUnit.MINUTES).observeOn(AndroidSchedulers.mainThread()).subscribe {
+            mAdvisoryDataProvider.GetDataObservable().subscribe(this)
         }
 
         mBinding!!.advisoriesRecyclerView.setAdapter(AdvisoriesRecyclerViewAdapter())
@@ -55,7 +55,7 @@ class AdvisoriesFragment : BaseFragment(), Observer<MutableList<Advisory>> {
         mAdvisoryListBuilder.BuildList(t).observeOn(AndroidSchedulers.mainThread()).subscribe {
             if (mBinding != null) {
                 mBinding?.progressBar?.visibility = View.GONE
-                mBinding?.advisoriesRecyclerView?.SetItems(t)
+                mBinding?.advisoriesRecyclerView?.SetItems(it as ArrayList<*>)
 
                 if(t.size == 0)
                     mBinding?.emptyListText?.visibility = View.VISIBLE

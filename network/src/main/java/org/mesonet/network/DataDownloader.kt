@@ -105,9 +105,9 @@ class DataDownloader @Inject constructor()
     }
 
 
-    fun GetAdvisoriesList(): Observable<MutableList<Advisory>>
+    fun GetAdvisoriesList(): Observable<ArrayList<Advisory>>
     {
-        return mJsonRetrofitService.GetAdvisoriesList().map { it as MutableList<Advisory> }.subscribeOn(Schedulers.io())
+        return mAdvisoryRetrofitService.GetAdvisoriesList().subscribeOn(Schedulers.io())
     }
 
 
@@ -217,6 +217,7 @@ class DataDownloader @Inject constructor()
         fun GetForecastIcon(@Path("imageId") inImageId: String): Call<Bitmap>
 
 
+
         @GET("/data/public/mesonet/meteograms/{stid}")
         fun GetMeteogram(@Path("stid") inStid: String): Observable<Bitmap>
 
@@ -229,7 +230,7 @@ class DataDownloader @Inject constructor()
         fun GetRadarHistory(@Path("site") inSite: String): Observable<List<RadarImageInfo>>
 
 
-        @GET("/data/public/noaa/wwa/mobile.txt")
-        fun GetAdvisoriesList(): Observable<ArrayList<AdvisoryModel>>
+        @GET("/data/public/noaa/wwa/mobile-ok.txt")
+        fun GetAdvisoriesList(): Observable<ArrayList<Advisory>>
     }
 }
