@@ -32,7 +32,7 @@ class MapsGroupViewHolder(private val mBaseActivity: BaseActivity, inBinding: Ma
 
         binding.viewAllLayout.setOnClickListener {
             val args = Bundle()
-            args.putParcelable(MapListFragment.kMapGroupFullList, inData.GetMapFullGroupDisplayData())
+            args.putSerializable(MapListFragment.kMapGroupFullList, inData.GetMapFullGroupDisplayData())
 
             val fragment = MapListFragment()
             fragment.arguments = args

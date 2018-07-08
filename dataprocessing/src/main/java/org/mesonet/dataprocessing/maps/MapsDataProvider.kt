@@ -1,13 +1,11 @@
 package org.mesonet.dataprocessing.maps
 
-import android.os.Parcel
-import android.os.Parcelable
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.models.maps.MapsList
 import org.mesonet.network.DataDownloader
+import java.io.Serializable
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.ArrayList
@@ -18,6 +16,7 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
 {
     companion object {
         val kAbbreviatedDisplayLimit = 4
+        val kGenericSectionHeaderText = "Other"
     }
 
 
@@ -58,10 +57,10 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
         val allProducts = inMapsList?.GetProducts()
 
         var groupsWithSectionsWithGoodProducts = ArrayList<MapFullGroupDisplayDataImpl>()
-        var sectionsWithGoodProducts = LinkedHashMap<String, MapFullGroupDisplayDataImpl.MapGroupSectionImpl>()
+        val sectionsWithGoodProducts = LinkedHashMap<String, MapFullGroupDisplayDataImpl.MapGroupSectionImpl>()
         var goodProducts = LinkedHashMap<String, MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl>()
 
-        var abbreviatedGroups = ArrayList<MapAbbreviatedGroupDisplayData>()
+        val abbreviatedGroups = ArrayList<MapAbbreviatedGroupDisplayData>()
 
         val orphanedGoodProducts = ArrayList<String>()
         val orphanedSectionsWithGoodProducts = ArrayList<String>()
@@ -80,7 +79,14 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
             if(allSections != null) {
                 sectionsWithGoodProducts.putAll( LinkedHashMap(allSections.filter { it.value.GetProducts().intersect(goodProducts.keys).isNotEmpty()}
                                                               .mapValues {
-                                                                  MapFullGroupDisplayDataImpl.MapGroupSectionImpl(it.value.GetTitle(), HashMap(it.value.GetProducts().filter { goodProducts.keys.contains(it) }
+                                                                  var title = it.value.GetTitle()
+                                                                  var titleAsSubtext = it.value.GetTitle()
+                                                                  if(title == null || title.isBlank())
+                                                                  {
+                                                                      title = kGenericSectionHeaderText
+                                                                      titleAsSubtext = ""
+                                                                  }
+                                                                  MapFullGroupDisplayDataImpl.MapGroupSectionImpl(title, titleAsSubtext, HashMap(it.value.GetProducts().filter { goodProducts.keys.contains(it) }
                                                                                                                                                                             .associate { it to goodProducts[it]!!}))
                                                               }))
 
@@ -92,19 +98,8 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
         {
             if(allGroups != null)
             {
-                val sortedSections = sectionsWithGoodProducts.toSortedMap(kotlin.Comparator { o1, o2 ->
-                    var result = 0
-
-                    if((sectionsWithGoodProducts[o1]!!.GetTitle() == null || sectionsWithGoodProducts[o1]!!.GetTitle()!!.isBlank()) && !(sectionsWithGoodProducts[o2]!!.GetTitle() == null || sectionsWithGoodProducts[o2]!!.GetTitle()!!.isBlank()))
-                        result = -1
-
-                    if(!(sectionsWithGoodProducts[o1]!!.GetTitle() == null || sectionsWithGoodProducts[o1]!!.GetTitle()!!.isBlank()) && (sectionsWithGoodProducts[o2]!!.GetTitle() == null || sectionsWithGoodProducts[o2]!!.GetTitle()!!.isBlank()))
-                        result = 1
-
-                    result
-                })
-                groupsWithSectionsWithGoodProducts = ArrayList(allGroups.filter { it.GetSections().intersect(sortedSections.keys).isNotEmpty() }.map {
-                    MapFullGroupDisplayDataImpl(it.GetTitle(), HashMap(it.GetSections().filter{sortedSections.keys.contains(it)}.associate { it to sortedSections[it]!! }))
+                groupsWithSectionsWithGoodProducts = ArrayList(allGroups.filter { it.GetSections().intersect(sectionsWithGoodProducts.keys).isNotEmpty() }.map {
+                    MapFullGroupDisplayDataImpl(it.GetTitle(), HashMap(it.GetSections().filter{sectionsWithGoodProducts.keys.contains(it)}.associate { it to sectionsWithGoodProducts[it]!! }))
                 })
 
                 groupsWithSectionsWithGoodProducts.forEach{ orphanedSectionsWithGoodProducts.removeAll(it.GetSections().keys)}
@@ -113,7 +108,7 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
 
         if(orphanedGoodProducts.isNotEmpty())
         {
-            sectionsWithGoodProducts[uncategorizedKey] = MapFullGroupDisplayDataImpl.MapGroupSectionImpl("", HashMap(orphanedGoodProducts.associate { it to goodProducts[it]!! }))
+            sectionsWithGoodProducts[uncategorizedKey] = MapFullGroupDisplayDataImpl.MapGroupSectionImpl("Other", "", HashMap(orphanedGoodProducts.associate { it to goodProducts[it]!! }))
             orphanedSectionsWithGoodProducts.add(uncategorizedKey)
         }
 
@@ -132,14 +127,18 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
             {
                 totalProducts += section.value.GetProducts().size
                 for(product in section.value.GetProducts()) {
-                    if (groupProducts.size >= kAbbreviatedDisplayLimit)
+                    if (groupProducts.size >= kAbbreviatedDisplayLimit) {
                         break
+                    }
 
-                    groupProducts.add(MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(product.value.GetTitle(), section.value.GetTitle(), product.value.GetImageUrl()))
+                    groupProducts.add(MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(product.value.GetTitle(), section.value.GetTitleAsSubtext(), product.value.GetImageUrl()))
                 }
             }
 
-            abbreviatedGroups.add(MapAbbreviatedGroupDisplayDataImpl(group.GetTitle(), groupProducts.size, groupProducts, group))
+            if(totalProducts > kAbbreviatedDisplayLimit)
+                groupProducts.remove(groupProducts.last())
+
+            abbreviatedGroups.add(MapAbbreviatedGroupDisplayDataImpl(group.GetTitle(), totalProducts, groupProducts, group))
         }
 
         return abbreviatedGroups
@@ -182,10 +181,6 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
     private class MapFullGroupDisplayDataImpl(val mTitle: String? = null,
                                               val mSections: HashMap<String, MapFullGroupDisplayData.MapGroupSection> = HashMap()): MapFullGroupDisplayData
     {
-        constructor(parcel: Parcel) : this(
-                parcel.readString(),
-                parcel.readSerializable() as HashMap<String, MapFullGroupDisplayData.MapGroupSection>)
-
         override fun GetTitle(): String? {
             return mTitle
         }
@@ -193,73 +188,27 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
         override fun GetSections(): HashMap<String, MapFullGroupDisplayData.MapGroupSection> {
             return mSections
         }
-
-        override fun writeToParcel(parcel: Parcel, flags: Int) {
-            parcel.writeString(mTitle)
-            parcel.writeSerializable(mSections)
-        }
-
-        override fun describeContents(): Int {
-            return 0
-        }
-
-        companion object CREATOR : Parcelable.Creator<MapFullGroupDisplayDataImpl> {
-            override fun createFromParcel(parcel: Parcel): MapFullGroupDisplayDataImpl {
-                return MapFullGroupDisplayDataImpl(parcel)
-            }
-
-            override fun newArray(size: Int): Array<MapFullGroupDisplayDataImpl?> {
-                return arrayOfNulls(size)
-            }
-        }
         class MapGroupSectionImpl(var mTitle: String? = null,
+                                  var mTitleAsSubtext: String? = null,
                                   var mProducts: HashMap<String, MapFullGroupDisplayData.MapGroupSection.MapsProduct> = HashMap()): MapFullGroupDisplayData.MapGroupSection
         {
-
-            constructor(parcel: Parcel) : this(
-                    parcel.readString(),
-                    parcel.readSerializable() as HashMap<String, MapFullGroupDisplayData.MapGroupSection.MapsProduct>)
-
             override fun GetTitle(): String?
             {
                 return mTitle
             }
 
+            override fun GetTitleAsSubtext(): String? {
+                return mTitleAsSubtext
+            }
 
             override fun GetProducts(): HashMap<String, MapFullGroupDisplayData.MapGroupSection.MapsProduct>
             {
                 return mProducts
             }
 
-            override fun writeToParcel(parcel: Parcel, flags: Int) {
-
-                parcel.writeString(mTitle)
-                parcel.writeSerializable(mProducts)
-            }
-
-            override fun describeContents(): Int {
-                return 0
-            }
-            companion object CREATOR : Parcelable.Creator<MapGroupSectionImpl> {
-
-                override fun createFromParcel(parcel: Parcel): MapGroupSectionImpl {
-                    return MapGroupSectionImpl(parcel)
-                }
-                override fun newArray(size: Int): Array<MapGroupSectionImpl?> {
-                    return arrayOfNulls(size)
-                }
-
-
-            }
 
             class MapsProductImpl(var mTitle: String? = null, var mSectionTitle: String? = null, var mImageUrl: String? = null): MapFullGroupDisplayData.MapGroupSection.MapsProduct
             {
-
-                constructor(parcel: Parcel) : this(
-                        parcel.readString(),
-                        parcel.readString(),
-                        parcel.readString())
-
                 override fun GetTitle(): String? {
                     return mTitle
                 }
@@ -271,27 +220,7 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
                 override fun GetImageUrl(): String? {
                     return mImageUrl
                 }
-
-                override fun writeToParcel(parcel: Parcel, flags: Int) {
-                    parcel.writeString(mTitle)
-                    parcel.writeString(mSectionTitle)
-                    parcel.writeString(mImageUrl)
-                }
-                override fun describeContents(): Int {
-                    return 0
-                }
-
-                companion object CREATOR : Parcelable.Creator<MapsProductImpl> {
-                    override fun createFromParcel(parcel: Parcel): MapsProductImpl {
-                        return MapsProductImpl(parcel)
-                    }
-                    override fun newArray(size: Int): Array<MapsProductImpl?> {
-                        return arrayOfNulls(size)
-                    }
-
-                }
             }
-
         }
     }
 
@@ -306,18 +235,19 @@ class MapsDataProvider @Inject constructor(internal var mDataDownloader: DataDow
     }
 
 
-    interface MapFullGroupDisplayData: Parcelable
+    interface MapFullGroupDisplayData: Serializable
     {
         fun GetTitle(): String?
         fun GetSections(): HashMap<String, MapGroupSection>
 
-        interface MapGroupSection: GenericMapData, Parcelable
+        interface MapGroupSection: GenericMapData, Serializable
         {
             fun GetTitle(): String?
+            fun GetTitleAsSubtext(): String?
             fun GetProducts(): HashMap<String, MapsProduct>
 
 
-            interface MapsProduct: GenericMapData, Parcelable
+            interface MapsProduct: GenericMapData, Serializable
             {
                 fun GetTitle(): String?
                 fun GetSectionTitle(): String?

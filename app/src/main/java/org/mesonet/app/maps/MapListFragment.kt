@@ -37,7 +37,7 @@ class MapListFragment : BaseFragment()
         var group: MapsDataProvider.MapFullGroupDisplayData? = null
 
         if (arguments != null && arguments!!.containsKey(kMapGroupFullList))
-            group = arguments!!.getParcelable(kMapGroupFullList) as MapsDataProvider.MapFullGroupDisplayData
+            group = arguments!!.getSerializable(kMapGroupFullList) as MapsDataProvider.MapFullGroupDisplayData
 
         if(group == null) {
             mBinding.mapList.setAdapter(MapsGroupRecyclerViewAdapter(mActivity))
@@ -54,6 +54,8 @@ class MapListFragment : BaseFragment()
         }
         else
         {
+            mBinding.groupNameToolbar.title = group.GetTitle()
+            mBinding.groupNameToolbar.visibility = View.VISIBLE
             mBinding.progressBar.visibility = View.GONE
             mBinding.mapList.setAdapter(MapsSectionRecyclerViewAdapter())
             mBinding.mapList.SetItems(ArrayList(group.GetSections().values))
