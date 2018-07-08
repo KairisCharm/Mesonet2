@@ -113,7 +113,9 @@ constructor(internal var mLocationProvider: LocationProvider,
                 i++
             }
 
-            mCache.SaveSites(mMesonetSiteList!!)
+            mCache.SaveSites(mMesonetSiteList!!).subscribe()
+
+            SetResult(mCurrentSelection)
         }
     }
 
@@ -196,15 +198,17 @@ constructor(internal var mLocationProvider: LocationProvider,
 
 
 
-    fun ToggleFavorite(inStid: String)
+    fun ToggleFavorite(inStid: String): Observable<Boolean>
     {
-        Observable.create(ObservableOnSubscribe<Void> {
+        return Observable.create{
             if (IsFavorite(inStid)) {
                 RemoveFavorite(inStid)
             } else {
                 AddFavorite(inStid)
             }
-        }).subscribe()
+
+            it.onNext(IsFavorite(inStid))
+        }
     }
 
 
@@ -222,9 +226,9 @@ constructor(internal var mLocationProvider: LocationProvider,
     internal fun AddFavorite(inStid: String) {
         if (mFavorites != null) {
             mFavorites!!.add(inStid)
-            if(inStid.equals(mCurrentSelection))
+            if(inStid == mCurrentSelection)
                 mCurrentIsFavorite = IsFavorite(mCurrentSelection)
-            mCache.SaveFavorites(mFavorites!!)
+            mCache.SaveFavorites(mFavorites!!).subscribe()
         }
     }
 
@@ -232,7 +236,7 @@ constructor(internal var mLocationProvider: LocationProvider,
     internal fun RemoveFavorite(inStid: String) {
         if (mFavorites != null && mFavorites!!.contains(inStid)) {
             mFavorites!!.remove(inStid)
-            mCache.SaveFavorites(mFavorites!!)
+            mCache.SaveFavorites(mFavorites!!).subscribe()
             if(inStid == mCurrentSelection)
                 mCurrentIsFavorite = IsFavorite(mCurrentSelection)
         }

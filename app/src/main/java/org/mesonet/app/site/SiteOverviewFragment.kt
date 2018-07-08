@@ -126,7 +126,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                             var forecastPostion = inPosition
                             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                                 if (inPosition == 0) {
-                                    val mesonetBinding = DataBindingUtil.inflate<MesonetDataContainerBinding>(LayoutInflater.from(getContext()), R.layout.mesonet_data_container, null, false)
+                                    val mesonetBinding = DataBindingUtil.inflate<MesonetDataContainerBinding>(LayoutInflater.from(context), R.layout.mesonet_data_container, null, false)
                                     SetMesonetBinding(mesonetBinding)
                                     inViewGroup.addView(mesonetBinding.root)
                                     return mesonetBinding.root
@@ -255,7 +255,13 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     }
 
     private fun ToggleFavorite() {
-        mMesonetSiteDataController.ToggleFavorite(mMesonetSiteDataController.CurrentSelection())
+        mMesonetSiteDataController.ToggleFavorite(mMesonetSiteDataController.CurrentSelection()).subscribe {
+            if (it) {
+                mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_white_36dp)
+            } else {
+                mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_border_white_36dp)
+            }
+        }
     }
 
 
@@ -319,7 +325,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         mMesonetDataBinding!!.siteToolbar.setNavigationOnClickListener {
             if (mMesonetSiteDataController.CurrentSelection() != "") {
                 val intent = Intent(activity?.baseContext, WebViewActivity::class.java)
-                intent.putExtra(WebViewActivity.kTitle, mMesonetSiteDataController.CurrentStationName()!! + " Meteogram")
+                intent.putExtra(WebViewActivity.kTitle, mMesonetSiteDataController.CurrentStationName() + " Meteogram")
                 intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/data/public/mesonet/meteograms/" + mMesonetSiteDataController.CurrentSelection().toUpperCase() + ".met.gif")
                 intent.putExtra(WebViewActivity.kInitialZoom, 1)
                 intent.putExtra(WebViewActivity.kAllowUserZoom, true)

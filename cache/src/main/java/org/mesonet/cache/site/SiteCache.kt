@@ -23,7 +23,7 @@ constructor() {
 
     fun SaveSites(inMesonetSites: MesonetSiteList): Observable<Void> {
         return Observable.create(ObservableOnSubscribe<Void> {
-            mCacher.SaveToCache(SiteRealmModel::class.java, mConverter.SitesToRealmModels(inMesonetSites))
+            mCacher.SaveToCache(SiteRealmModel::class.java, mConverter.SitesToRealmModels(inMesonetSites)).subscribe()
         }).subscribeOn(Schedulers.computation())
     }
 
@@ -37,7 +37,7 @@ constructor() {
 
     fun SaveFavorites(inFavorites: List<String>): Observable<Void> {
         return Observable.create(ObservableOnSubscribe<Void> {
-            mCacher.SaveToCache(FavoriteSiteRealmModel::class.java, mConverter.FavoritesToRealmModels(inFavorites))
+            mCacher.SaveToCache(FavoriteSiteRealmModel::class.java, mConverter.FavoritesToRealmModels(inFavorites)).subscribe()
         }).subscribeOn(Schedulers.computation())
     }
 
