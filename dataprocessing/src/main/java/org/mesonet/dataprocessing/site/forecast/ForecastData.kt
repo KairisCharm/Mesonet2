@@ -1,7 +1,7 @@
 package org.mesonet.dataprocessing.site.forecast
 
 
-interface ForecastData {
+interface ForecastData: Comparable<ForecastData> {
     fun GetTime(): String
     fun GetIconUrl(): String
     fun GetStatus(): String

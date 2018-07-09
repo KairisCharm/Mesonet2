@@ -41,7 +41,7 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
 
     internal open fun Update(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
-        mMesonetUIController.GetDisplayFieldsObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
+        mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
             SetMesonetViews(inRemoteViews, inAppWidgetIds)
 
             UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
@@ -74,7 +74,7 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
 
     internal fun SetMesonetViews(inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
-        mMesonetUIController.GetDisplayFieldsObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
+        mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
             inRemoteViews.setTextViewText(R.id.widget_place, mMesonetSiteDataController.CurrentStationName())
             inRemoteViews.setTextViewText(R.id.widget_tair, it.GetAirTempString())
 

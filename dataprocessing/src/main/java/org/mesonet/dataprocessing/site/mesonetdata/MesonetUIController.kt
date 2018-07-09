@@ -1,8 +1,7 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
-import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.dataprocessing.userdata.Preferences
 
 import java.text.SimpleDateFormat
@@ -16,11 +15,13 @@ import javax.inject.Singleton
 
 @Singleton
 class MesonetUIController @Inject
-constructor(private var mDataController: MesonetDataController, private var mPreferences: Preferences)
+constructor(private var mDataController: MesonetDataController, inPreferences: Preferences)
 {
-    private var mUIObservable = Observable.create(ObservableOnSubscribe<MesonetDisplayFields> {observer ->
-        mPreferences.UnitPreferencesObservable().observeOn(Schedulers.computation()).subscribe { unitPreference ->
-            mDataController.GetDataObservable().observeOn(Schedulers.computation()).map {
+    private var mUISubject: BehaviorSubject<MesonetDisplayFields> = BehaviorSubject.create()
+    init
+    {
+        inPreferences.UnitPreferencesSubject().observeOn(Schedulers.computation()).subscribe { unitPreference ->
+            mDataController.GetDataSubject().observeOn(Schedulers.computation()).map {
                 val displayFields = MesonetDisplayFieldsImpl()
                 val formattedString = "Observed at %s"
 
@@ -150,15 +151,21 @@ constructor(private var mDataController: MesonetDataController, private var mPre
                 }
 
                 displayFields as MesonetDisplayFields
-            }.subscribe{observer.onNext(it)}
+            }.subscribe{mUISubject.onNext(it)}
         }
-    }).subscribeOn(Schedulers.computation())
+    }
 
 
 
-    fun GetDisplayFieldsObservable(): Observable<MesonetDisplayFields>
+    fun GetDisplayFieldsSubject(): BehaviorSubject<MesonetDisplayFields>
     {
-        return mUIObservable
+        return mUISubject
+    }
+
+
+    fun Dispose()
+    {
+        mDataController.Dispose()
     }
 
 

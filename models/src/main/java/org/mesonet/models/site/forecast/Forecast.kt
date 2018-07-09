@@ -3,7 +3,7 @@ package org.mesonet.models.site.forecast
 import org.mesonet.core.DefaultUnits
 
 
-interface Forecast : DefaultUnits
+interface Forecast : DefaultUnits, Comparable<Forecast>
 {
     fun GetTime(): String?
     fun GetTemp(): Number?

@@ -1,6 +1,6 @@
 package org.mesonet.dataprocessing.userdata
 
-import io.reactivex.Observable
+import io.reactivex.subjects.BehaviorSubject
 
 
 interface Preferences {
@@ -9,10 +9,10 @@ interface Preferences {
     }
 
 
-    fun UnitPreferencesObservable(): Observable<UnitPreference>
+    fun UnitPreferencesSubject(): BehaviorSubject<UnitPreference>
     fun SetUnitPreference(inPreference: UnitPreference)
-    fun SelectedStidObservable(): Observable<String>
+    fun SelectedStidSubject(): BehaviorSubject<String>
     fun SetSelectedStid(inStid: String)
-    fun SelectedRadarObservable(): Observable<String>
+    fun SelectedRadarSubject(): BehaviorSubject<String>
     fun SetSelectedRadar(inRadarName: String)
 }

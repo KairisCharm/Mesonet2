@@ -5,6 +5,117 @@ import org.mesonet.core.DefaultUnits
 
 class MesonetModel : MesonetData
 {
+    override fun compareTo(other: MesonetData): Int {
+        var result = 0
+
+        if(GetStID() != null && other.GetStID() == null)
+            result = -1
+
+        else if(GetStID() == null && other.GetStID() != null)
+            result = 1
+
+        else if(GetStID() != null && other.GetStID() != null)
+            result = GetStID()!!.compareTo(other.GetStID()!!)
+
+        if(result == 0)
+        {
+            if(GetTime() != null && other.GetTime() == null)
+                result = -1
+
+            else if(GetTime() == null && other.GetTime() != null)
+                result = 1
+
+            else if(GetTime() != null && other.GetTime() != null)
+                result = GetTime()!!.compareTo(other.GetTime()!!)
+        }
+
+        if(result == 0)
+        {
+            if(GetRelH() != null && other.GetRelH() == null)
+                result = -1
+
+            else if(GetRelH() == null && other.GetRelH() != null)
+                result = 1
+
+            else if(GetRelH() != null && other.GetRelH() != null)
+                result = GetRelH()!!.toDouble().compareTo(other.GetRelH()!!.toDouble())
+        }
+
+        if(result == 0)
+        {
+            if(GetTAir() != null && other.GetTAir() == null)
+                result = -1
+
+            else if(GetTAir() == null && other.GetTAir() != null)
+                result = 1
+
+            else if(GetTAir() != null && other.GetTAir() != null)
+                result = GetTAir()!!.toDouble().compareTo(other.GetTime()!!.toDouble())
+        }
+
+        if(result == 0)
+        {
+            if(GetWSpd() != null && other.GetWSpd() == null)
+                result = -1
+
+            else if(GetWSpd() == null && other.GetWSpd() != null)
+                result = 1
+
+            else if(GetWSpd() != null && other.GetWSpd() != null)
+                result = GetWSpd()!!.toDouble().compareTo(other.GetWSpd()!!.toDouble())
+        }
+
+        if(result == 0)
+        {
+            if(GetWDir() != null && other.GetWDir() == null)
+                result = -1
+
+            else if(GetWDir() == null && other.GetWDir() != null)
+                result = 1
+
+            else if(GetWDir() != null && other.GetWDir() != null)
+                result = GetWDir()!!.toDouble().compareTo(other.GetWDir()!!.toDouble())
+        }
+
+        if(result == 0)
+        {
+            if(GetWMax() != null && other.GetWMax() == null)
+                result = -1
+
+            else if(GetWMax() == null && other.GetWMax() != null)
+                result = 1
+
+            else if(GetWMax() != null && other.GetWMax() != null)
+                result = GetWMax()!!.toDouble().compareTo(other.GetWMax()!!.toDouble())
+        }
+
+        if(result == 0)
+        {
+            if(GetPres() != null && other.GetPres() == null)
+                result = -1
+
+            else if(GetPres() == null && other.GetPres() != null)
+                result = 1
+
+            else if(GetPres() != null && other.GetPres() != null)
+                result = GetPres()!!.toDouble().compareTo(other.GetPres()!!.toDouble())
+        }
+
+        if(result == 0)
+        {
+            if(GetRain24H() != null && other.GetRain24H() == null)
+                result = -1
+
+            else if(GetRain24H() == null && other.GetRain24H() != null)
+                result = 1
+
+            else if(GetRain24H() != null && other.GetRain24H() != null)
+                result = GetRain24H()!!.toDouble().compareTo(other.GetRain24H()!!.toDouble())
+        }
+
+        return result
+    }
+
     internal var TIME: Long? = null
     internal var RELH: Number? = null
     internal var TAIR: Number? = null

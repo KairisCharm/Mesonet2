@@ -14,9 +14,12 @@ import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.MapsProductViewHolderBinding
 import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.dataprocessing.maps.MapsDataProvider
+import java.util.*
 
 
 class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.GenericMapData, MapsProductViewHolderBinding>(inBinding) {
+
+
     override fun SetData(inData: MapsDataProvider.GenericMapData)
     {
         if(inData is MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct) {
@@ -33,13 +36,16 @@ class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerV
             Picasso.with(binding?.root?.context).load(inData.GetImageUrl()).into(binding?.productPreview)
 
             binding?.layout?.setOnClickListener {
+                it.isEnabled = false
                 val intent = Intent(binding.root.context, WebViewActivity::class.java)
                 intent.putExtra(WebViewActivity.kTitle, inData.GetTitle())
-                intent.putExtra(WebViewActivity.kUrl, inData.GetImageUrl())
+                intent.putExtra(WebViewActivity.kUrl, inData.GetImageUrl()?.removeSuffix(".png") + "?" + Date().time)
                 intent.putExtra(WebViewActivity.kAllowShare, true)
                 intent.putExtra(WebViewActivity.kInitialZoom, 1)
                 intent.putExtra(WebViewActivity.kAllowUserZoom, true)
                 binding.root.context.startActivity(intent)
+
+                it.isEnabled = true
             }
         }
     }

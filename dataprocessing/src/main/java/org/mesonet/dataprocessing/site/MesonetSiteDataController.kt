@@ -9,6 +9,7 @@ import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.cache.site.SiteCache
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.LocationProvider
@@ -33,22 +34,20 @@ constructor(internal var mLocationProvider: LocationProvider,
             internal var mCache: SiteCache,
             internal var mPreferences: Preferences,
             internal var mContext: Context,
-            internal val mDataDownloader: DataDownloader): FilterListDataProvider, SelectSiteListener {
+            internal val mDataDownloader: DataDownloader): FilterListDataProvider, SelectSiteListener
+{
     private var mMesonetSiteList: MesonetSiteList? = null
 
     private var mFavorites: MutableList<String>? = ArrayList()
 
-    private var mCurrentSelection = "nrmn"
-
     private var mCurrentStationName = ""
     private var mCurrentIsFavorite = false
 
-    private var mCurrentSelectionObservable = Observable.create(ObservableOnSubscribe<String> {
-        it.onNext(mCurrentSelection)
-    }).subscribeOn(Schedulers.computation())
+    private var mCurrentSelectionSubject: BehaviorSubject<String> = BehaviorSubject.create()
 
 
     init {
+        mCurrentSelectionSubject.onNext("nrmn")
         Observable.create (ObservableOnSubscribe<Void>{
             mCache.GetSites().subscribe {
                     if (mMesonetSiteList == null) {
@@ -74,9 +73,9 @@ constructor(internal var mLocationProvider: LocationProvider,
     }
 
 
-    fun GetCurrentSelectionObservable(): Observable<String>
+    fun GetCurrentSelectionSubject(): Observable<String>
     {
-        return mCurrentSelectionObservable
+        return mCurrentSelectionSubject
     }
 
 
@@ -115,20 +114,21 @@ constructor(internal var mLocationProvider: LocationProvider,
 
             mCache.SaveSites(mMesonetSiteList!!).subscribe()
 
-            SetResult(mCurrentSelection)
+            SetResult(mCurrentSelectionSubject.value)
         }
     }
 
 
-    private fun FinalizeSelection()
+    private fun FinalizeSelection(inStid: String)
     {
-        if(mMesonetSiteList != null && mMesonetSiteList!![mCurrentSelection] != null && mMesonetSiteList!![mCurrentSelection]!!.GetName() != null) {
-            mCurrentStationName = mMesonetSiteList!![mCurrentSelection]!!.GetName()!!
+        if(mMesonetSiteList != null && mMesonetSiteList!![inStid] != null && mMesonetSiteList!![mCurrentSelectionSubject.value]!!.GetName() != null) {
+            mCurrentStationName = mMesonetSiteList!![inStid]!!.GetName()!!
         }
 
-        mCurrentIsFavorite = IsFavorite(mCurrentSelection)
+        mCurrentIsFavorite = IsFavorite(inStid)
 
-        mCurrentSelectionObservable.subscribe()
+        if(mCurrentSelectionSubject.value != inStid)
+            mCurrentSelectionSubject.onNext(inStid)
     }
 
 
@@ -163,13 +163,13 @@ constructor(internal var mLocationProvider: LocationProvider,
 
     override fun AsBasicListData(): Observable<Pair<Map<String, BasicListData>, String>> {
         return Observable.create(ObservableOnSubscribe<Pair<Map<String, BasicListData>, String>> {
-            if (mMesonetSiteList != null) it.onNext(Pair(MakeMesonetStidNamePairs(mMesonetSiteList!!, mFavorites!!), mCurrentSelection))
+            if (mMesonetSiteList != null) it.onNext(Pair(MakeMesonetStidNamePairs(mMesonetSiteList!!, mFavorites!!), mCurrentSelectionSubject.value))
         }).subscribeOn(Schedulers.computation())
     }
 
 
     override fun CurrentSelection(): String {
-        return mCurrentSelection
+        return mCurrentSelectionSubject.value
     }
 
 
@@ -226,8 +226,8 @@ constructor(internal var mLocationProvider: LocationProvider,
     internal fun AddFavorite(inStid: String) {
         if (mFavorites != null) {
             mFavorites!!.add(inStid)
-            if(inStid == mCurrentSelection)
-                mCurrentIsFavorite = IsFavorite(mCurrentSelection)
+            if(inStid == mCurrentSelectionSubject.value)
+                mCurrentIsFavorite = IsFavorite(mCurrentSelectionSubject.value)
             mCache.SaveFavorites(mFavorites!!).subscribe()
         }
     }
@@ -237,44 +237,42 @@ constructor(internal var mLocationProvider: LocationProvider,
         if (mFavorites != null && mFavorites!!.contains(inStid)) {
             mFavorites!!.remove(inStid)
             mCache.SaveFavorites(mFavorites!!).subscribe()
-            if(inStid == mCurrentSelection)
-                mCurrentIsFavorite = IsFavorite(mCurrentSelection)
+            if(inStid == mCurrentSelectionSubject.value)
+                mCurrentIsFavorite = IsFavorite(mCurrentSelectionSubject.value)
         }
     }
 
 
     override fun SetResult(inResult: String) {
         Observable.create(ObservableOnSubscribe<Void> {
-            mCurrentSelection = inResult
             mPreferences.SetSelectedStid(inResult)
 
-            FinalizeSelection()
+            FinalizeSelection(inResult)
         }).subscribe()
     }
 
 
     internal fun LoadData(inContext: Context) {
-        mPreferences.SelectedStidObservable().subscribe { stid ->
-            mCurrentSelection = stid
+        mPreferences.SelectedStidSubject().subscribe { stid ->
             mCache.GetSites().subscribe {
                 if (mMesonetSiteList == null || mMesonetSiteList!!.size == 0)
                     SetData(it)
 
-                if(mCurrentSelection.isEmpty()) {
+                if(stid.isEmpty()) {
                     mLocationProvider.GetLocation(inContext).observeOn(Schedulers.computation()).subscribe{
 
-                        mCurrentSelection = "nrmn"
+                        var result = "nrmn"
 
                         if(it.LocationResult() != null)
-                            mCurrentSelection = GetNearestSite(it.LocationResult())
+                            result = GetNearestSite(it.LocationResult())
 
-                        mPreferences.SetSelectedStid(mCurrentSelection)
+                        mPreferences.SetSelectedStid(result)
 
-                        FinalizeSelection()
+                        FinalizeSelection(result)
                     }
                 }
                 else
-                    FinalizeSelection()
+                    FinalizeSelection(stid)
             }
 
             mDataDownloader.GetMesonetSites().observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetSiteList> {

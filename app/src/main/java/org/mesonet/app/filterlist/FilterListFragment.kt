@@ -4,6 +4,7 @@ package org.mesonet.app.filterlist
 import android.databinding.DataBindingUtil
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -25,12 +26,15 @@ import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.SelectSiteListener
 import org.mesonet.dataprocessing.filterlist.FilterListController
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
+import java.util.*
 
 import javax.inject.Inject
 
 
 class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableList<Pair<String, BasicListData>>> {
     private var mTextChangedListener: TextWatcher? = null
+
+
 
     private lateinit var mBinding: FilterListFragmentBinding
 
@@ -63,7 +67,7 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
 
         mBinding.siteSelectionToolbar.menu.findItem(R.id.nearestLocation).setOnMenuItemClickListener {
             mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe {
-                if(context != null)
+                if (context != null)
                     mFilterListController.SortByNearest(context!!, mBinding.searchText.text.toString(), it.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this)
             }
             false

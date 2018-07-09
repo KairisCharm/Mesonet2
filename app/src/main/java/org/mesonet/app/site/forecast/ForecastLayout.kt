@@ -2,6 +2,9 @@ package org.mesonet.app.site.forecast
 
 import android.app.Activity
 import android.databinding.DataBindingUtil
+import android.os.Build
+import android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
+import android.text.Layout.BREAK_STRATEGY_SIMPLE
 import android.view.LayoutInflater
 import android.widget.RelativeLayout
 import com.squareup.picasso.Picasso
@@ -26,6 +29,10 @@ class ForecastLayout(inActivity: Activity) : RelativeLayout(inActivity), Observe
 
     internal fun SetData(inForecastData: ForecastData)
     {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            mBinding.statusTextView.breakStrategy = BREAK_STRATEGY_SIMPLE
+        }
+
         ForecastLayoutController(context, inForecastData).GetForecastObservable().observeOn(AndroidSchedulers.mainThread())?.subscribe(this)
     }
 

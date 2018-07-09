@@ -1,44 +1,45 @@
 package org.mesonet.dataprocessing.advisories
 
 import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.models.advisories.Advisory
 import org.mesonet.network.DataDownloader
+import java.util.concurrent.TimeUnit
 
 import javax.inject.Inject
+import javax.inject.Singleton
 
+
+@Singleton
 class AdvisoryDataProvider @Inject constructor(internal var mDataDownloader: DataDownloader)
 {
-    val mCurrentList: MutableList<Advisory>? = null
-    val mDataObservable = Observable.create(ObservableOnSubscribe<MutableList<Advisory>> {
+    private var mAdvisoryDisposable: Disposable? = null
 
-        if(mCurrentList != null)
-            it.onNext(mCurrentList)
+    val mDataSubject: BehaviorSubject<Advisory.AdvisoryList> = BehaviorSubject.create()
 
-        mDataDownloader.GetAdvisoriesList().observeOn(Schedulers.computation()).subscribe (object: Observer<MutableList<Advisory>>{
-            override fun onComplete() {
+
+
+    init{
+        mAdvisoryDisposable = Observable.interval(0, 1, TimeUnit.MINUTES).subscribeOn(Schedulers.computation()).subscribe {
+            if(mDataSubject.hasObservers()) {
+                mDataDownloader.GetAdvisoriesList().observeOn(Schedulers.computation()).subscribe {
+                    if (!mDataSubject.hasValue() || compareValues(mDataSubject.value, it) != 0)
+                        mDataSubject.onNext(it)
+                }
             }
-
-            override fun onSubscribe(d: Disposable) {
+            else
+            {
+                mAdvisoryDisposable?.dispose()
             }
-
-            override fun onNext(t: MutableList<Advisory>) {
-                it.onNext(t)
-            }
-
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-        })
-    }).subscribeOn(Schedulers.computation())
+        }
+    }
 
 
 
-    fun GetDataObservable(): Observable<MutableList<Advisory>>
+    fun GetDataSubject(): BehaviorSubject<Advisory.AdvisoryList>
     {
-        return mDataObservable
+        return mDataSubject
     }
 }

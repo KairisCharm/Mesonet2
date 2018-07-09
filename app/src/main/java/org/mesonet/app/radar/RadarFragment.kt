@@ -75,7 +75,9 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapSetup, Filter
         }
 
         mBinding!!.playPauseButton.SetPlayPauseState(mMapController.GetPlayPauseState())
-        mBinding!!.playPauseButton.setOnClickListener { mMapController.TogglePlay() }
+        mBinding!!.playPauseButton.setOnClickListener {
+            mMapController.TogglePlay()
+        }
 
         mBinding!!.transparencySeekBar.max = 255
         mBinding!!.transparencySeekBar.progress = Math.round(255.0f * (1 - mMapController.GetTransparency()))

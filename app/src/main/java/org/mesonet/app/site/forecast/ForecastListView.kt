@@ -29,7 +29,7 @@ class ForecastListView(inActivity: Activity) : LinearLayout(inActivity) {
 	internal fun SetSemiDayForecast(inForecastIndex: Int, inController: SemiDayForecastDataController) {
 		if (mBinding != null) {
 			if (inForecastIndex < mBinding!!.layout.childCount) {
-				inController.GetForecastDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
+				inController.GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
 					(mBinding!!.layout.getChildAt(inForecastIndex) as ForecastLayout).SetData(it)
 				}
 

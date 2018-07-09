@@ -105,9 +105,15 @@ class DataDownloader @Inject constructor()
     }
 
 
-    fun GetAdvisoriesList(): Observable<ArrayList<Advisory>>
+    fun GetAdvisoriesList(): Observable<Advisory.AdvisoryList>
     {
         return mAdvisoryRetrofitService.GetAdvisoriesList().subscribeOn(Schedulers.io())
+    }
+
+
+    fun GetAdvisoriesGlobal(): Observable<Advisory.AdvisoryList>
+    {
+        return mAdvisoryRetrofitService.GetAdvisoriesGlobal().subscribeOn(Schedulers.io())
     }
 
 
@@ -231,6 +237,9 @@ class DataDownloader @Inject constructor()
 
 
         @GET("/data/public/noaa/wwa/mobile-ok.txt")
-        fun GetAdvisoriesList(): Observable<ArrayList<Advisory>>
+        fun GetAdvisoriesList(): Observable<Advisory.AdvisoryList>
+
+        @GET("/data/public/noaa/wwa/mobile.txt")
+        fun GetAdvisoriesGlobal(): Observable<Advisory.AdvisoryList>
     }
 }

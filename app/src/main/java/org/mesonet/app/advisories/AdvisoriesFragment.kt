@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -16,13 +15,13 @@ import org.mesonet.app.databinding.AdvisoriesFragmentBinding
 import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
 import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilder
 import org.mesonet.models.advisories.Advisory
-import java.util.concurrent.TimeUnit
 
 
 import javax.inject.Inject
 
 
-class AdvisoriesFragment : BaseFragment(), Observer<MutableList<Advisory>> {
+class AdvisoriesFragment : BaseFragment()
+{
     private var mBinding: AdvisoriesFragmentBinding? = null
 
     @Inject
@@ -31,14 +30,12 @@ class AdvisoriesFragment : BaseFragment(), Observer<MutableList<Advisory>> {
     @Inject
     internal lateinit var mAdvisoryListBuilder: AdvisoryDisplayListBuilder
 
-    private var mDisposable: Disposable? = null
+    var mAdvisoryDisposable: Disposable? = null
+
+
 
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View? {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.advisories_fragment, inParent, false)
-
-        mDisposable = Observable.interval(0,1, TimeUnit.MINUTES).observeOn(AndroidSchedulers.mainThread()).subscribe {
-            mAdvisoryDataProvider.GetDataObservable().subscribe(this)
-        }
 
         mBinding!!.advisoriesRecyclerView.setAdapter(AdvisoriesRecyclerViewAdapter())
 
@@ -46,26 +43,27 @@ class AdvisoriesFragment : BaseFragment(), Observer<MutableList<Advisory>> {
     }
 
 
-    override fun onComplete() {}
-    override fun onSubscribe(d: Disposable) {}
-    override fun onError(e: Throwable) {}
+    override fun onResume() {
+        super.onResume()
 
-    override fun onNext(t: MutableList<Advisory>) {
+        mAdvisoryDisposable = mAdvisoryDataProvider.GetDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe{list ->
+            mAdvisoryListBuilder.BuildList(list).observeOn(AndroidSchedulers.mainThread()).subscribe {
+                if (mBinding != null) {
+                    mBinding?.progressBar?.visibility = View.GONE
+                    mBinding?.advisoriesRecyclerView?.SetItems(it as ArrayList<*>)
 
-        mAdvisoryListBuilder.BuildList(t).observeOn(AndroidSchedulers.mainThread()).subscribe {
-            if (mBinding != null) {
-                mBinding?.progressBar?.visibility = View.GONE
-                mBinding?.advisoriesRecyclerView?.SetItems(it as ArrayList<*>)
-
-                if(t.size == 0)
-                    mBinding?.emptyListText?.visibility = View.VISIBLE
+                    if(list.size == 0)
+                        mBinding?.emptyListText?.visibility = View.VISIBLE
+                    else
+                        mBinding?.emptyListText?.visibility = View.GONE
+                }
             }
         }
     }
 
 
-    override fun onDestroyView() {
-        mDisposable?.dispose()
-        super.onDestroyView()
+    override fun onPause() {
+        mAdvisoryDisposable?.dispose()
+        super.onPause()
     }
 }

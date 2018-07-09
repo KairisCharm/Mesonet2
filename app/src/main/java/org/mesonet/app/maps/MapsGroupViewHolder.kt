@@ -4,6 +4,7 @@ package org.mesonet.app.maps
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,8 +14,11 @@ import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.MapsGroupViewHolderBinding
 import org.mesonet.dataprocessing.maps.MapsDataProvider
+import java.util.*
 
 class MapsGroupViewHolder(private val mBaseActivity: BaseActivity, inBinding: MapsGroupViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.MapAbbreviatedGroupDisplayData, MapsGroupViewHolderBinding>(inBinding) {
+
+
     init {
         inBinding.productRecyclerView.setAdapter(MapsProductRecyclerViewAdapter())
     }
@@ -31,6 +35,7 @@ class MapsGroupViewHolder(private val mBaseActivity: BaseActivity, inBinding: Ma
             binding.viewAllLayout.visibility = View.GONE
 
         binding.viewAllLayout.setOnClickListener {
+            it.isEnabled = false
             val args = Bundle()
             args.putSerializable(MapListFragment.kMapGroupFullList, inData.GetMapFullGroupDisplayData())
 
@@ -38,6 +43,7 @@ class MapsGroupViewHolder(private val mBaseActivity: BaseActivity, inBinding: Ma
             fragment.arguments = args
 
             mBaseActivity.NavigateToPage(fragment, true, R.anim.slide_from_right_animation, R.anim.slide_to_left_animation)
+            it.isEnabled = true
         }
     }
 

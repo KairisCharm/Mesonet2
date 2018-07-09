@@ -3,6 +3,7 @@ package org.mesonet.app.webview
 import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.os.Bundle
+import android.os.SystemClock
 import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
@@ -17,6 +18,7 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URL
+import java.util.*
 
 
 class WebViewActivity : AppCompatActivity() {
@@ -52,11 +54,13 @@ class WebViewActivity : AppCompatActivity() {
         if (intent.getBooleanExtra(kAllowShare, false)) {
             binding.shareButton.visibility = View.VISIBLE
             binding.shareButton.setOnClickListener {
+                it.isEnabled = false
                 val i = Intent(Intent.ACTION_SEND)
                 i.type = "text/plain"
                 i.putExtra(Intent.EXTRA_SUBJECT, title)
                 i.putExtra(Intent.EXTRA_TEXT, finalUrl)
                 startActivity(Intent.createChooser(i, "Share URL"))
+                it.isEnabled = true
             }
         }
 

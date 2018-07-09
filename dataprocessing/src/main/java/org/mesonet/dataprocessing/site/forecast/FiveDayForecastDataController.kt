@@ -2,63 +2,46 @@ package org.mesonet.dataprocessing.site.forecast
 
 import android.content.Context
 import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 
 import org.mesonet.dataprocessing.formulas.UnitConverter
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.site.forecast.Forecast
 import org.mesonet.network.DataDownloader
+import java.util.concurrent.TimeUnit
 
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.collections.ArrayList
 
 @Singleton
-class FiveDayForecastDataController @Inject constructor(private var mMesonetSiteDataController: MesonetSiteDataController,
+class FiveDayForecastDataController @Inject constructor(inMesonetSiteDataController: MesonetSiteDataController,
                                                         private var mPreferences: Preferences,
                                                         private var mUnitConverter: UnitConverter,
                                                         private var mContext: Context,
                                                         private var mDataDownloader: DataDownloader) : Observer<String> {
 
 
-    private var mSemiDayForecasts: MutableList<SemiDayForecastDataController> = ArrayList()
 
     private var mCurrentSite: String? = null
 
-    private var mDataObservable = Observable.create(ObservableOnSubscribe<List<SemiDayForecastDataController>>{observer ->
-        mDataDownloader.GetForecast(mMesonetSiteDataController.CurrentSelection()).observeOn(Schedulers.computation()).subscribe(object: Observer<List<Forecast>>
-        {
-            override fun onComplete() {
-            }
+    private var mDataSubject: BehaviorSubject<List<SemiDayForecastDataController>> = BehaviorSubject.create()
 
-            override fun onSubscribe(d: Disposable) {
-            }
+    private var mDisposable: Disposable? = null
 
-            override fun onNext(t: List<Forecast>) {
-                SetData(t)
-
-                observer.onNext(mSemiDayForecasts)
-            }
-
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-
-        })
-    }).subscribeOn(Schedulers.computation())
 
     init {
-        mMesonetSiteDataController.GetCurrentSelectionObservable().observeOn(Schedulers.computation()).subscribe(this)
+        inMesonetSiteDataController.GetCurrentSelectionSubject().observeOn(Schedulers.computation()).subscribe(this)
     }
 
 
-    fun GetForecastDataObservable(): Observable<List<SemiDayForecastDataController>>
+    fun GetForecastDataSubject(): BehaviorSubject<List<SemiDayForecastDataController>>
     {
-        return mDataObservable
+        return mDataSubject
     }
 
 
@@ -71,11 +54,22 @@ class FiveDayForecastDataController @Inject constructor(private var mMesonetSite
     }
 
     override fun onNext(t: String) {
-        if(mCurrentSite == null || !mCurrentSite.equals(mMesonetSiteDataController.CurrentSelection()))
+        if(mCurrentSite == null || !mCurrentSite.equals(t))
         {
-            mCurrentSite = mMesonetSiteDataController.CurrentSelection()
-            mSemiDayForecasts = ArrayList()
-            mDataObservable.subscribe()
+            mDataSubject.onNext(ArrayList())
+
+            mDisposable = Observable.interval(0, 1, TimeUnit.MINUTES).observeOn(Schedulers.computation()).subscribe {
+                if(mCurrentSite != t || mDataSubject.hasObservers()) {
+                    mCurrentSite = t
+                    mDataDownloader.GetForecast(mCurrentSite!!).observeOn(Schedulers.computation()).subscribe {
+                        SetData(it)
+                    }
+                }
+                else
+                {
+                    mDisposable?.dispose()
+                }
+            }
         }
     }
 
@@ -88,22 +82,37 @@ class FiveDayForecastDataController @Inject constructor(private var mMesonetSite
     internal fun SetData(inForecast: List<Forecast>?) {
         if (inForecast != null) {
 
-            for (i in inForecast.indices) {
-                if(mSemiDayForecasts.size <= i)
-                    mSemiDayForecasts.add(SemiDayForecastDataController(mContext, mPreferences, mUnitConverter, inForecast[i], mDataDownloader))
-                else
-                    mSemiDayForecasts[i].SetData(inForecast[i])
+            if(!mDataSubject.hasValue() || mDataSubject.value.isEmpty()) {
+                val result = ArrayList<SemiDayForecastDataController>()
+                for (i in 0..9) {
+                    if(i < inForecast.size)
+                        result.add(SemiDayForecastDataController(mContext, mPreferences, mUnitConverter, inForecast[i], mDataDownloader))
+                    else
+                        result.add(SemiDayForecastDataController(mContext, mPreferences, mUnitConverter, null, mDataDownloader))
+                }
+
+                mDataSubject.onNext(result)
+            }
+            else
+            {
+                for(i in 0..9)
+                {
+                    if(i < inForecast.size)
+                        mDataSubject.value[i].SetData(inForecast[i])
+                    else
+                        mDataSubject.value[i].SetData(null)
+                }
             }
         }
     }
 
 
     fun GetCount(): Int {
-        return mSemiDayForecasts.size
+        return mDataSubject.value.size
     }
 
 
     fun GetForecast(inIndex: Int): SemiDayForecastDataController {
-        return mSemiDayForecasts[inIndex]
+        return mDataSubject.value[inIndex]
     }
 }

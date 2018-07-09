@@ -2,7 +2,7 @@ package org.mesonet.models.site.mesonetdata
 
 import org.mesonet.core.DefaultUnits
 
-interface MesonetData : DefaultUnits
+interface MesonetData : DefaultUnits, Comparable<MesonetData>
 {
   fun GetTime(): Long?
   fun GetRelH(): Number?

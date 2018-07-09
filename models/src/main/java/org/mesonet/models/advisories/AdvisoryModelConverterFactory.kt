@@ -17,7 +17,7 @@ class AdvisoryModelConverterFactory: Converter.Factory() {
 
     class AdvisoryModelConverter: Converter<ResponseBody, List<Advisory>> {
         override fun convert(inValue: ResponseBody?): List<Advisory> {
-            val result = ArrayList<Advisory>()
+            val result = Advisory.AdvisoryList()
 
             try {
                 if (inValue != null) {

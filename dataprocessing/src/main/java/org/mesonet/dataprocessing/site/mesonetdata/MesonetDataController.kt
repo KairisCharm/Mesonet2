@@ -1,10 +1,10 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
 import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.core.DefaultUnits
 import org.mesonet.dataprocessing.formulas.UnitConverter
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
@@ -12,6 +12,7 @@ import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.site.mesonetdata.MesonetData
 import org.mesonet.network.DataDownloader
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,29 +28,13 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
 {
     private var mMesonetData: MesonetData? = null
 
-    private var mDataObservable = Observable.create(ObservableOnSubscribe<MesonetData> {subscriber ->
-        mDataDownloader.GetMesonetData(mSiteDataController.CurrentSelection()).observeOn(Schedulers.computation()).subscribe (object: Observer<MesonetData>
-        {
-            override fun onComplete() {
-            }
+    private var mDisposable: Disposable? = null
 
-            override fun onSubscribe(d: Disposable) {
-            }
+    private var mDataSubject: BehaviorSubject<MesonetData> = BehaviorSubject.create()
 
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-
-            override fun onNext(it: MesonetData) {
-                SetData(it)
-                if (mMesonetData != null)
-                    subscriber.onNext(mMesonetData!!)
-            }
-        })
-    }).subscribeOn(Schedulers.computation())
 
     init {
-        mSiteDataController.GetCurrentSelectionObservable().observeOn(Schedulers.computation()).subscribe(this)
+        mSiteDataController.GetCurrentSelectionSubject().observeOn(Schedulers.computation()).subscribe(this)
     }
 
 
@@ -220,9 +205,9 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
     }
 
 
-    fun GetDataObservable(): Observable<MesonetData>
+    fun GetDataSubject(): BehaviorSubject<MesonetData>
     {
-        return mDataObservable
+        return mDataSubject
     }
 
 
@@ -241,7 +226,16 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
     override fun onNext(t: String) {
         if (mMesonetData == null || !mMesonetData?.GetStID()?.toLowerCase().equals(t)) {
             mMesonetData = null
-            mDataObservable.subscribe()
+
+            mDisposable?.dispose()
+
+            mDisposable = Observable.interval(0, 1, TimeUnit.MINUTES).observeOn(Schedulers.computation()).subscribe {
+                mDataDownloader.GetMesonetData(mSiteDataController.CurrentSelection()).observeOn(Schedulers.computation()).subscribe {
+                    SetData(it)
+                    if (mMesonetData != null && (!mDataSubject.hasValue() ||  mMesonetData!!.compareTo(mDataSubject.value) != 0))
+                        mDataSubject.onNext(mMesonetData!!)
+                }
+            }
         }
     }
 
@@ -251,5 +245,11 @@ class MesonetDataController @Inject constructor(private var mSiteDataController:
     override fun onError(e: Throwable)
     {
         e.printStackTrace()
+    }
+
+
+    fun Dispose()
+    {
+        mDisposable?.dispose()
     }
 }

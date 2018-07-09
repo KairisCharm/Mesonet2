@@ -27,21 +27,17 @@ import org.mesonet.app.radar.RadarFragment
 import org.mesonet.app.site.SiteOverviewFragment
 import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
-import org.mesonet.dataprocessing.maps.MapsDataProvider
-import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import android.content.res.Configuration
 import android.view.Gravity
-import io.reactivex.Observable
-import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import org.mesonet.app.contact.ContactActivity
 import org.mesonet.app.usersettings.UserSettingsActivity
-import org.mesonet.models.advisories.Advisory
-import java.util.concurrent.TimeUnit
 
 
-class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener, Observer<List<Advisory>> {
+class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener {
+
+
 
     private val kSelectedTabId = "selectedTabId"
 
@@ -53,29 +49,39 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     @Inject
     internal lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
 
-    @Inject
-    internal lateinit var mMapsDataProvider: MapsDataProvider
-
-    @Inject
-    internal lateinit var mMesonetSiteDataProvider: MesonetSiteDataController
-
-    private var mAdvisoryDisposable: Disposable? = null
+    var mAdvisoryDisposable: Disposable? = null
 
 
-    public override fun onCreate(inSavedInstanceState: Bundle?) {
 
-        super.onCreate(inSavedInstanceState)
+    public override fun onCreate(savedInstanceState: Bundle?) {
+
+        super.onCreate(savedInstanceState)
 
         var selectedTab = R.id.mesonetOption
 
-        if (inSavedInstanceState != null)
-            selectedTab = inSavedInstanceState.getInt(kSelectedTabId)
+        if (savedInstanceState != null)
+            selectedTab = savedInstanceState.getInt(kSelectedTabId)
 
         LoadBinding(selectedTab)
+    }
 
-        mAdvisoryDisposable = Observable.interval(0,1, TimeUnit.MINUTES).subscribe {
-             mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(this)
+
+    override fun onResume() {
+        super.onResume()
+
+        mAdvisoryDisposable = mAdvisoryDataProvider.GetDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe{
+            if (it.isNotEmpty())
+                mBinding!!.bottomNav.menu.getItem(3).icon = resources.getDrawable(R.drawable.advisory_badge, theme)
+            else
+                mBinding!!.bottomNav.menu.getItem(3).setIcon(R.drawable.advisories_image)
         }
+    }
+
+
+    override fun onPause() {
+        mAdvisoryDisposable?.dispose()
+
+        super.onPause()
     }
 
 
@@ -129,21 +135,21 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
 
         mBinding!!.bottomNav.setOnNavigationItemSelectedListener { inItem ->
-            var fragment: Fragment? = null
+            var resultFragment: Fragment? = null
 
             when (inItem.itemId) {
-                R.id.mesonetOption -> fragment = SiteOverviewFragment()
+                R.id.mesonetOption -> resultFragment = SiteOverviewFragment()
 
-                R.id.mapsOption -> fragment = MapListFragment()
+                R.id.mapsOption -> resultFragment = MapListFragment()
 
-                R.id.radarOption -> fragment = RadarFragment()
+                R.id.radarOption -> resultFragment = RadarFragment()
 
-                R.id.advisoriesOption -> fragment = AdvisoriesFragment()
+                R.id.advisoriesOption -> resultFragment = AdvisoriesFragment()
             }
 
-            if (fragment != null) {
+            if (resultFragment != null) {
                 val fragmentTransaction = supportFragmentManager.beginTransaction()
-                fragmentTransaction.replace(R.id.fragmentLayout, fragment)
+                fragmentTransaction.replace(R.id.fragmentLayout, resultFragment)
                 fragmentTransaction.commit()
             }
 
@@ -196,11 +202,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-
+        item.isEnabled = false
         val intent = Intent(baseContext, WebViewActivity::class.java)
         intent.putExtra(WebViewActivity.kTitle, "Ticker")
         intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt")
         startActivity(intent)
+        item.isEnabled = true
 
         return super.onOptionsItemSelected(item)
     }
@@ -211,13 +218,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         mActionBarDrawerToggle = null
 
-        mAdvisoryDisposable?.dispose()
-
         super.onDestroy()
     }
 
 
     override fun onNavigationItemSelected(inMenuItem: MenuItem): Boolean {
+        inMenuItem.isEnabled = false
         when (inMenuItem.itemId) {
             R.id.userSettings -> {
                 val userSettingsIntent = Intent(baseContext, UserSettingsActivity::class.java)
@@ -235,24 +241,22 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 intent.putExtra(WebViewActivity.kRaw, "file:///android_res/raw/about.html")
                 startActivity(intent)
             }
-        }//            case R.id.metricUnits:
-        //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kMetric.name());
-        //                mPreferencesObservable.notifyObservers();
-        //                break;
-        //            case R.id.imperialUnits:
-        //                mUserSettings.SetPreference(this, UserSettings.kUnitPreference, Preferences.UnitPreference.kImperial.name());
-        //                mPreferencesObservable.notifyObservers();
-        //                break;
+        }
 
         mBinding?.drawer?.closeDrawer(Gravity.START)
+
+        inMenuItem.isEnabled = true
         return false
     }
 
     override fun onMenuItemClick(item: MenuItem): Boolean {
+        item.isEnabled = false
         val intent = Intent(baseContext, WebViewActivity::class.java)
         intent.putExtra(WebViewActivity.kTitle, "Ticker")
         intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt")
         startActivity(intent)
+        item.isEnabled = true
+
         return false
     }
 
@@ -268,17 +272,5 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         if (inPushToBackStack)
             fragmentTransaction.addToBackStack(inFragment.javaClass.name)
         fragmentTransaction.commit()
-    }
-
-
-    override fun onComplete() {}
-    override fun onSubscribe(d: Disposable) {}
-    override fun onError(e: Throwable) {}
-
-    override fun onNext(t: List<Advisory>) {
-        if (t.isNotEmpty())
-            mBinding!!.bottomNav.menu.getItem(3).icon = resources.getDrawable(R.drawable.advisory_badge, theme)
-        else
-            mBinding!!.bottomNav.menu.getItem(3).setIcon(R.drawable.advisories_image)
     }
 }

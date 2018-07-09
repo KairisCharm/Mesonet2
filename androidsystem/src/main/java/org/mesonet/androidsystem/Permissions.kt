@@ -1,6 +1,5 @@
 package org.mesonet.androidsystem
 
-
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
@@ -13,6 +12,8 @@ import io.reactivex.schedulers.Schedulers
 
 import javax.inject.Inject
 import javax.inject.Singleton
+
+
 
 @Singleton
 class Permissions @Inject

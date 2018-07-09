@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.databinding.DataBindingUtil
 import android.os.Bundle
+import android.os.SystemClock
 import android.support.v4.view.PagerAdapter
 import android.support.v4.view.ViewPager
 import android.view.LayoutInflater
@@ -26,21 +27,20 @@ import org.mesonet.app.databinding.MesonetDataContainerBinding
 import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.app.databinding.SiteOverviewFragmentBinding
 import org.mesonet.app.filterlist.FilterListFragment
+import org.mesonet.app.site.forecast.ForecastLayout
 import org.mesonet.app.site.forecast.ForecastListView
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController
 import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController
-import org.mesonet.dataprocessing.site.forecast.ForecastData
-import org.mesonet.dataprocessing.site.forecast.SemiDayForecastDataController
-
-import java.util.ArrayList
-import java.util.concurrent.TimeUnit
+import java.util.*
 
 import javax.inject.Inject
 
 
 class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser, Toolbar.OnMenuItemClickListener, Observer<String> {
     private var mMesonetDataBinding: MesonetDataContainerBinding? = null
+
+
 
     private var mBinding: SiteOverviewFragmentBinding? = null
 
@@ -53,114 +53,15 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     @Inject
     internal lateinit var mMesonetSiteDataController: MesonetSiteDataController
 
+    var mMesonetDisposable: Disposable? = null
+    var mForecastDisposable: Disposable? = null
+
     internal var mCurrentStid: String? = null
-
-    internal var mMesonetDisposable: Disposable? = null
-
-    internal var mForecastDisposable: Disposable? = null
-    internal val mMesonetObserver = object: Observer<MesonetUIController.MesonetDisplayFields>{
-        override fun onComplete() {
-        }
-
-        override fun onSubscribe(d: Disposable) {
-        }
-
-        override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
-            if(isAdded) {
-                mBinding?.mesonetDataContainer?.displayFields = t
-                mBinding?.mesonetProgressBar?.visibility = View.GONE
-                mMesonetDataBinding?.mesonetData?.mesonetLayout?.visibility = View.VISIBLE
-            }
-        }
-
-        override fun onError(e: Throwable) {
-            e.printStackTrace()
-        }
-    }
-
-    internal val mForecastObserver = object: Observer<List<SemiDayForecastDataController>>{
-        override fun onComplete() {}
-        override fun onSubscribe(d: Disposable) {}
-        override fun onNext(t: List<SemiDayForecastDataController>)
-        {
-            if(isAdded)
-            {
-                mBinding!!.forecastViewPager.removeAllViews()
-
-                val forecastsPerPage = getResources().getInteger(R.integer.forecastsPerPage)
-                var pageCount = mFiveDayForecastDataController.GetCount() / forecastsPerPage
-
-                val forecastPages = ArrayList<ForecastListView>()
-                var i = 0
-                while (i < mFiveDayForecastDataController.GetCount()) {
-                    val forecastListView = ForecastListView(activity!!)
-
-                    var j = 0
-                    while (j < forecastsPerPage && i + j < mFiveDayForecastDataController.GetCount()) {
-                        forecastListView.SetSemiDayForecast(j, mFiveDayForecastDataController.GetForecast(i + j))
-                        j++
-                    }
-
-                    forecastPages.add(forecastListView)
-                    i += forecastsPerPage
-                }
-
-                if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    pageCount++
-                }
-
-                val finalPageCount = pageCount
-
-                if (mBinding!!.forecastViewPager.childCount == 0) {
-                    val pagerAdapter = object : PagerAdapter() {
-                        override fun getCount(): Int {
-                            return finalPageCount
-                        }
-
-                        override fun isViewFromObject(view: View, `object`: Any): Boolean {
-                            return view == `object`
-                        }
-
-                        override fun instantiateItem(inViewGroup: ViewGroup, inPosition: Int): View {
-                            mBinding!!.forecastProgressBar?.visibility = View.GONE
-                            var forecastPostion = inPosition
-                            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                                if (inPosition == 0) {
-                                    val mesonetBinding = DataBindingUtil.inflate<MesonetDataContainerBinding>(LayoutInflater.from(context), R.layout.mesonet_data_container, null, false)
-                                    SetMesonetBinding(mesonetBinding)
-                                    inViewGroup.addView(mesonetBinding.root)
-                                    return mesonetBinding.root
-                                }
-
-                                forecastPostion--
-                            }
-
-                            if (forecastPages[forecastPostion].parent != null)
-                                (forecastPages[forecastPostion].parent as ViewGroup).removeView(forecastPages[forecastPostion])
-                            inViewGroup.addView(forecastPages[forecastPostion])
-                            return forecastPages[forecastPostion]
-                        }
-
-                        override fun destroyItem(inParent: ViewGroup, inPosition: Int, inObject: Any) {}
-                    }
-
-                    mBinding!!.forecastViewPager.adapter = pagerAdapter
-                    pagerAdapter.notifyDataSetChanged()
-                }
-            }
-        }
-
-        override fun onError(e: Throwable)
-        {
-            e.printStackTrace()
-        }
-
-    }
 
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.site_overview_fragment, inParent, false)
 
-        mMesonetSiteDataController.GetCurrentSelectionObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(this)
+        mMesonetSiteDataController.GetCurrentSelectionSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(this)
 
         mBinding!!.previousFab.setOnClickListener {
             val currentSelected = mBinding!!.forecastViewPager.currentItem
@@ -192,15 +93,17 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
 
 
     private fun CalculateScrollButtonVisibility() {
-        if (mBinding?.forecastViewPager?.currentItem == 0)
-            mBinding!!.previousFab.visibility = View.GONE
-        else
-            mBinding!!.previousFab.visibility = View.VISIBLE
+        if(mBinding != null && mBinding!!.forecastViewPager.adapter != null) {
+            if (mBinding?.forecastViewPager?.currentItem == 0)
+                mBinding!!.previousFab.visibility = View.GONE
+            else
+                mBinding!!.previousFab.visibility = View.VISIBLE
 
-        if (mBinding?.forecastViewPager?.currentItem!! < mBinding!!.forecastViewPager.childCount - 1)
-            mBinding!!.nextFab.visibility = View.VISIBLE
-        else
-            mBinding!!.nextFab.visibility = View.GONE
+            if (mBinding?.forecastViewPager?.currentItem!! < (mBinding!!.forecastViewPager.adapter!!.count - 1))
+                mBinding!!.nextFab.visibility = View.VISIBLE
+            else
+                mBinding!!.nextFab.visibility = View.GONE
+        }
     }
 
 
@@ -242,6 +145,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     }
 
     override fun onMenuItemClick(menuItem: MenuItem): Boolean {
+        menuItem.isEnabled = false
         when (menuItem.itemId) {
             R.id.openList -> {
                 val transaction = childFragmentManager.beginTransaction()
@@ -251,6 +155,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
             }
             R.id.favorite -> ToggleFavorite()
         }
+        menuItem.isEnabled = true
         return false
     }
 
@@ -272,11 +177,80 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         mMesonetDataBinding!!.mesonetData!!.mesonetLayout.visibility = View.GONE
         mBinding!!.mesonetProgressBar.visibility = View.VISIBLE
 
-        mMesonetDisposable = Observable.interval(0,1, TimeUnit.MINUTES).subscribe {
-            mMesonetUIController.GetDisplayFieldsObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(mMesonetObserver)
+        mMesonetDisposable = mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe{
+            if(isAdded) {
+                mBinding?.mesonetDataContainer?.displayFields = it
+                mBinding?.mesonetProgressBar?.visibility = View.GONE
+                mMesonetDataBinding?.mesonetData?.mesonetLayout?.visibility = View.VISIBLE
+            }
         }
-        mForecastDisposable = Observable.interval(0,1, TimeUnit.MINUTES).subscribe {
-            mFiveDayForecastDataController.GetForecastDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(mForecastObserver)
+        mForecastDisposable = mFiveDayForecastDataController.GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe{
+            if(isAdded)
+            {
+                if(mBinding!!.forecastViewPager.adapter == null || mBinding!!.forecastViewPager.adapter!!.count == 0) {
+                    val forecastsPerPage = resources.getInteger(R.integer.forecastsPerPage)
+                    var pageCount = mFiveDayForecastDataController.GetCount() / forecastsPerPage
+
+                    val forecastPages = ArrayList<ForecastListView>()
+                    var i = 0
+                    while (i < mFiveDayForecastDataController.GetCount()) {
+                        val forecastListView = ForecastListView(activity!!)
+
+                        var j = 0
+                        while (j < forecastsPerPage && i + j < mFiveDayForecastDataController.GetCount()) {
+                            forecastListView.SetSemiDayForecast(j, mFiveDayForecastDataController.GetForecast(i + j))
+                            j++
+                        }
+
+                        forecastPages.add(forecastListView)
+                        i += forecastsPerPage
+                    }
+
+                    if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                        pageCount++
+                    }
+
+                    val finalPageCount = pageCount
+
+                    if (mBinding!!.forecastViewPager.childCount == 0) {
+                        val pagerAdapter = object : PagerAdapter() {
+                            override fun getCount(): Int {
+                                return finalPageCount
+                            }
+
+                            override fun isViewFromObject(view: View, `object`: Any): Boolean {
+                                return view == `object`
+                            }
+
+                            override fun instantiateItem(inViewGroup: ViewGroup, inPosition: Int): View {
+                                mBinding!!.forecastProgressBar?.visibility = View.GONE
+                                var forecastPostion = inPosition
+                                if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                                    if (inPosition == 0) {
+                                        val mesonetBinding = DataBindingUtil.inflate<MesonetDataContainerBinding>(LayoutInflater.from(context), R.layout.mesonet_data_container, null, false)
+                                        SetMesonetBinding(mesonetBinding)
+                                        inViewGroup.addView(mesonetBinding.root)
+                                        return mesonetBinding.root
+                                    }
+
+                                    forecastPostion--
+                                }
+
+                                if (forecastPages[forecastPostion].parent != null)
+                                    (forecastPages[forecastPostion].parent as ViewGroup).removeView(forecastPages[forecastPostion])
+                                inViewGroup.addView(forecastPages[forecastPostion])
+                                return forecastPages[forecastPostion]
+                            }
+
+                            override fun destroyItem(inParent: ViewGroup, inPosition: Int, inObject: Any) {}
+                        }
+
+                        mBinding!!.forecastViewPager.adapter = pagerAdapter
+                        pagerAdapter.notifyDataSetChanged()
+                        mBinding!!.forecastViewPager.visibility = View.VISIBLE
+                    }
+                }
+            }
         }
     }
 
@@ -299,15 +273,11 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     override fun onNext(t: String) {
         if(t != mCurrentStid)
         {
-            mMesonetDisposable?.dispose()
-            mForecastDisposable?.dispose()
-
-            mMesonetDisposable = Observable.interval(0, 1, TimeUnit.MINUTES).subscribe {
-                mMesonetUIController.GetDisplayFieldsObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(mMesonetObserver)
-            }
-            mForecastDisposable = Observable.interval(0, 1, TimeUnit.MINUTES).subscribe {
-                mFiveDayForecastDataController.GetForecastDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(mForecastObserver)
-            }
+            mBinding!!.mesonetDataContainer!!.siteToolbar.title = ""
+            mMesonetDataBinding!!.mesonetData!!.mesonetLayout.visibility = View.GONE
+            mBinding!!.mesonetProgressBar.visibility = View.VISIBLE
+            mBinding!!.forecastViewPager.visibility = View.GONE
+            mBinding!!.forecastProgressBar!!.visibility = View.VISIBLE
         }
     }
 
@@ -323,6 +293,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         mMesonetDataBinding!!.siteToolbar.setOnMenuItemClickListener(this)
         mMesonetDataBinding!!.siteToolbar.setNavigationIcon(R.drawable.ic_multiline_chart_white_36dp)
         mMesonetDataBinding!!.siteToolbar.setNavigationOnClickListener {
+            it.isEnabled = false
             if (mMesonetSiteDataController.CurrentSelection() != "") {
                 val intent = Intent(activity?.baseContext, WebViewActivity::class.java)
                 intent.putExtra(WebViewActivity.kTitle, mMesonetSiteDataController.CurrentStationName() + " Meteogram")
@@ -332,6 +303,8 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                 intent.putExtra(WebViewActivity.kAllowShare, true)
                 startActivity(intent)
             }
+
+            it.isEnabled = true
         }
         if (mMesonetSiteDataController.CurrentIsFavorite()) {
             mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_white_36dp)
@@ -339,7 +312,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
             mMesonetDataBinding!!.siteToolbar.menu.findItem(R.id.favorite).setIcon(R.drawable.ic_favorite_border_white_36dp)
         }
 
-        mMesonetUIController.GetDisplayFieldsObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
+        mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
             mMesonetDataBinding!!.mesonetData?.displayFields = it
         }
 

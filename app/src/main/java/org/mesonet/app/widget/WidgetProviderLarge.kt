@@ -27,7 +27,7 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
 
     internal fun SetForecastViews(inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
         if (mFiveDayForecastDataController.GetCount() > 1) {
-            mFiveDayForecastDataController.GetForecast(0).GetForecastDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
+            mFiveDayForecastDataController.GetForecast(0).GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
                 val iconUrl1 = it.GetIconUrl()
                 inRemoteViews.setTextViewText(R.id.widget_forecast_condition1, it.GetStatus())
                 inRemoteViews.setTextViewText(R.id.widget_forecast_loworhightemp1, it.GetTemp())
@@ -37,7 +37,7 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
                     Picasso.with(mContext).load(iconUrl1).into(inRemoteViews, R.id.widget_forecast_image1, inAppWidgetIds)
             }
 
-            mFiveDayForecastDataController.GetForecast(1).GetForecastDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
+            mFiveDayForecastDataController.GetForecast(1).GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
                 val iconUrl2 = it.GetIconUrl()
                 inRemoteViews.setTextViewText(R.id.widget_forecast_condition2, it.GetStatus())
                 inRemoteViews.setTextViewText(R.id.widget_forecast_loworhightemp2, it.GetTemp())
@@ -53,7 +53,7 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
     override fun Update(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
         super.Update(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
 
-        mFiveDayForecastDataController.GetForecastDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
+        mFiveDayForecastDataController.GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
             SetForecastViews(inRemoteViews, inAppWidgetIds)
 
             UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)

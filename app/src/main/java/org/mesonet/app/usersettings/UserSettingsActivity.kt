@@ -23,7 +23,7 @@ class UserSettingsActivity: BaseActivity()
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.user_settings_activity)
 
-        mPreferences.UnitPreferencesObservable().subscribe {
+        mPreferences.UnitPreferencesSubject().subscribe {
             when(it)
             {
                 Preferences.UnitPreference.kImperial -> mBinding.imperialButton.isChecked = true

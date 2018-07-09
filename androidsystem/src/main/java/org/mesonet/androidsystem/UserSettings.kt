@@ -4,6 +4,7 @@ import android.content.Context
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.dataprocessing.userdata.Preferences
 
 import javax.inject.Inject
@@ -12,6 +13,17 @@ import javax.inject.Singleton
 
 @Singleton
 class UserSettings @Inject constructor(var mContext: Context) : Preferences {
+
+    val mUnitPreferenceSubject: BehaviorSubject<Preferences.UnitPreference> = BehaviorSubject.create()
+    val mStidSubject: BehaviorSubject<String> = BehaviorSubject.create()
+    val mRadarSubject: BehaviorSubject<String> = BehaviorSubject.create()
+
+    init {
+        mUnitPreferenceSubject.onNext(Preferences.UnitPreference.valueOf(GetStringPreference(kUnitPreference, Preferences.UnitPreference.kImperial.name)))
+        mStidSubject.onNext(GetStringPreference(UserSettings.kSelectedStid, "nrmn"))
+        mRadarSubject.onNext(GetStringPreference(UserSettings.kSelectedRadar, "KTLX"))
+    }
+
 
     internal fun SetPreference(inName: String, inValue: String) {
         Observable.create (ObservableOnSubscribe<Void>{
@@ -37,10 +49,8 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
     }
 
 
-    override fun UnitPreferencesObservable(): Observable<Preferences.UnitPreference> {
-        return Observable.create(ObservableOnSubscribe<Preferences.UnitPreference>{
-            it.onNext(Preferences.UnitPreference.valueOf(GetStringPreference(UserSettings.kUnitPreference, Preferences.UnitPreference.kImperial.name)))
-        }).subscribeOn(Schedulers.computation())
+    override fun UnitPreferencesSubject(): BehaviorSubject<Preferences.UnitPreference> {
+        return mUnitPreferenceSubject
     }
 
     override fun SetUnitPreference(inPreference: Preferences.UnitPreference) {
@@ -49,10 +59,8 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
         }).subscribeOn(Schedulers.computation()).subscribe()
     }
 
-    override fun SelectedStidObservable(): Observable<String> {
-        return Observable.create(ObservableOnSubscribe<String>{
-            it.onNext(GetStringPreference(UserSettings.kSelectedStid, "nrmn"))
-        }).subscribeOn(Schedulers.computation())
+    override fun SelectedStidSubject(): BehaviorSubject<String> {
+        return mStidSubject
     }
 
     override fun SetSelectedStid(inStid: String) {
@@ -61,10 +69,8 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
         }).subscribeOn(Schedulers.computation()).subscribe()
     }
 
-    override fun SelectedRadarObservable(): Observable<String> {
-        return Observable.create(ObservableOnSubscribe<String> {
-            it.onNext(GetStringPreference(UserSettings.kSelectedRadar, "KTLX"))
-        }).subscribeOn(Schedulers.computation())
+    override fun SelectedRadarSubject(): BehaviorSubject<String> {
+        return mRadarSubject
     }
 
     override fun SetSelectedRadar(inRadarName: String) {

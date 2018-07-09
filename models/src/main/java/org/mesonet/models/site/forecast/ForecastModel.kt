@@ -4,6 +4,73 @@ import org.mesonet.core.DefaultUnits
 
 class ForecastModel : Forecast
 {
+    override fun compareTo(other: Forecast): Int {
+        if(GetTime() != null && other.GetTime() == null)
+            return -1
+        else if(GetTime() == null && other.GetTime() != null)
+            return 1
+        else if( GetTime() != null && other.GetTime() != null)
+            return GetTime()!!.compareTo(other.GetTime()!!)
+
+        if(GetIconUrl() != null && other.GetIconUrl() == null)
+            return -1
+        else if(GetIconUrl() == null && other.GetIconUrl() != null)
+            return 1
+        else if( GetIconUrl() != null && other.GetIconUrl() != null)
+            return GetIconUrl()!!.compareTo(other.GetIconUrl()!!)
+
+        if(GetStatus() != null && other.GetStatus() == null)
+            return -1
+        else if(GetStatus() == null && other.GetStatus() != null)
+            return 1
+        else if( GetStatus() != null && other.GetStatus() != null)
+            return GetStatus()!!.compareTo(other.GetStatus()!!)
+
+        if(GetHighOrLow() != null && other.GetHighOrLow() == null)
+            return -1
+        else if(GetHighOrLow() == null && other.GetHighOrLow() != null)
+            return 1
+        else if( GetHighOrLow() != null && other.GetHighOrLow() != null)
+            return GetHighOrLow()!!.compareTo(other.GetHighOrLow()!!)
+
+        if(GetTemp() != null && other.GetTemp() == null)
+            return -1
+        else if(GetTemp() == null && other.GetTemp() != null)
+            return 1
+        else if(GetTemp() != null && other.GetTemp() != null)
+            return GetTemp()!!.toDouble().compareTo(other.GetTemp()!!.toDouble())
+
+        if(GetWindDirectionStart() != null && other.GetWindDirectionStart() == null)
+            return -1
+        else if(GetWindDirectionStart() == null && other.GetWindDirectionStart() != null)
+            return 1
+        else if( GetWindDirectionStart() != null && other.GetWindDirectionStart() != null)
+            return GetWindDirectionStart()!!.compareTo(other.GetWindDirectionStart()!!)
+
+        if(GetWindDirectionEnd() != null && other.GetWindDirectionEnd() == null)
+            return -1
+        else if(GetWindDirectionEnd() == null && other.GetWindDirectionEnd() != null)
+            return 1
+        else if( GetWindDirectionEnd() != null && other.GetWindDirectionEnd() != null)
+            return GetWindDirectionEnd()!!.compareTo(other.GetWindDirectionEnd()!!)
+
+        if(GetWindMin() != null && other.GetWindMin() == null)
+            return -1
+        else if(GetWindMin() == null && other.GetWindMin() != null)
+            return 1
+        else if(GetWindMin() != null && other.GetWindMin() != null)
+            return GetWindMin()!!.toDouble().compareTo(other.GetWindMin()!!.toDouble())
+
+        if(GetWindMax() != null && other.GetWindMax() == null)
+            return -1
+        else if(GetWindMax() == null && other.GetWindMax() != null)
+            return 1
+        else if(GetWindMax() != null && other.GetWindMax() != null)
+            return GetWindMax()!!.toDouble().compareTo(other.GetWindMax()!!.toDouble())
+
+        return 0
+    }
+
     internal var mTime: String? = null
     internal var mIconUrl: String? = null
     internal var mStatus: String? = null
