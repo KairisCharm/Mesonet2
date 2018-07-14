@@ -19,6 +19,8 @@ import org.mesonet.app.radar.dependencyinjection.RadarSiteDataProviderSubcompone
 import org.mesonet.app.site.dependencyinjection.SiteOverviewFragmentSubcomponent;
 import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetSiteDataControllerSubcomponent;
 import org.mesonet.app.site.SiteOverviewFragment;
+import org.mesonet.dataprocessing.radar.RadarDataController;
+import org.mesonet.dataprocessing.radar.RadarImageDataProvider;
 import org.mesonet.dataprocessing.userdata.Preferences;
 import org.mesonet.core.PerActivity;
 import org.mesonet.dataprocessing.LocationProvider;

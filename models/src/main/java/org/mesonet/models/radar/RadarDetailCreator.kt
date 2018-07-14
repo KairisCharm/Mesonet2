@@ -5,5 +5,5 @@ import java.io.InputStream
 
 interface RadarDetailCreator
 {
-    fun ParseRadarXml(inXmlParser: XmlPullParser): Map<String, RadarDetails>
+    fun ParseRadarJson(inJson: String): Map<String, RadarDetails>
 }

@@ -13,7 +13,10 @@ class ForecastModelConverterFactory: Converter.Factory() {
 
     override fun responseBodyConverter(type: Type, annotations: Array<Annotation>, retrofit: Retrofit): Converter<ResponseBody, List<Forecast>>
     {
-        return ForecastModelConverter()
+        if(annotations.any { it is ForecastConverter })
+            return ForecastModelConverter()
+
+        return retrofit.nextResponseBodyConverter(this, type, annotations)
     }
 
 

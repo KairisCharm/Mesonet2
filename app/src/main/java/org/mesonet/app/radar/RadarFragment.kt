@@ -11,79 +11,100 @@ import android.view.View
 import android.view.ViewAnimationUtils
 import android.view.ViewGroup
 import android.widget.SeekBar
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.GroundOverlay
-import com.google.android.gms.maps.model.LatLng
+import com.mapbox.mapboxsdk.geometry.LatLng
+import com.mapbox.mapboxsdk.geometry.LatLngQuad
+import com.mapbox.mapboxsdk.maps.MapboxMapOptions
+import com.mapbox.mapboxsdk.maps.SupportMapFragment
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory
+import com.mapbox.mapboxsdk.style.layers.PropertyValue
+import com.mapbox.mapboxsdk.style.layers.RasterLayer
+import com.mapbox.mapboxsdk.style.sources.ImageSource
+import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.RadarFragmentBinding
 import org.mesonet.app.filterlist.FilterListFragment
-import org.mesonet.dataprocessing.radar.GoogleMapController
+import org.mesonet.dataprocessing.radar.MapboxMapController
 import org.mesonet.dataprocessing.radar.RadarImageDataProvider
-import java.util.ArrayList
 
 import javax.inject.Inject
 
 
-class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapSetup, FilterListFragment.FilterListCloser {
+class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
+
+    private val kRasterImageName = "Radar"
 
     @Inject
-    internal lateinit var mMapController: GoogleMapController
+    internal lateinit var mRadarImageDataProvider: RadarImageDataProvider
 
-    private val mGroundOverlays = ArrayList<GroundOverlay?>(6)
+    @Inject
+    internal lateinit var mMapController: MapboxMapController
+
+    private var mRadarImageDisposable: Disposable? = null
 
 
     private var mBinding: RadarFragmentBinding? = null
 
     private var mSnackbar: Snackbar? = null
-    private var mLastLocation: LatLng? = null
 
+    private var mMapFragment: SupportMapFragment? = null
 
-    private var mBindingReadyListener: BindingReadyListener? = null
-
-
-    override fun onCreate(inSavedInstanceState: Bundle?) {
-        super.onCreate(inSavedInstanceState)
-
-        mMapController.SetProvider(this)
-    }
-
-
-    override fun onActivityCreated(inSavedInstanceState: Bundle?) {
-        super.onActivityCreated(inSavedInstanceState)
-
-        mBinding!!.map.onCreate(inSavedInstanceState)
-    }
+    private var mRadarLayer: RasterLayer? = null
+    private var mRadarImageSource: ImageSource? = null
 
 
     override fun onCreateView(inInflater: LayoutInflater, inContainer: ViewGroup?, inSavedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.radar_fragment, inContainer, false)
 
-        if (mBindingReadyListener != null)
-            mBindingReadyListener!!.BindingReady(mBinding)
+        val options = MapboxMapOptions()
+        options.styleUrl("mapbox://styles/okmesonet/cjic5xvsd02xl2sp7sh1eljuj")
 
-        mBindingReadyListener = null
+        mMapFragment = SupportMapFragment.newInstance(options)
 
-        mSnackbar = Snackbar.make(mBinding!!.radarLayout, "", Snackbar.LENGTH_INDEFINITE).setAction("Change") {
-            val transaction = childFragmentManager.beginTransaction()
-            transaction.replace(R.id.childFragmentContainer, FilterListFragment())
-            transaction.commit()
-            RevealView(mBinding!!.radarLayout)
-            mBinding!!.playPauseButton.hide()
-        }
+        mRadarImageSource = ImageSource(kRasterImageName, LatLngQuad(LatLng(0.0, 0.0),
+                                                                     LatLng(0.0, 0.0),
+                                                                     LatLng(0.0, 0.0),
+                                                                     LatLng(0.0, 0.0)), R.drawable.ic_close_white_36dp)
 
-        mBinding!!.playPauseButton.SetPlayPauseState(mMapController.GetPlayPauseState())
+
+
+        mRadarLayer = RasterLayer(kRasterImageName, mRadarImageSource!!.id)
+
+        val mapTransaction = childFragmentManager.beginTransaction()
+        mapTransaction?.add(R.id.mapContainer, mMapFragment)
+        mapTransaction?.commit()
+
+        mBinding!!.playPauseButton.SetPlayPauseState(mMapController.GetPlayPauseStateObservable())
+
         mBinding!!.playPauseButton.setOnClickListener {
             mMapController.TogglePlay()
         }
 
+        mSnackbar = Snackbar.make(mBinding!!.radarLayout, "", Snackbar.LENGTH_INDEFINITE).setAction("Change") {
+            val filterTransaction = childFragmentManager.beginTransaction()
+            filterTransaction.replace(R.id.childFragmentContainer, FilterListFragment())
+            filterTransaction.commit()
+            RevealView(mBinding!!.radarLayout)
+            mBinding!!.playPauseButton.hide()
+        }
+
         mBinding!!.transparencySeekBar.max = 255
-        mBinding!!.transparencySeekBar.progress = Math.round(255.0f * (1 - mMapController.GetTransparency()))
+        mBinding!!.transparencySeekBar.progress = Math.round(mMapController.GetTransparencySubject().value * 255.0f)
+        mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
+            mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(it))
+        }
         mBinding!!.transparencySeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(inSeekBar: SeekBar, inProgress: Int, inFromUser: Boolean) {
-                mMapController.SetTransparency(1 - inProgress / 255.0f)
+                val result = inProgress / 255.0f
+
+                val subject = mMapController.GetTransparencySubject()
+
+                if(!subject.hasValue() || subject.value != result)
+                    mMapController.GetTransparencySubject().onNext(result)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {
@@ -102,96 +123,64 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapSetup, Filter
     override fun onResume() {
         super.onResume()
 
-        mBinding!!.map.onResume()
-        mMapController.StartUpdates()
-    }
+        mRadarImageDataProvider.GetSiteNameSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {radarId ->
+            mRadarImageDataProvider.GetSiteDetailSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {radarDetails ->
+                SetSnackbarText(radarId, radarDetails.GetName()!!, "")
+                mSnackbar?.show()
+                mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
+                mMapFragment?.getMapAsync{map ->
+                    if(map.getSource(mRadarImageSource!!.id) == null)
+                        map.addSource(mRadarImageSource!!)
+                    if(map.getLayer(mRadarLayer!!.id) == null)
+                        map.addLayer(mRadarLayer!!)
+                    mRadarImageSource?.setCoordinates(LatLngQuad(LatLng(radarDetails.GetNorthEastCorner()?.GetLatitude()?.toDouble() ?: 0.0, radarDetails.GetSouthWestCorner()?.GetLongitude()?.toDouble() ?: 0.0),
+                                                                                LatLng(radarDetails.GetNorthEastCorner()?.GetLatitude()?.toDouble() ?: 0.0, radarDetails.GetNorthEastCorner()?.GetLongitude()?.toDouble() ?: 0.0),
+                                                                                LatLng(radarDetails.GetSouthWestCorner()?.GetLatitude()?.toDouble() ?: 0.0, radarDetails.GetNorthEastCorner()?.GetLongitude()?.toDouble() ?: 0.0),
+                                                                                LatLng(radarDetails.GetSouthWestCorner()?.GetLatitude()?.toDouble() ?: 0.0, radarDetails.GetSouthWestCorner()?.GetLongitude()?.toDouble() ?: 0.0)))
+                    mMapController.GetCameraPositionObservable(radarDetails.GetLatitude()?.toDouble() ?: 0.0, radarDetails.GetLongitude()?.toDouble() ?: 0.0, 5.0).observeOn(AndroidSchedulers.mainThread()).subscribe {
+                        map.cameraPosition = it
+                    }
 
+                    mRadarImageDataProvider.GetRadarAnimationObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {imageList ->
 
-    override fun onPause() {
-        mBinding!!.map.onPause()
+                        mMapController.SetFrameCount(imageList.size)
 
-        super.onPause()
-    }
+                        mBinding!!.playPauseButton.visibility = View.VISIBLE
 
+                        mMapController.GetActiveImageIndexObservable().observeOn(AndroidSchedulers.mainThread()).subscribe { index ->
+                            mRadarImageDisposable?.dispose()
+                            mRadarImageDisposable = imageList[index].GetSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
+                                if (!it.isRecycled) {
+                                    mRadarImageSource!!.setImage(it)
 
-    override fun onDestroy() {
-        mMapController.SetProvider(null)
-        mBinding!!.map.onDestroy()
-
-        super.onDestroy()
-    }
-
-
-    override fun onSaveInstanceState(inSaveInstanceState: Bundle) {
-        super.onSaveInstanceState(inSaveInstanceState)
-
-        mBinding!!.map.onSaveInstanceState(inSaveInstanceState)
-    }
-
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-
-        mBinding!!.map.onLowMemory()
-    }
-
-
-    override fun GetMap(inListener: RadarImageDataProvider) {
-        if(activity != null && isAdded) {
-            activity?.runOnUiThread {
-                val bindingReadyListener = object : BindingReadyListener {
-                    override fun BindingReady(inBinding: RadarFragmentBinding?) {
-                        if (inBinding != null) {
-                            inBinding.map.getMapAsync { inMap ->
-                                mMapController.GetLocation().subscribe {
-                                    if(mLastLocation == null || mLastLocation!! != it && activity != null) {
-                                        mLastLocation = it
-                                        activity?.runOnUiThread {
-                                            inMap.moveCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(LatLng(it.latitude, it.longitude), 7f)))
-                                        }
+                                    mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
+                                        mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(it))
                                     }
-                                }
-                                inListener.GetImages(context!!).subscribe{
-                                    if(activity != null && isAdded) {
-                                        activity?.runOnUiThread {
-                                            val index = it.GetIndex()
-                                            val options = it.GetOptions()
-                                            while (index >= mGroundOverlays.size)
-                                                mGroundOverlays.add(null)
 
-                                            if (mGroundOverlays[index] == null) {
-                                                mGroundOverlays[index] = inMap.addGroundOverlay(options)
-                                            } else {
-                                                mGroundOverlays[index]?.setImage(options.image)
-                                                mGroundOverlays[index]?.position = options.location
-                                                mGroundOverlays[index]?.setDimensions(options.width, options.height)
-                                            }
-
-                                            mGroundOverlays[index]?.transparency = it.GetTransparency()
-                                        }
-                                    }
+                                    SetSnackbarText(radarId, radarDetails.GetName()!!, imageList[index].GetTimestring())
                                 }
                             }
                         }
                     }
                 }
-
-                if (mBinding == null)
-                    mBindingReadyListener = bindingReadyListener
-                else
-                    bindingReadyListener.BindingReady(mBinding)
             }
         }
     }
 
+
+    override fun onPause() {
+        mRadarImageDisposable?.dispose()
+
+        super.onPause()
+    }
+
+
     override fun Close() {
-        if(activity != null && isAdded) {
-            activity?.runOnUiThread {
-                RevealView(mBinding!!.radarLayout)
-                mSnackbar!!.show()
-                mBinding!!.playPauseButton.show()
-            }
-        }
+        Observable.create(ObservableOnSubscribe<Void>{
+            RevealView(mBinding!!.radarLayout)
+            mSnackbar!!.show()
+            mBinding!!.playPauseButton.show()
+        }).subscribeOn(AndroidSchedulers.mainThread()).subscribe()
     }
 
 
@@ -225,39 +214,16 @@ class RadarFragment : BaseFragment(), GoogleMapController.GoogleMapSetup, Filter
     }
 
 
-    override fun SetActiveImage(inIndex: Int, inTransparency: Float, inTimeString: String?) {
-        if(activity != null && isAdded) {
-            activity?.runOnUiThread {
-                for (i in mGroundOverlays.indices) {
-                    if (mGroundOverlays[i] != null) {
-                        var transparency = 1f
-                        if (i == inIndex)
-                            transparency = inTransparency
 
-                        mGroundOverlays[i]!!.transparency = transparency
-                    }
-                }
+    internal fun SetSnackbarText(inRadarId: String, inRadarName: String, inTimeString: String)
+    {
+        var timeString = ""
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+            timeString = "\n"
+        else
+            timeString += ", "
 
-                if (inTimeString != null && !inTimeString.isEmpty()) {
-                    var timeString = ""
-                    if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-                        timeString = "\n"
-                    else
-                        timeString += ", "
-
-                    timeString += inTimeString
-                    mSnackbar!!.setText(mMapController.GetRadarName() + timeString)
-                    mSnackbar!!.show()
-                    mBinding!!.playPauseButton.show()
-                } else {
-                    mBinding!!.playPauseButton.hide()
-                }
-            }
-        }
-    }
-
-
-    private interface BindingReadyListener {
-        fun BindingReady(inBinding: RadarFragmentBinding?)
+        timeString += inTimeString
+        mSnackbar!!.setText("$inRadarId - $inRadarName$timeString")
     }
 }

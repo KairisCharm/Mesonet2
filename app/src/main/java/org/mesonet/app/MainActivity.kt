@@ -69,7 +69,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onResume() {
         super.onResume()
 
-        mAdvisoryDisposable = mAdvisoryDataProvider.GetDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe{
+        mAdvisoryDisposable = mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe{
             if (it.isNotEmpty())
                 mBinding!!.bottomNav.menu.getItem(3).icon = resources.getDrawable(R.drawable.advisory_badge, theme)
             else

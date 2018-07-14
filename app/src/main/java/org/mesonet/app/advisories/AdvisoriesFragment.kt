@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 
@@ -14,7 +13,6 @@ import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.AdvisoriesFragmentBinding
 import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
 import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilder
-import org.mesonet.models.advisories.Advisory
 
 
 import javax.inject.Inject
@@ -46,7 +44,7 @@ class AdvisoriesFragment : BaseFragment()
     override fun onResume() {
         super.onResume()
 
-        mAdvisoryDisposable = mAdvisoryDataProvider.GetDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe{list ->
+        mAdvisoryDisposable = mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe{ list ->
             mAdvisoryListBuilder.BuildList(list).observeOn(AndroidSchedulers.mainThread()).subscribe {
                 if (mBinding != null) {
                     mBinding?.progressBar?.visibility = View.GONE

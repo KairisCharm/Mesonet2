@@ -12,7 +12,10 @@ class AdvisoryModelConverterFactory: Converter.Factory() {
 
     override fun responseBodyConverter(type: Type, annotations: Array<Annotation>, retrofit: Retrofit): Converter<ResponseBody, List<Advisory>>
     {
-        return AdvisoryModelConverter()
+        if(annotations.any { it is AdvisoryConverter })
+            return AdvisoryModelConverter()
+
+        return retrofit.nextResponseBodyConverter(this, type, annotations)
     }
 
     class AdvisoryModelConverter: Converter<ResponseBody, List<Advisory>> {

@@ -1,12 +1,16 @@
 package org.mesonet.dataprocessing.radar
 
 import android.content.Context
+import android.graphics.Bitmap
 
-import com.google.android.gms.maps.model.LatLng
 import io.reactivex.Observable
+import io.reactivex.subjects.BehaviorSubject
+import org.mesonet.models.radar.RadarDetails
+import org.mesonet.models.radar.RadarHistory
 
 
 interface RadarImageDataProvider {
-    fun GetImages(inContext: Context): Observable<GoogleMapController.ImageInfo>
-    fun GetLocation(): Observable<LatLng>
+    fun GetSiteNameSubject(): BehaviorSubject<String>
+    fun GetSiteDetailSubject(): BehaviorSubject<RadarDetails>
+    fun GetRadarAnimationObservable(): Observable<List<RadarDataController.ImageSubject>>
 }

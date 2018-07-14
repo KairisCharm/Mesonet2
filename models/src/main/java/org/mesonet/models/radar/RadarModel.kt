@@ -1,80 +1,68 @@
 package org.mesonet.models.radar
 
-import java.lang.reflect.Field
-
+import com.google.gson.annotations.SerializedName
 
 
 class RadarModel : RadarDetails {
 
-    private val name: String? = null
-    private val latitude: Float? = null
-    private val longitude: Float? = null
-    private val range: Float? = null
+    @SerializedName("name")
+    private val mName: String? = null
+
+    @SerializedName("latitude")
+    private val mLatitude: Float? = null
+
+    @SerializedName("longitude")
+    private val mLongitude: Float? = null
+
+    @SerializedName("southWest")
+    private val mSouthWest: CornerModel? = null
+
+    @SerializedName("northEast")
+    private val mNorthEast: CornerModel? = null
 
 
     override fun GetLatitude(): Float? {
-        return latitude
+        return mLatitude
     }
 
 
     override fun GetLongitude(): Float? {
-        return longitude
-    }
-
-
-    override fun GetRange(): Float? {
-        return range
+        return mLongitude
     }
 
 
     override fun GetName(): String? {
-        return name
+        return mName
     }
 
 
-    class Builder {
-        private val mResult = RadarModel()
+    override fun GetSouthWestCorner(): RadarDetails.Corner? {
+        return mSouthWest
+    }
 
 
-        internal fun SetValue(inKey: String, inType: String, inValue: String) {
-            val field = FindField(inKey)
+    override fun GetNorthEastCorner(): RadarDetails.Corner? {
+        return mNorthEast
+    }
 
-            if (field != null) {
-                try {
-                    field.isAccessible = true
-                    if (inType.equals("string") && field.type == String::class.java)
-                        field.set(mResult, inValue)
-                    else if (inType.equals("real") && (field.type == Float::class.javaPrimitiveType || field.type == Float::class.javaObjectType))
-                        field.set(mResult, java.lang.Float.parseFloat(inValue))
-                } catch (e: IllegalAccessException ) {
-                    e.printStackTrace()
-                }
-                catch (e: NumberFormatException)
-                {
-                    e.printStackTrace()
-                }
 
-                field.isAccessible = false
-            }
+    class CornerModel: RadarDetails.Corner
+    {
+        @SerializedName("latitude")
+        private val mLatitude: Float? = null
+
+        @SerializedName("longitude")
+        private val mLongitude: Float? = null
+
+        override fun GetLatitude(): Float? {
+            return mLatitude
         }
 
 
-        internal fun FindField(inName: String): Field? {
-            val fields = RadarModel::class.java.declaredFields
-
-            if (fields != null) {
-                for (i in fields.indices) {
-                    if (fields[i].name == inName)
-                        return fields[i]
-                }
-            }
-
-            return null
-        }
-
-
-        internal fun Build(): RadarModel {
-            return mResult
+        override fun GetLongitude(): Float? {
+            return mLongitude
         }
     }
+
+    class Map: HashMap<String, RadarModel>()
 }

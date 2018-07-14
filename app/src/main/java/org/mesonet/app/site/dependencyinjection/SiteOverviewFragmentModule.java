@@ -40,12 +40,9 @@ abstract class SiteOverviewFragmentModule {
     @PerFragment
     abstract FilterListFragment.FilterListCloser FilterListCloser(SiteOverviewFragment inSiteOverviewFragment);
 
-    @Provides
+    @Binds
     @PerFragment
-    static FilterListDataProvider FilterListDataProvider(MesonetSiteDataController inSiteDataController)
-    {
-        return inSiteDataController;
-    }
+    abstract FilterListDataProvider FilterListDataProvider(MesonetSiteDataController inSiteDataController);
 
     @Binds
     @PerFragment

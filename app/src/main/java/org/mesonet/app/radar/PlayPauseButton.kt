@@ -3,21 +3,21 @@ package org.mesonet.app.radar
 import android.content.Context
 import android.support.design.widget.FloatingActionButton
 import android.util.AttributeSet
+import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
+import io.reactivex.subjects.BehaviorSubject
 
 import org.mesonet.app.R
-import org.mesonet.dataprocessing.radar.GoogleMapController
+import org.mesonet.dataprocessing.radar.MapboxMapController
 
 
 
 class PlayPauseButton(mContext: Context, inAttrs: AttributeSet) : FloatingActionButton(mContext, inAttrs), Observer<Boolean> {
-    private var mPlayPauseState: GoogleMapController.PlayPauseState? = null
 
-    internal fun SetPlayPauseState(inPlayPauseState: GoogleMapController.PlayPauseState) {
-        mPlayPauseState = inPlayPauseState
-        mPlayPauseState?.observeOn(AndroidSchedulers.mainThread())?.subscribe(this)
+    internal fun SetPlayPauseState(inPlayPauseState: Observable<Boolean>) {
+        inPlayPauseState.observeOn(AndroidSchedulers.mainThread())?.subscribe(this)
     }
 
 

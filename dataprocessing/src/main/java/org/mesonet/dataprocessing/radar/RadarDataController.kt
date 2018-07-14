@@ -1,93 +1,165 @@
 package org.mesonet.dataprocessing.radar
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Matrix
-import android.graphics.Paint
-import com.squareup.picasso.Picasso
 import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
+import org.mesonet.core.PerFragment
 import org.mesonet.models.radar.RadarDetails
-import org.mesonet.models.radar.RadarImageInfo
+import org.mesonet.models.radar.RadarHistory
 import org.mesonet.network.DataDownloader
-import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 import javax.inject.Inject
-import kotlin.collections.ArrayList
 
 
+@PerFragment
 class RadarDataController @Inject
 constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
-            internal var mDataDownloader: DataDownloader) : Observable<Void>(), Observer<Pair<Map<String, RadarDetails>, String>> {
+            internal var mDataDownloader: DataDownloader) : RadarImageDataProvider {
+    private val mAnimation: ArrayList<ImageSubject> = ArrayList()
 
 
-    private var mRadarImageInfo: List<RadarImageInfo> = ArrayList()
-    private var mCurrentRadar = ""
-
+    private var mUpdateDisposable: Disposable? = null
+    private val mRadarImageDataSubject: BehaviorSubject<List<ImageSubject>> = BehaviorSubject.create()
+    private  var mRadarImageDataObservable: Observable<List<ImageSubject>>
 
 
     init {
-        mSiteDataProvider.observeOn(Schedulers.computation()).subscribe(this)
-    }
+        mRadarImageDataObservable = mRadarImageDataSubject.doOnSubscribe {
+            if (mUpdateDisposable == null || mUpdateDisposable!!.isDisposed) {
 
+                mUpdateDisposable = Observable.interval(0, 1, TimeUnit.MINUTES).subscribeOn(Schedulers.computation()).subscribe {
+                    if(mRadarImageDataSubject.hasObservers())
+                    {
+                        GetSiteNameSubject().observeOn(Schedulers.computation()).subscribe { radarId ->
+                            mDataDownloader.GetRadarHistory(radarId).observeOn(Schedulers.computation()).subscribe {
+                                synchronized(mAnimation)
+                                {
+                                    val relevantList = it.GetFrames().subList(0, 6)
 
-    override fun subscribeActual(observer: Observer<in Void>?)
-    {
-        mCurrentRadar = mSiteDataProvider.CurrentSelection()
+                                    val newIds = relevantList.map { frame -> MakeId(it.GetRadar(), frame) }.toTypedArray()
+                                    val oldIds = mAnimation.map { it.GetName() }.toTypedArray()
 
-        mDataDownloader.GetRadarHistory(mCurrentRadar).observeOn(Schedulers.computation()).subscribe {
-            mRadarImageInfo = it
-        }
-    }
+                                    if (!newIds.contentEquals(oldIds)) {
+                                        mAnimation.filter { !newIds.contains(it.GetName()) }.forEach {
+                                            if (it.GetSubject().hasValue())
+                                                it.GetSubject().value.recycle()
+                                        }
 
+                                        val oldValuesBuf: ArrayList<ImageSubject> = ArrayList()
 
-    override fun onComplete() {}
-    override fun onSubscribe(d: Disposable) {}
-    override fun onError(e: Throwable) {}
+                                        var countHandled = 0
 
+                                        for (i in relevantList.indices) {
+                                            if (i >= mAnimation.size) {
+                                                mAnimation.add(ImageSubjectImpl())
+                                            }
 
+                                            if (i >= oldIds.size || newIds[i] != oldIds[i]) {
+                                                if (i < oldIds.size && newIds.toList().subList(i + 1, newIds.size).contains(oldIds[i]))
+                                                    oldValuesBuf.add(mAnimation[i])
+                                                else if (mAnimation[i].GetSubject().hasValue())
+                                                    mAnimation[i].GetSubject().value.recycle()
 
-    internal fun GetRadarImageDetails(): List<RadarImageInfo> {
-        return mRadarImageInfo
-    }
+                                                var oldValue = mAnimation.subList(i, mAnimation.size).find { it.GetName() == newIds[i] }
 
+                                                if (oldValue == null)
+                                                    oldValue = oldValuesBuf.find { it.GetName() == newIds[i] }
 
-    internal fun GetImage(inIndex: Int, inContext: Context): Observable<Bitmap> {
-        return GetImage(inContext, "https://www.mesonet.org" + mRadarImageInfo[inIndex])
-    }
+                                                if (oldValue != null) {
+                                                    (mAnimation[i] as ImageSubjectImpl).mName = oldValue.GetName()
+                                                    (mAnimation[i] as ImageSubjectImpl).mSubject.onNext(oldValue.GetSubject().value)
 
+                                                    continue
+                                                }
+                                            }
 
-    internal fun GetImage(inContext: Context, inImagePath: String): Observable<Bitmap> {
+                                            (mAnimation[i] as ImageSubjectImpl).mName = newIds[i]
 
-        return Observable.create(ObservableOnSubscribe<Bitmap> {
-            try {
-                val original = Picasso.with(inContext).load(inImagePath).get()
+                                            mDataDownloader.GetRadarImage(radarId, relevantList[i].GetFrameId()).observeOn(Schedulers.computation()).subscribe(object : Observer<Bitmap> {
+                                                override fun onComplete() {
+                                                    if (countHandled == relevantList.size)
+                                                        mRadarImageDataSubject.onNext(mAnimation)
+                                                }
 
-                val matrix = Matrix()
-                matrix.postScale(2f, 2f)
-                val resizedBitmap = Bitmap.createBitmap(1200, 1200, Bitmap.Config.ARGB_8888)
+                                                override fun onSubscribe(d: Disposable) {
 
-                val canvas = Canvas(resizedBitmap)
-                canvas.drawBitmap(original, matrix, Paint())
-                canvas.save()
+                                                }
 
-                original.recycle()
+                                                override fun onError(e: Throwable) {
 
-                it.onNext(resizedBitmap)
-            } catch (e: IOException) {
-                e.printStackTrace()
+                                                }
+
+                                                override fun onNext(t: Bitmap) {
+                                                    (mAnimation[i] as ImageSubjectImpl).mName = newIds[i]
+                                                    (mAnimation[i] as ImageSubjectImpl).mTimestring = relevantList[i].GetTimestring()
+                                                    (mAnimation[i] as ImageSubjectImpl).mSubject.onNext(t)
+
+                                                    countHandled++
+                                                    if (countHandled == relevantList.size)
+                                                        onComplete()
+                                                }
+                                            })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                        mUpdateDisposable?.dispose()
+                }
             }
-        }).subscribeOn(Schedulers.computation())
+        }
+
     }
 
 
-    override fun onNext(t: Pair<Map<String, RadarDetails>, String>) {
-        if(mCurrentRadar != mSiteDataProvider.CurrentSelection()) {
-            subscribe()
+    override fun GetSiteNameSubject(): BehaviorSubject<String> {
+        return mSiteDataProvider.GetSelectedSiteNameSubject()
+    }
+
+
+    override fun GetSiteDetailSubject(): BehaviorSubject<RadarDetails> {
+        return mSiteDataProvider.GetSelectedSiteDetailSubject()
+    }
+
+
+    override fun GetRadarAnimationObservable(): Observable<List<ImageSubject>> {
+        return mRadarImageDataObservable
+    }
+
+
+    private fun MakeId(inRadarId: String, inFrame: RadarHistory.RadarFrame): String {
+        return inRadarId + inFrame.GetTime()
+    }
+
+
+    inner class ImageSubjectImpl(var mName: String = "",
+                                 var mTimestring: String = "",
+                                 var mSubject: BehaviorSubject<Bitmap> = BehaviorSubject.create()) : ImageSubject
+    {
+        override fun GetName(): String {
+            return mName
         }
+
+        override fun GetTimestring(): String {
+            return mTimestring
+        }
+
+        override fun GetSubject(): BehaviorSubject<Bitmap> {
+            return mSubject
+        }
+    }
+
+
+    interface ImageSubject
+    {
+        fun GetName(): String
+        fun GetTimestring(): String
+        fun GetSubject(): BehaviorSubject<Bitmap>
     }
 }

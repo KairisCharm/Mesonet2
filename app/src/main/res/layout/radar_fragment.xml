@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:mapbox="http://schemas.android.com/tools">
     <android.support.design.widget.CoordinatorLayout
         android:id="@+id/radarLayout"
         android:orientation="vertical"
@@ -26,17 +27,23 @@
                 android:layout_height="30dp"
                 android:scaleType="fitXY" />
 
-            <com.google.android.gms.maps.MapView
-                android:id="@+id/map"
+            <FrameLayout
+                android:id="@+id/mapContainer"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
+
+            <!--<com.mapbox.mapboxsdk.maps.MapView-->
+                <!--android:id="@+id/map"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--mapbox:mapbox_styleUrl="mapbox://styles/okmesonet/cjic5xvsd02xl2sp7sh1eljuj" />-->
         </LinearLayout>
 
         <org.mesonet.app.radar.PlayPauseButton
             android:id="@+id/playPauseButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_anchor="@id/map"
+            app:layout_anchor="@id/mapContainer"
             app:layout_anchorGravity="bottom|end"
             android:layout_marginBottom="16dp"
             android:layout_marginEnd="16dp"

@@ -5,8 +5,10 @@ import android.location.Location
 import android.util.Xml
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
+import org.mesonet.core.PerActivity
+import org.mesonet.core.PerFragment
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.SelectSiteListener
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
@@ -22,107 +24,91 @@ import javax.inject.Inject
 import java.io.*
 
 
-@org.mesonet.core.PerFragment
+@PerFragment
 class RadarSiteDataProvider @Inject
-constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : Observable<Pair<Map<String, RadarDetails>, String>>(), FilterListDataProvider, SelectSiteListener {
+constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : FilterListDataProvider, SelectSiteListener {
+    private var mSelectedSiteNameSubject: BehaviorSubject<String> = BehaviorSubject.create()
+    private var mSelectedSiteDetailSubject: BehaviorSubject<RadarDetails> = BehaviorSubject.create()
 
-    private var mSelectedRadar = "KTLX"
-    private var mRadarDetail: Map<String, RadarDetails> = HashMap()
+    private var mSiteSubject: BehaviorSubject<Map<String, RadarDetails>> = BehaviorSubject.create()
 
     init {
+        mSelectedSiteNameSubject.observeOn(Schedulers.computation()).subscribe {
+            if(mSiteSubject.hasValue() && mSiteSubject.value.containsKey(it))
+                mSelectedSiteDetailSubject.onNext(mSiteSubject.value[it]!!)
+        }
         Observable.create(ObservableOnSubscribe<String> {
             it.onNext(inContext.resources.openRawResource(inContext.resources.getIdentifier("radar_list", "raw", inContext.packageName)).bufferedReader().use { it.readText() })
-        }).subscribeOn(Schedulers.io()).observeOn(Schedulers.computation()).subscribe{
-                ProcessRadarXml(it.byteInputStream()).observeOn(Schedulers.computation()).subscribe {
-                    mRadarDetail = it
-                }
+        }).subscribeOn(Schedulers.io()).observeOn(Schedulers.computation()).map {
+            mRadarDetailCreator.ParseRadarJson(it)
+        }.subscribe{
+            mSiteSubject.onNext(it)
+            var initRadar = "KTLX"
+
+            if (!it.containsKey(initRadar))
+                initRadar = it.keys.first()
+
+            mSelectedSiteNameSubject.onNext(initRadar)
+            mSelectedSiteDetailSubject.onNext(it[initRadar]!!)
         }
     }
 
 
-    private fun ProcessRadarXml(inRadarXmlStream: InputStream): Observable<Map<String, RadarDetails>> {
-        return Observable.create (ObservableOnSubscribe<Map<String, RadarDetails>>{
-            val xmlParser = Xml.newPullParser()
 
-            var result: Map<String, RadarDetails> = HashMap()
-
-            try {
-                xmlParser.setFeature(XmlPullParser.FEATURE_PROCESS_NAMESPACES, false)
-                xmlParser.setInput(inRadarXmlStream, null)
-                result = mRadarDetailCreator.ParseRadarXml(xmlParser)
-            } catch (e: XmlPullParserException) {
-                e.printStackTrace()
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-
-            try {
-                inRadarXmlStream.close()
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-
-            it.onNext(result)
-        }).subscribeOn(Schedulers.computation())
+    fun GetSelectedSiteNameSubject(): BehaviorSubject<String>
+    {
+        return mSelectedSiteNameSubject
     }
 
 
-
-    internal fun GetRadarDetail(inKey: String = mSelectedRadar): RadarDetails {
-        return mRadarDetail[inKey]!!
+    fun GetSelectedSiteDetailSubject(): BehaviorSubject<RadarDetails>
+    {
+        return mSelectedSiteDetailSubject
     }
 
 
-    internal fun GetRadarName(): String {
-        return mSelectedRadar + " - " + mRadarDetail[mSelectedRadar]!!.GetName()
+    fun GetDataSubject(): BehaviorSubject<Map<String, RadarDetails>> {
+        return mSiteSubject
     }
 
 
     override fun CurrentSelection(): String {
-        return mSelectedRadar
-    }
-
-
-    override fun subscribeActual(observer: Observer<in Pair<Map<String, RadarDetails>, String>>?) {
-        observer?.onNext(Pair(mRadarDetail, mSelectedRadar))
+        return mSelectedSiteNameSubject.value
     }
 
 
     override fun AsBasicListData(): Observable<Pair<Map<String, BasicListData>, String>>
     {
-        return Observable.create {observer ->
-            this.observeOn(Schedulers.computation()).map {
-                val resultMap = it.first.mapValues {
-                    object : BasicListData {
-                        override fun GetName(): String {
-                            return it.value.GetName()!!
-                        }
-
-                        override fun IsFavorite(): Boolean {
-                            return false
-                        }
-
-                        override fun GetLocation(): Location {
-                            val location = Location("none")
-
-                            location.latitude = it.value.GetLatitude()!!.toDouble()
-                            location.longitude = it.value.GetLongitude()!!.toDouble()
-
-                            return location
-                        }
-
+        return Observable.create (
+            ObservableOnSubscribe<Pair<Map<String, BasicListData>, String>> {
+            val resultMap = mSiteSubject.value.mapValues {
+                object : BasicListData {
+                    override fun GetName(): String {
+                        return it.value.GetName()!!
                     }
-                }
 
-                Pair(resultMap, mSelectedRadar)
-            }.subscribe{
-                observer.onNext(it)
+                    override fun IsFavorite(): Boolean {
+                        return false
+                    }
+
+                    override fun GetLocation(): Location {
+                        val location = Location("none")
+
+                        location.latitude = it.value.GetLatitude()!!.toDouble()
+                        location.longitude = it.value.GetLongitude()!!.toDouble()
+
+                        return location
+                    }
+
+                }
             }
-        }
+
+            it.onNext(Pair(resultMap, mSelectedSiteNameSubject.value))
+        }).subscribeOn(Schedulers.computation())
     }
 
 
     override fun SetResult(inResult: String) {
-            mSelectedRadar = inResult
+        mSelectedSiteNameSubject.onNext(inResult)
     }
 }

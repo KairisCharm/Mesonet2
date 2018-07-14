@@ -7,6 +7,8 @@ import org.mesonet.app.filterlist.dependencyinjection.FilterListFragmentSubcompo
 import org.mesonet.app.radar.RadarFragment;
 import org.mesonet.dataprocessing.SelectSiteListener;
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider;
+import org.mesonet.dataprocessing.radar.RadarDataController;
+import org.mesonet.dataprocessing.radar.RadarImageDataProvider;
 import org.mesonet.dataprocessing.radar.RadarSiteDataProvider;
 import org.mesonet.core.PerFragment;
 
@@ -37,16 +39,17 @@ abstract class RadarFragmentModule
     @PerFragment
     abstract FilterListFragment.FilterListCloser FilterListCloser(RadarFragment inRadarFragment);
 
-    @Provides
+    @Binds
     @PerFragment
-    static FilterListDataProvider FilterListDataProvider(RadarSiteDataProvider inSiteDataProvider)
-    {
-        return inSiteDataProvider;
-    }
-
+    abstract FilterListDataProvider FilterListDataProvider(RadarSiteDataProvider inSiteDataProvider);
 
 
     @Binds
     @PerFragment
     abstract SelectSiteListener OnSelectedListener(RadarSiteDataProvider inSiteDataController);
+
+
+    @Binds
+    @PerFragment
+    abstract RadarImageDataProvider RadarImageDataProvider(RadarDataController inRadarDataController);
 }
