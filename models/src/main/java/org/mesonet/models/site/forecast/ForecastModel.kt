@@ -10,63 +10,63 @@ class ForecastModel : Forecast
         else if(GetTime() == null && other.GetTime() != null)
             return 1
         else if( GetTime() != null && other.GetTime() != null)
-            return GetTime()!!.compareTo(other.GetTime()!!)
+            return GetTime()?.compareTo(other.GetTime()?: "") ?: 1
 
         if(GetIconUrl() != null && other.GetIconUrl() == null)
             return -1
         else if(GetIconUrl() == null && other.GetIconUrl() != null)
             return 1
         else if( GetIconUrl() != null && other.GetIconUrl() != null)
-            return GetIconUrl()!!.compareTo(other.GetIconUrl()!!)
+            return GetIconUrl()?.compareTo(other.GetIconUrl()?: "") ?: 1
 
         if(GetStatus() != null && other.GetStatus() == null)
             return -1
         else if(GetStatus() == null && other.GetStatus() != null)
             return 1
         else if( GetStatus() != null && other.GetStatus() != null)
-            return GetStatus()!!.compareTo(other.GetStatus()!!)
+            return GetStatus()?.compareTo(other.GetStatus()?: "") ?: 1
 
         if(GetHighOrLow() != null && other.GetHighOrLow() == null)
             return -1
         else if(GetHighOrLow() == null && other.GetHighOrLow() != null)
             return 1
         else if( GetHighOrLow() != null && other.GetHighOrLow() != null)
-            return GetHighOrLow()!!.compareTo(other.GetHighOrLow()!!)
+            return GetHighOrLow()?.CompareTo(other.GetHighOrLow()) ?: 1
 
         if(GetTemp() != null && other.GetTemp() == null)
             return -1
         else if(GetTemp() == null && other.GetTemp() != null)
             return 1
         else if(GetTemp() != null && other.GetTemp() != null)
-            return GetTemp()!!.toDouble().compareTo(other.GetTemp()!!.toDouble())
+            return GetTemp()?.toDouble()?.compareTo(other.GetTemp()?.toDouble() ?: Double.MAX_VALUE) ?: 1
 
         if(GetWindDirectionStart() != null && other.GetWindDirectionStart() == null)
             return -1
         else if(GetWindDirectionStart() == null && other.GetWindDirectionStart() != null)
             return 1
         else if( GetWindDirectionStart() != null && other.GetWindDirectionStart() != null)
-            return GetWindDirectionStart()!!.compareTo(other.GetWindDirectionStart()!!)
+            return GetWindDirectionStart()?.CompareTo(other.GetWindDirectionStart())?: 1
 
         if(GetWindDirectionEnd() != null && other.GetWindDirectionEnd() == null)
             return -1
         else if(GetWindDirectionEnd() == null && other.GetWindDirectionEnd() != null)
             return 1
         else if( GetWindDirectionEnd() != null && other.GetWindDirectionEnd() != null)
-            return GetWindDirectionEnd()!!.compareTo(other.GetWindDirectionEnd()!!)
+            return GetWindDirectionEnd()?.CompareTo(other.GetWindDirectionEnd())?: 1
 
         if(GetWindMin() != null && other.GetWindMin() == null)
             return -1
         else if(GetWindMin() == null && other.GetWindMin() != null)
             return 1
         else if(GetWindMin() != null && other.GetWindMin() != null)
-            return GetWindMin()!!.toDouble().compareTo(other.GetWindMin()!!.toDouble())
+            return GetWindMin()?.toDouble()?.compareTo(other.GetWindMin()?.toDouble()?: Double.MAX_VALUE) ?: 1
 
         if(GetWindMax() != null && other.GetWindMax() == null)
             return -1
         else if(GetWindMax() == null && other.GetWindMax() != null)
             return 1
         else if(GetWindMax() != null && other.GetWindMax() != null)
-            return GetWindMax()!!.toDouble().compareTo(other.GetWindMax()!!.toDouble())
+            return GetWindMax()?.toDouble()?.compareTo(other.GetWindMax()?.toDouble() ?: Double.MAX_VALUE) ?: 1
 
         return 0
     }

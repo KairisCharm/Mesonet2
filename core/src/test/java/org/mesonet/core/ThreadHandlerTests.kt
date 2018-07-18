@@ -42,7 +42,7 @@ class ThreadHandlerTests
                     })
 
             assertNotNull(threadHandler.mThreads["SpecificThread"])
-            shadowOf(threadHandler.mThreads["SpecificThread"]!!.first.looper).runToEndOfTasks()
+            shadowOf(threadHandler.mThreads["SpecificThread"]?.first.looper).runToEndOfTasks()
 
             latch.await()
             threadHandler.CloseThreads()
@@ -76,7 +76,7 @@ class ThreadHandlerTests
                     })
 
             assertNotNull(threadHandler.mThreads[""])
-            shadowOf(threadHandler.mThreads[""]!!.first.looper).runToEndOfTasks()
+            shadowOf(threadHandler.mThreads[""]?.first.looper).runToEndOfTasks()
 
             latch.await()
             threadHandler.CloseThreads()
@@ -106,7 +106,7 @@ class ThreadHandlerTests
                     },
                     null)
 
-            shadowOf(threadHandler.mThreads["SpecificThread"]!!.first.looper).runToEndOfTasks()
+            shadowOf(threadHandler.mThreads["SpecificThread"]?.first.looper).runToEndOfTasks()
 
             latch.await()
             threadHandler.CloseThreads()
@@ -134,7 +134,7 @@ class ThreadHandlerTests
                 latch.countDown()
             })
 
-            shadowOf(threadHandler.mThreads["0"]!!.first.looper).runToEndOfTasks()
+            shadowOf(threadHandler.mThreads["0"]?.first.looper).runToEndOfTasks()
 
             latch.await()
             threadHandler.CloseThreads()
@@ -163,7 +163,7 @@ class ThreadHandlerTests
                 latch.countDown()
             })
 
-            shadowOf(threadHandler.mThreads["GenericThreadName0"]!!.first.looper).runToEndOfTasks()
+            shadowOf(threadHandler.mThreads["GenericThreadName0"]?.first.looper).runToEndOfTasks()
 
             latch.await()
             threadHandler.CloseThreads()

@@ -46,7 +46,7 @@ class AdvisoryModelConverterFactory: Converter.Factory() {
                         val splitCounties = splitList[i].split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 
                         advisory.mCountyCodes = ArrayList()
-                        advisory.mCountyCodes!!.addAll(splitCounties)
+                        advisory.mCountyCodes?.addAll(splitCounties)
 
                         result.add(advisory)
                         i++

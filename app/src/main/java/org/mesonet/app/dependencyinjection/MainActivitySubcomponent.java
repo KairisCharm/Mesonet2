@@ -1,6 +1,7 @@
 package org.mesonet.app.dependencyinjection;
 
 import org.mesonet.app.MainActivity;
+import org.mesonet.app.baseclasses.BaseActivity;
 import org.mesonet.core.PerActivity;
 
 import dagger.Subcomponent;
@@ -9,7 +10,8 @@ import dagger.android.AndroidInjector;
 
 
 @PerActivity
-@Subcomponent(modules = MainActivityModule.class)
+@Subcomponent(modules = {MainActivityModule.class,
+                         BaseActivityModule.class})
 public interface MainActivitySubcomponent extends AndroidInjector<MainActivity> {
 
     @Subcomponent.Builder

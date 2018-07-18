@@ -14,7 +14,10 @@ import com.google.android.gms.location.LocationServices
 
 import org.mesonet.dataprocessing.LocationProvider
 import android.content.Context
+import com.google.android.gms.location.LocationResult
 import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,19 +31,43 @@ constructor() : LocationProvider {
     internal lateinit var mPermissions: Permissions
 
 
-    override fun GetLocation(inContext: Context): Observable<LocationProvider.LocationResult> {
+    override fun GetLocation(inContext: Context?): Observable<LocationProvider.LocationResult> {
         return Observable.create (ObservableOnSubscribe<LocationProvider.LocationResult>{ locationSubscriber ->
-            mPermissions.RequestPermission(inContext, Manifest.permission.ACCESS_FINE_LOCATION).observeOn(Schedulers.computation()).subscribe {
-                if (it && ContextCompat.checkSelfPermission(inContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                    LocationServices.getFusedLocationProviderClient(inContext).requestLocationUpdates(LocationRequest.create(), object : LocationCallback() {
-                        override fun onLocationResult(inResult: com.google.android.gms.location.LocationResult?) {
-                            locationSubscriber.onNext(LocationResultImpl(inResult?.lastLocation))
+            if(inContext == null)
+            {
+                locationSubscriber.onNext(object: LocationProvider.LocationResult{
+                    override fun LocationResult(): Location? {
+                        return null
+                    }
+                })
 
-                            LocationServices.getFusedLocationProviderClient(inContext).removeLocationUpdates(this)
-                        }
-                    }, null)
-                }
+                return@ObservableOnSubscribe
             }
+            mPermissions.RequestPermission(inContext, Manifest.permission.ACCESS_FINE_LOCATION).observeOn(Schedulers.computation()).subscribe(object: Observer<Boolean>{
+                override fun onComplete() {
+                }
+
+                override fun onSubscribe(d: Disposable) {
+                }
+
+                override fun onNext(t: Boolean) {
+                    if (t && ContextCompat.checkSelfPermission(inContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        LocationServices.getFusedLocationProviderClient(inContext).requestLocationUpdates(LocationRequest.create(), object : LocationCallback() {
+                            override fun onLocationResult(inResult: com.google.android.gms.location.LocationResult?) {
+                                locationSubscriber.onNext(LocationResultImpl(inResult?.lastLocation))
+
+                                LocationServices.getFusedLocationProviderClient(inContext).removeLocationUpdates(this)
+                            }
+                        }, null)
+                    }
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                    onNext(false)
+                }
+
+            })
         }).subscribeOn(Schedulers.computation())
     }
 

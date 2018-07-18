@@ -16,10 +16,10 @@ import org.mesonet.androidsystem.Permissions
 
 abstract class BaseActivity : AppCompatActivity(), HasSupportFragmentInjector {
     @Inject
-    internal lateinit var mFragmentInjector: DispatchingAndroidInjector<Fragment>
+    lateinit var mFragmentInjector: DispatchingAndroidInjector<Fragment>
 
     @Inject
-    internal lateinit var mPermissions: Permissions
+    lateinit var mPermissions: Permissions
 
 
 
@@ -36,9 +36,9 @@ abstract class BaseActivity : AppCompatActivity(), HasSupportFragmentInjector {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
         AndroidInjection.inject(this)
+
+        super.onCreate(savedInstanceState)
     }
 
 

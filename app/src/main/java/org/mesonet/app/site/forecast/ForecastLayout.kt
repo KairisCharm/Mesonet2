@@ -29,10 +29,6 @@ class ForecastLayout(inActivity: Activity) : RelativeLayout(inActivity), Observe
 
     internal fun SetData(inForecastData: ForecastData)
     {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mBinding.statusTextView.breakStrategy = BREAK_STRATEGY_SIMPLE
-        }
-
         ForecastLayoutController(context, inForecastData).GetForecastObservable().observeOn(AndroidSchedulers.mainThread())?.subscribe(this)
     }
 

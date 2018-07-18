@@ -20,7 +20,7 @@ import java.util.*
 class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.GenericMapData, MapsProductViewHolderBinding>(inBinding) {
 
 
-    override fun SetData(inData: MapsDataProvider.GenericMapData)
+    override fun SetData(inData: MapsDataProvider.GenericMapData?)
     {
         if(inData is MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct) {
             val binding = GetBinding()
@@ -28,7 +28,7 @@ class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerV
             binding?.productTitle?.text = inData.GetTitle()
             binding?.productSection?.text = inData.GetSectionTitle()
 
-            if (inData.GetSectionTitle() == null || inData.GetSectionTitle()!!.isEmpty())
+            if (inData.GetSectionTitle() == null || inData.GetSectionTitle()?.isEmpty() != false)
                 binding?.productSection?.visibility = View.GONE
             else
                 binding?.productSection?.visibility = View.VISIBLE

@@ -15,7 +15,7 @@ class MesonetModel : MesonetData
             result = 1
 
         else if(GetStID() != null && other.GetStID() != null)
-            result = GetStID()!!.compareTo(other.GetStID()!!)
+            result = GetStID()?.compareTo(other.GetStID()?: "zzzzz") ?: 1
 
         if(result == 0)
         {
@@ -26,7 +26,7 @@ class MesonetModel : MesonetData
                 result = 1
 
             else if(GetTime() != null && other.GetTime() != null)
-                result = GetTime()!!.compareTo(other.GetTime()!!)
+                result = GetTime()?.compareTo(other.GetTime()?: Long.MAX_VALUE) ?: 1
         }
 
         if(result == 0)
@@ -38,7 +38,7 @@ class MesonetModel : MesonetData
                 result = 1
 
             else if(GetRelH() != null && other.GetRelH() != null)
-                result = GetRelH()!!.toDouble().compareTo(other.GetRelH()!!.toDouble())
+                result = GetRelH()?.toDouble()?.compareTo(other.GetRelH()?.toDouble() ?: Double.MAX_VALUE)?: 1
         }
 
         if(result == 0)
@@ -50,7 +50,7 @@ class MesonetModel : MesonetData
                 result = 1
 
             else if(GetTAir() != null && other.GetTAir() != null)
-                result = GetTAir()!!.toDouble().compareTo(other.GetTime()!!.toDouble())
+                result = GetTAir()?.toDouble()?.compareTo(other.GetTime()?.toDouble()?: Double.MAX_VALUE) ?: 1
         }
 
         if(result == 0)
@@ -62,7 +62,7 @@ class MesonetModel : MesonetData
                 result = 1
 
             else if(GetWSpd() != null && other.GetWSpd() != null)
-                result = GetWSpd()!!.toDouble().compareTo(other.GetWSpd()!!.toDouble())
+                result = GetWSpd()?.toDouble()?.compareTo(other.GetWSpd()?.toDouble()?: Double.MAX_VALUE)?: 1
         }
 
         if(result == 0)
@@ -74,7 +74,7 @@ class MesonetModel : MesonetData
                 result = 1
 
             else if(GetWDir() != null && other.GetWDir() != null)
-                result = GetWDir()!!.toDouble().compareTo(other.GetWDir()!!.toDouble())
+                result = GetWDir()?.toDouble()?.compareTo(other.GetWDir()?.toDouble()?: Double.MAX_VALUE) ?: 1
         }
 
         if(result == 0)
@@ -86,7 +86,7 @@ class MesonetModel : MesonetData
                 result = 1
 
             else if(GetWMax() != null && other.GetWMax() != null)
-                result = GetWMax()!!.toDouble().compareTo(other.GetWMax()!!.toDouble())
+                result = GetWMax()?.toDouble()?.compareTo(other.GetWMax()?.toDouble()?: 0.0)?: 1
         }
 
         if(result == 0)
@@ -98,7 +98,7 @@ class MesonetModel : MesonetData
                 result = 1
 
             else if(GetPres() != null && other.GetPres() != null)
-                result = GetPres()!!.toDouble().compareTo(other.GetPres()!!.toDouble())
+                result = GetPres()?.toDouble()?.compareTo(other.GetPres()?.toDouble()?: Double.MAX_VALUE) ?: 1
         }
 
         if(result == 0)
@@ -110,7 +110,7 @@ class MesonetModel : MesonetData
                 result = 1
 
             else if(GetRain24H() != null && other.GetRain24H() != null)
-                result = GetRain24H()!!.toDouble().compareTo(other.GetRain24H()!!.toDouble())
+                result = GetRain24H()?.toDouble()?.compareTo(other.GetRain24H()?.toDouble()?: Double.MAX_VALUE) ?: 1
         }
 
         return result

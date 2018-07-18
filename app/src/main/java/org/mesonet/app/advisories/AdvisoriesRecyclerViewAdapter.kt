@@ -11,9 +11,9 @@ class AdvisoriesRecyclerViewAdapter : RecyclerViewAdapter<Pair<AdvisoryDisplayLi
 
 
     override fun getItemViewType(inPosition: Int): Int {
-        if(mDataItems != null && inPosition >= 0 && inPosition < mDataItems!!.size && mDataItems?.get(inPosition) != null && mDataItems?.get(inPosition)?.first != null)
+        if(mDataItems != null && inPosition >= 0 && inPosition < mDataItems?.size?: 0 && mDataItems?.get(inPosition) != null && mDataItems?.get(inPosition)?.first != null)
         {
-            return mDataItems?.get(inPosition)?.first!!.ordinal
+            return mDataItems?.get(inPosition)?.first?.ordinal?: -1
         }
 
         return -1

@@ -13,12 +13,12 @@ import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilder
 
 class AdvisoryHeaderViewHolder(inBinding: HeaderViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>, HeaderViewHolderBinding>(inBinding) {
 
-    override fun SetData(inData: Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>) {
+    override fun SetData(inData: Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>?) {
 
         val binding = GetBinding()
 
         if(binding != null)
-            binding.headerText.text = (inData.second).AdvisoryType()
+            binding.headerText.text = (inData?.second)?.AdvisoryType()
     }
 
     companion object {

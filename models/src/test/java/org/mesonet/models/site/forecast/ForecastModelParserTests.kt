@@ -14,7 +14,7 @@ class ForecastModelParserTests
         val list = parser.Parse("")
 
         assertNotNull(list)
-        assertEquals(list!!.size, 0)
+        assertEquals(list?.size, 0)
     }
 
 
@@ -27,7 +27,7 @@ class ForecastModelParserTests
         val list = parser.Parse("ERROR!!! ERROR!!! ERROR!!!")
 
         assertNotNull(list)
-        assertEquals(list!!.size, 0)
+        assertEquals(list?.size, 0)
     }
 
 
@@ -51,7 +51,7 @@ class ForecastModelParserTests
                         "Wednesday Night,http://www.nws.noaa.gov/weather/images/fcicons/ntsra40.jpg,Chance Thunderstorms,Low,64,SE,SE,6,9\n")
 
         assertNotNull(list)
-        assertEquals(list!!.size, 10)
+        assertEquals(list?.size, 10)
         assertNotNull(list[0])
         assertNotNull(list[0].GetTime())
         assertEquals(list[0].GetTime(), "Today")
@@ -265,7 +265,7 @@ class ForecastModelParserTests
                         "Wednesday Night,http://www.nws.noaa.gov/weather/images/fcicons/ntsra40.jpg,Chance Thunderstorms,Low,64,SE,SE,6,9\n")
 
         assertNotNull(list)
-        assertEquals(list!!.size, 10)
+        assertEquals(list?.size, 10)
         assertNotNull(list[0])
         assertNotNull(list[0].GetTime())
         assertEquals(list[0].GetTime(), "Today")
@@ -472,7 +472,7 @@ class ForecastModelParserTests
                         "Wednesday Night,http://www.nws.noaa.gov/weather/images/fcicons/ntsra40.jpg,Chance Thunderstorms,Low,64,SE,SE,6,9\n")
 
         assertNotNull(list)
-        assertEquals(list!!.size, 10)
+        assertEquals(list?.size, 10)
         assertNotNull(list[0])
         assertNotNull(list[0].GetTime())
         assertEquals(list[0].GetTime(), "")
@@ -679,7 +679,7 @@ class ForecastModelParserTests
                         "Wednesday Night,http://www.nws.noaa.gov/weather/images/fcicons/ntsra40.jpg,Chance Thunderstorms,Low,64,SE,SE,6,9\n")
 
         assertNotNull(list)
-        assertEquals(list!!.size, 9)
+        assertEquals(list?.size, 9)
         assertNotNull(list[0])
         assertNotNull(list[0].GetTime())
         assertEquals(list[0].GetTime(), "Today")
@@ -872,7 +872,7 @@ class ForecastModelParserTests
                 "Wednesday Night,http://www.nws.noaa.gov/weather/images/fcicons/ntsra40.jpg,Chance Thunderstorms,Low,64,SE,SE,6,9\n")
 
         assertNotNull(list)
-        assertEquals(list!!.size, 10)
+        assertEquals(list?.size, 10)
         assertNotNull(list[0])
         assertNotNull(list[0].GetTime())
         assertEquals(list[0].GetTime(), "Today")

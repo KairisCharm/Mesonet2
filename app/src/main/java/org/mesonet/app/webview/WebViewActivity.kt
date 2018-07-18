@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
 import android.webkit.WebSettings
+import android.webkit.WebViewClient
 
 import org.mesonet.app.R
 import org.mesonet.app.databinding.WebViewActivityBinding
@@ -18,6 +19,7 @@ import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URL
+import java.net.URLEncoder
 import java.util.*
 
 
@@ -35,7 +37,7 @@ class WebViewActivity : AppCompatActivity() {
             url = intent.getStringExtra(kUrl)
 
         if (url != null && intent.getBooleanExtra(kUseGoogleDocs, false))
-            url = "http://docs.google.com/gview?embedded=true&url=$url"
+            url = "http://docs.google.com/gview?embedded=true&url=$url"// + URLEncoder.encode(url, "UTF-8")
 
         if (intent.getBooleanExtra(kAllowUserZoom, false)) {
             binding.webView.settings.setSupportZoom(true)
@@ -44,6 +46,7 @@ class WebViewActivity : AppCompatActivity() {
 
         val webSettings = binding.webView.settings
         webSettings.javaScriptEnabled = true
+        binding.webView.webViewClient = WebViewClient()
 
         binding.toolBar.title = title
         binding.toolBar.setNavigationIcon(R.drawable.ic_close_white_36dp)

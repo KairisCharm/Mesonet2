@@ -17,18 +17,18 @@ import java.util.*
 class AdvisoryViewHolder(inBinding: AdvisoryViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>, AdvisoryViewHolderBinding>(inBinding) {
 
 
-    override fun SetData(inData: Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>) {
+    override fun SetData(inData: Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>?) {
         val binding = GetBinding()
 
         if(binding != null) {
-            val advisoryData = inData.second
-            binding.countyListTextView.text = advisoryData.Counties()
+            val advisoryData = inData?.second
+            binding.countyListTextView.text = advisoryData?.Counties()
 
             binding.root.setOnClickListener {
                 it.isEnabled = false
                 val intent = Intent(binding.root.context, WebViewActivity::class.java)
-                intent.putExtra(WebViewActivity.kTitle, advisoryData.AdvisoryType())
-                intent.putExtra(WebViewActivity.kUrl, advisoryData.Url())
+                intent.putExtra(WebViewActivity.kTitle, advisoryData?.AdvisoryType())
+                intent.putExtra(WebViewActivity.kUrl, advisoryData?.Url())
                 intent.putExtra(WebViewActivity.kUseGoogleDocs, true)
                 binding.root.context.startActivity(intent)
                 it.isEnabled = true

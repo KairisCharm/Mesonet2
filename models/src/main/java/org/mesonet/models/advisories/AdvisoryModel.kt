@@ -4,21 +4,21 @@ class AdvisoryModel internal constructor() : Advisory {
     override fun compareTo(other: Advisory): Int {
 
         if(mAdvisoryType.mAdvisoryType != null && other.GetType() != null)
-            return mAdvisoryType.mAdvisoryType!!.compareTo(other.GetType()!!)
+            return mAdvisoryType.mAdvisoryType?.CompareTo(other.GetType()) ?: 1
         else if (mAdvisoryType.mAdvisoryType != null)
             return -1
         else if(other.GetType() != null)
             return 1
 
         if (mAdvisoryType.mAdvisoryLevel != null && other.GetLevel() != null)
-            return mAdvisoryType.mAdvisoryLevel!!.compareTo(other.GetLevel()!!)
+            return mAdvisoryType.mAdvisoryLevel?.CompareTo(other.GetLevel()) ?: 1
         else if (mAdvisoryType.mAdvisoryLevel != null)
             return -1
         else if(other.GetLevel() != null)
             return 1
 
         if (mFilePath != null && other.GetFilePath() != null)
-            return mFilePath!!.compareTo(other.GetFilePath()!!)
+            return mFilePath?.compareTo(other.GetFilePath() ?: "") ?: 1
         else if (mFilePath != null)
             return -1
         else if(other.GetFilePath() != null)
@@ -70,9 +70,19 @@ class AdvisoryModel internal constructor() : Advisory {
                 W -> "Warning"
             }
         }
+
+
+        fun CompareTo(other: AdvisoryLevel?): Int
+        {
+            if(other == null)
+                return 1
+
+            return compareTo(other)
+        }
     }
 
-    enum class AdvisoryType {
+    enum class
+    AdvisoryType {
         RB, HF, LS, SW, BW, UP, TS, SU, TR, LO, HY,
         AS, HU, SM, TI, LE, SI, CF, MA, LB, SE, GL, SC, AF, TY, DS, ZF,
         LW, HI, SN, DU, SB, FR, FZ, FG, BS, HZ, SR, HT, EH, WC, EC, IP,
@@ -141,6 +151,15 @@ class AdvisoryModel internal constructor() : Advisory {
                 SV -> return "Severe Thunderstorm"
                 TO -> return "Tornado"
             }
+        }
+
+
+        fun CompareTo(other: AdvisoryType?): Int
+        {
+            if(other == null)
+                return 1
+
+            return compareTo(other)
         }
     }
 

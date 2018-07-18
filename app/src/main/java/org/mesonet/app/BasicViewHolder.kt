@@ -14,12 +14,12 @@ import org.mesonet.dataprocessing.SelectSiteListener
 class BasicViewHolder(inParent: ViewGroup, private var mSelectedListener: SelectSiteListener) : RecyclerViewHolder<Pair<String, BasicListData>, BasicViewHolderBinding>(DataBindingUtil.inflate<ViewDataBinding>(LayoutInflater.from(inParent.context), R.layout.basic_view_holder, inParent, false)) {
 
 
-    override fun SetData(inData: Pair<String, BasicListData>) {
-        GetBinding()?.favorite = inData.second.IsFavorite()
-        GetBinding()?.text = inData.second.GetName()
+    override fun SetData(inData: Pair<String, BasicListData>?) {
+        GetBinding()?.favorite = inData?.second?.IsFavorite()?: false
+        GetBinding()?.text = inData?.second?.GetName()
         GetBinding()?.root?.setOnClickListener {
             it.isEnabled = false
-            mSelectedListener.SetResult(inData.first)
+            mSelectedListener.SetResult(inData?.first?: "")
             it.isEnabled = true
         }
     }

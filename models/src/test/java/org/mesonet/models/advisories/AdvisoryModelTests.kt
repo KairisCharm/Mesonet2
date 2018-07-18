@@ -30,9 +30,9 @@ class AdvisoryModelTests @Inject constructor()
 
         model.mFilePath = "filePath"
         model.mCountyCodes = ArrayList()
-        model.mCountyCodes!!.add(AdvisoryModel.County.OKC001.name)
-        model.mCountyCodes!!.add(AdvisoryModel.County.OKC003.name)
-        model.mCountyCodes!!.add(AdvisoryModel.County.OKC005.name)
+        model.mCountyCodes?.add(AdvisoryModel.County.OKC001.name)
+        model.mCountyCodes?.add(AdvisoryModel.County.OKC003.name)
+        model.mCountyCodes?.add(AdvisoryModel.County.OKC005.name)
         model.mAdvisoryType.mAdvisoryLevel = AdvisoryModel.AdvisoryLevel.A
         model.mAdvisoryType.mAdvisoryType = AdvisoryModel.AdvisoryType.AS
 

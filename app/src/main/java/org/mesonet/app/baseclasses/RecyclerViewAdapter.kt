@@ -21,14 +21,14 @@ abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHold
         setHasStableIds(true)
 
         kOnScrollListener = object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(inRecyclerView: RecyclerView?, inDx: Int, inDy: Int) {
+            override fun onScrolled(inRecyclerView: RecyclerView, inDx: Int, inDy: Int) {
                 super.onScrolled(inRecyclerView, inDx, inDy)
 
-                val layoutManager = mRecyclerView!!.layoutManager
+                val layoutManager = mRecyclerView?.layoutManager
 
                 if (mDataItems != null) {
-                    if ((layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition() == mDataItems!!.size) {
-                        for (scrolledToEndListener in mScrolledToEndListeners!!)
+                    if ((layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition() == mDataItems?.size) {
+                        for (scrolledToEndListener in mScrolledToEndListeners?: ArrayList())
                             scrolledToEndListener.OnScrolledToEnd()
                     }
                 }
@@ -41,7 +41,7 @@ abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHold
         var result = 0
 
         if (mDataItems != null)
-            result = mDataItems!!.size
+            result = mDataItems?.size ?: 0
 
         if (mUsePagination)
             result++
@@ -52,13 +52,14 @@ abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHold
 
     override fun onAttachedToRecyclerView(inRecyclerView: RecyclerView) {
         mRecyclerView = inRecyclerView
-        mRecyclerView!!.addOnScrollListener(kOnScrollListener)
+        if(kOnScrollListener != null)
+            mRecyclerView?.addOnScrollListener(kOnScrollListener ?: object: RecyclerView.OnScrollListener(){})
     }
 
 
     override fun onBindViewHolder(inHolder: TRecyclerViewHolder, inPosition: Int) {
-        if (inPosition < mDataItems!!.size) {
-            val data = mDataItems!![inPosition]
+        if (inPosition < mDataItems?.size ?: 0) {
+            val data = mDataItems?.get(inPosition)
 
             inHolder.SetData(data)
         }
@@ -77,7 +78,7 @@ abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHold
             return
 
         mDataItems = inDataItems
-        mUsePagination = (if (mDataItems == null) 0 else mDataItems!!.size) < inTotalItems
+        mUsePagination = (mDataItems?.size ?: 0) < inTotalItems
         notifyDataSetChanged()
     }
 
@@ -86,17 +87,15 @@ abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHold
         if (mDataItems == null)
             mDataItems = ArrayList()
 
-        mDataItems!!.addAll(inDataItems)
-        mUsePagination = mDataItems!!.size < inTotalItems
+        mDataItems?.addAll(inDataItems)
+        mUsePagination = mDataItems?.size ?: 0 < inTotalItems
         notifyDataSetChanged()
     }
 
     internal fun ClearItems() {
-        if (mDataItems != null) {
-            mDataItems!!.clear()
-            mUsePagination = false
-            notifyDataSetChanged()
-        }
+        mDataItems?.clear()
+        mUsePagination = false
+        notifyDataSetChanged()
     }
 
 
@@ -111,12 +110,12 @@ abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHold
 
 
     internal fun AddScrolledToEndListener(inScrolledToEndListener: ScrolledToEndListener) {
-        mScrolledToEndListeners!!.add(inScrolledToEndListener)
+        mScrolledToEndListeners?.add(inScrolledToEndListener)
     }
 
 
     internal fun RemoveScrolledToEndListener(inScrolledToEndListener: ScrolledToEndListener) {
-        mScrolledToEndListeners!!.remove(inScrolledToEndListener)
+        mScrolledToEndListeners?.remove(inScrolledToEndListener)
     }
 
 
@@ -130,7 +129,7 @@ abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHold
 
 
     fun finalize() {
-        mRecyclerView!!.removeOnScrollListener(kOnScrollListener)
+        mRecyclerView?.removeOnScrollListener(kOnScrollListener ?: object: RecyclerView.OnScrollListener(){})
 
         kOnScrollListener = null
         mScrolledToEndListeners = null

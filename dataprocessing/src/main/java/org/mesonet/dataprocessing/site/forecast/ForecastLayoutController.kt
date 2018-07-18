@@ -19,8 +19,8 @@ class ForecastLayoutController constructor(private var mContext: Context, privat
 
         var colorResource = R.color.colorPrimary
 
-        if (!mForecastData.GetHighOrLow().isEmpty()) {
-            val highOrLow = Forecast.HighOrLow.valueOf(mForecastData.GetHighOrLow())
+        if (!mForecastData.GetHighOrLowTemp().isEmpty()) {
+            val highOrLow = Forecast.HighOrLow.valueOf(mForecastData.GetHighOrLowTemp().split(" ").first())
 
             colorResource = when (highOrLow) {
                 Forecast.HighOrLow.High -> R.color.forecastDayBackground
@@ -30,11 +30,7 @@ class ForecastLayoutController constructor(private var mContext: Context, privat
 
         forecastData.mForecastData = mForecastData
 
-        forecastData.mBackgroundColor =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-                    mContext.resources.getColor(colorResource, mContext.theme)
-                else
-                    mContext.resources.getColor(colorResource)
+        forecastData.mBackgroundColor = mContext.resources.getColor(colorResource, mContext.theme)
 
 
         it.onNext(forecastData)

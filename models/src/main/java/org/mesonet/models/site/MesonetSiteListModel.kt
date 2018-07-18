@@ -5,8 +5,8 @@ import com.google.gson.annotations.SerializedName
 import java.util.HashMap
 
 
-class MesonetSiteListModel : HashMap<String, MesonetSiteListModel.MesonetSiteModel>(), MesonetSiteList {
-    class MesonetSiteModel {
+class MesonetSiteListModel : HashMap<String, MesonetSiteList.MesonetSite>(), MesonetSiteList {
+    class MesonetSiteModel: MesonetSiteList.MesonetSite {
 
         @SerializedName("lat")
         internal var mLat: String? = null
@@ -26,28 +26,28 @@ class MesonetSiteListModel : HashMap<String, MesonetSiteListModel.MesonetSiteMod
         @SerializedName("lon")
         internal var mLon: String? = null
 
-        fun GetLat(): String? {
+        override fun GetLat(): String? {
             return mLat
         }
 
-        fun GetElev(): String? {
+        override fun GetElev(): String? {
             return mElev
         }
 
-        fun GetStnm(): String? {
+        override fun GetStnm(): String? {
             return mStnm
         }
 
-        fun GetName(): String? {
+        override fun GetName(): String? {
             return mName
         }
 
-        fun GetLon(): String? {
+        override fun GetLon(): String? {
             return mLon
         }
 
 
-        fun GetDatd(): String? {
+        override fun GetDatd(): String? {
             return mDatd
         }
 

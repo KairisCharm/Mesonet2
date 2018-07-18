@@ -2,9 +2,7 @@ package org.mesonet.app.filterlist
 
 
 import android.databinding.DataBindingUtil
-import android.os.Build
 import android.os.Bundle
-import android.os.SystemClock
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -26,7 +24,6 @@ import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.SelectSiteListener
 import org.mesonet.dataprocessing.filterlist.FilterListController
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
-import java.util.*
 
 import javax.inject.Inject
 
@@ -58,7 +55,7 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
 
         mBinding.searchList.setAdapter(FilterListAdapter())
 
-        val closeDrawable = resources.getDrawable(R.drawable.ic_close_white_36dp)
+        val closeDrawable = resources.getDrawable(R.drawable.ic_close_white_36dp, context?.theme)
 
         mBinding.siteSelectionToolbar.navigationIcon = closeDrawable
         mBinding.siteSelectionToolbar.setNavigationOnClickListener { Close() }
@@ -66,20 +63,31 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
         mBinding.siteSelectionToolbar.inflateMenu(R.menu.search_list_menu)
 
         mBinding.siteSelectionToolbar.menu.findItem(R.id.nearestLocation).setOnMenuItemClickListener {
-            mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe {
-                if (context != null)
-                    mFilterListController.SortByNearest(context!!, mBinding.searchText.text.toString(), it.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this)
-            }
+            mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Pair<Map<String, BasicListData>, String>>
+            {
+                override fun onComplete() {
+
+                }
+
+                override fun onSubscribe(d: Disposable) {
+
+                }
+
+                override fun onNext(t: Pair<Map<String, BasicListData>, String>) {
+                    if (context != null)
+                        mFilterListController.SortByNearest(context, mBinding.searchText.text.toString(), t.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+
+            })
             false
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            closeDrawable.setTint(resources.getColor(R.color.lightTextColor, activity?.theme))
-            mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor, activity?.theme))
-        } else {
-            closeDrawable.setTint(resources.getColor(R.color.lightTextColor))
-            mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor))
-        }
+        closeDrawable.setTint(resources.getColor(R.color.lightTextColor, activity?.theme))
+        mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor, activity?.theme))
 
         mTextChangedListener = object : TextWatcher {
             override fun beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
@@ -87,23 +95,54 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
             }
 
             override fun onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
-                mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe {
-                    if(context != null)
-                        mFilterListController.TryGetLocationAndFillListObservable(context!!, mBinding.searchText.text.toString(), it.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
-                }
+                mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Pair<Map<String, BasicListData>, String>>
+                {
+                    override fun onComplete() {
+
+                    }
+
+                    override fun onSubscribe(d: Disposable) {
+
+                    }
+
+                    override fun onNext(t: Pair<Map<String, BasicListData>, String>) {
+                        if(context != null)
+                            mFilterListController.TryGetLocationAndFillListObservable(context, mBinding.searchText.text.toString(), t.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
+                    }
+
+                    override fun onError(e: Throwable) {
+                        e.printStackTrace()
+                    }
+
+                })
             }
 
             override fun afterTextChanged(editable: Editable) {
             }
         }
 
-        mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe{
-            if (it.first.containsKey(mFilterListData.CurrentSelection()))
-                mBinding.searchText.setText(it.first[mFilterListData.CurrentSelection()]?.GetName())
-            mBinding.searchText.addTextChangedListener(mTextChangedListener)
-            if(context != null)
-                mFilterListController.TryGetLocationAndFillListObservable(context!!, mBinding.searchText.text.toString(), it.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
-        }
+        mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Pair<Map<String, BasicListData>, String>>
+        {
+            override fun onComplete() {
+
+            }
+
+            override fun onSubscribe(d: Disposable) {
+
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+
+            override fun onNext(t: Pair<Map<String, BasicListData>, String>) {
+                if (t.first.containsKey(mFilterListData.CurrentSelection()))
+                    mBinding.searchText.setText(t.first[mFilterListData.CurrentSelection()]?.GetName())
+                mBinding.searchText.addTextChangedListener(mTextChangedListener)
+                if (context != null)
+                    mFilterListController.TryGetLocationAndFillListObservable(context, mBinding.searchText.text.toString(), t.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
+            }
+        })
 
         return mBinding.root
     }

@@ -3,6 +3,7 @@ package org.mesonet.cache.site
 
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
+import org.mesonet.models.site.MesonetSiteList
 import org.mesonet.models.site.MesonetSiteListModel
 
 
@@ -19,7 +20,7 @@ open class SiteRealmModel : RealmObject {
     constructor()
 
 
-    constructor(inStid: String, inSiteModel: MesonetSiteListModel.MesonetSiteModel) {
+    constructor(inStid: String, inSiteModel: MesonetSiteList.MesonetSite) {
         mStid = inStid
         mLat = inSiteModel.GetLat()
         mElev = inSiteModel.GetElev()

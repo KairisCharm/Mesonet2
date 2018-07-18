@@ -17,6 +17,19 @@ interface Forecast : DefaultUnits, Comparable<Forecast>
 
 
     enum class HighOrLow {
-        High, Low
+        High, Low;
+
+
+
+
+
+
+        fun CompareTo(other: Forecast.HighOrLow?): Int
+        {
+            if(other == null)
+                return 0
+
+            return compareTo(other)
+        }
     }
 }

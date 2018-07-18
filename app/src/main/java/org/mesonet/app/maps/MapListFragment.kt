@@ -5,7 +5,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseActivity
@@ -36,21 +38,38 @@ class MapListFragment : BaseFragment()
 
         var group: MapsDataProvider.MapFullGroupDisplayData? = null
 
-        if (arguments != null && arguments!!.containsKey(kMapGroupFullList))
-            group = arguments!!.getSerializable(kMapGroupFullList) as MapsDataProvider.MapFullGroupDisplayData
+        if (arguments != null && arguments?.containsKey(kMapGroupFullList) == true)
+            group = arguments?.getSerializable(kMapGroupFullList) as MapsDataProvider.MapFullGroupDisplayData
 
         if(group == null) {
             mBinding.mapList.setAdapter(MapsGroupRecyclerViewAdapter(mActivity))
 
-            mDataProvider.GetMapsListObservable().observeOn(AndroidSchedulers.mainThread()).subscribe {
-                mBinding.progressBar.visibility = View.GONE
-                if (it.isEmpty())
-                    mBinding.emptyListText.visibility = View.VISIBLE
-                else {
-                    mBinding.emptyListText.visibility = View.GONE
-                    mBinding.mapList.SetItems(it)
+            mDataProvider.GetMapsListObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>>
+            {
+                override fun onComplete() {
+
                 }
-            }
+
+                override fun onSubscribe(d: Disposable) {
+
+                }
+
+                override fun onNext(t: MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>)
+                {
+                    mBinding.progressBar.visibility = View.GONE
+                    if (t.isEmpty())
+                        mBinding.emptyListText.visibility = View.VISIBLE
+                    else {
+                        mBinding.emptyListText.visibility = View.GONE
+                        mBinding.mapList.SetItems(t)
+                    }
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+
+            })
         }
         else
         {

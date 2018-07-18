@@ -107,7 +107,7 @@ class AdvisoryDisplayListBuilderTests
         val result = listBuilder.Sort(ArrayList())
 
         assertNotNull(result)
-        assert(result!!.isEmpty())
+        assert(result?.isEmpty())
     }
 
 
@@ -376,7 +376,7 @@ class AdvisoryDisplayListBuilderTests
         val result = listBuilder.Sort(advisoryList)
 
         assertNotNull(result)
-        assert(!result!!.isEmpty())
+        assert(!result?.isEmpty())
         assertEquals(result.size, 14)
         assertEquals(result[0].GetLevel(), AdvisoryModel.AdvisoryLevel.W)
         assertEquals(result[0].GetType(), AdvisoryModel.AdvisoryType.BS)
@@ -423,7 +423,7 @@ class AdvisoryDisplayListBuilderTests
             }
         })
 
-//        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]!!.first.looper).runToEndOfTasks()
+//        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
     }
@@ -442,7 +442,7 @@ class AdvisoryDisplayListBuilderTests
             }
         })
 
-//        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]!!.first.looper).runToEndOfTasks()
+//        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
     }
@@ -825,7 +825,7 @@ class AdvisoryDisplayListBuilderTests
             }
         })
 
-//        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]!!.first.looper).runToEndOfTasks()
+//        Shadows.shadowOf(listBuilder.mThreadHandler.mThreads["AdvisoryData0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
     }

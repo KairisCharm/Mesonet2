@@ -16,13 +16,13 @@ class RadarModelTests
         assertNull(builder.FindField(""))
         assertNull(builder.FindField("bad field name"))
         assertNotNull(builder.FindField("latitude"))
-        Assert.assertEquals(builder.FindField("latitude")!!.type, Float::class.javaObjectType)
+        Assert.assertEquals(builder.FindField("latitude")?.type, Float::class.javaObjectType)
         assertNotNull(builder.FindField("longitude"))
-        Assert.assertEquals(builder.FindField("longitude")!!.type, Float::class.javaObjectType)
+        Assert.assertEquals(builder.FindField("longitude")?.type, Float::class.javaObjectType)
         assertNotNull(builder.FindField("range"))
-        Assert.assertEquals(builder.FindField("range")!!.type, Float::class.javaObjectType)
+        Assert.assertEquals(builder.FindField("range")?.type, Float::class.javaObjectType)
         assertNotNull(builder.FindField("name"))
-        Assert.assertEquals(builder.FindField("name")!!.type, String::class.java)
+        Assert.assertEquals(builder.FindField("name")?.type, String::class.java)
     }
 
 
@@ -83,7 +83,7 @@ class RadarModelTests
         builder.SetValue("latitude", "real", "35.1234")
 
         assertNotNull(model.GetLatitude())
-        assertEquals(model.GetLatitude()!!, 35.1234f)
+        assertEquals(model.GetLatitude()?, 35.1234f)
         assertNull(model.GetLongitude())
         assertNull(model.GetRange())
         assertNull(model.GetName())
@@ -116,7 +116,7 @@ class RadarModelTests
 
         assertNull(model.GetLatitude())
         assertNotNull(model.GetLongitude())
-        assertEquals(model.GetLongitude()!!, -95.1234f)
+        assertEquals(model.GetLongitude()?, -95.1234f)
         assertNull(model.GetRange())
         assertNull(model.GetName())
 
@@ -151,7 +151,7 @@ class RadarModelTests
         assertNull(model.GetLatitude())
         assertNull(model.GetLongitude())
         assertNotNull(model.GetRange())
-        assertEquals(model.GetRange()!!, 123.456f)
+        assertEquals(model.GetRange()?, 123.456f)
         assertNull(model.GetName())
 
 

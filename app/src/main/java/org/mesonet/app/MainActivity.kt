@@ -28,11 +28,16 @@ import org.mesonet.app.site.SiteOverviewFragment
 import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
 import android.content.res.Configuration
+import android.support.v4.widget.DrawerLayout
 import android.view.Gravity
+import io.reactivex.Observable
+import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import org.mesonet.app.contact.ContactActivity
 import org.mesonet.app.usersettings.UserSettingsActivity
+import org.mesonet.models.advisories.Advisory
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener {
@@ -69,12 +74,26 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onResume() {
         super.onResume()
 
-        mAdvisoryDisposable = mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe{
-            if (it.isNotEmpty())
-                mBinding!!.bottomNav.menu.getItem(3).icon = resources.getDrawable(R.drawable.advisory_badge, theme)
-            else
-                mBinding!!.bottomNav.menu.getItem(3).setIcon(R.drawable.advisories_image)
-        }
+        mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Advisory.AdvisoryList>{
+            override fun onComplete() {
+
+            }
+
+            override fun onSubscribe(d: Disposable) {
+                mAdvisoryDisposable = d
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+
+            override fun onNext(t: Advisory.AdvisoryList) {
+                if (t.isNotEmpty())
+                    mBinding?.bottomNav?.menu?.getItem(3)?.icon = resources.getDrawable(R.drawable.advisory_badge, theme)
+                else
+                    mBinding?.bottomNav?.menu?.getItem(3)?.setIcon(R.drawable.advisories_image)
+            }
+        })
     }
 
 
@@ -107,15 +126,15 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity)
 
-        mBinding!!.toolBar.inflateMenu(R.menu.ticker_menu)
-        mBinding!!.toolBar.setOnMenuItemClickListener(this)
+        mBinding?.toolBar?.inflateMenu(R.menu.ticker_menu)
+        mBinding?.toolBar?.setOnMenuItemClickListener(this)
 
-        setSupportActionBar(mBinding!!.toolBar)
+        setSupportActionBar(mBinding?.toolBar)
 
         val actionBar = supportActionBar
 
         if (actionBar != null) {
-            mActionBarDrawerToggle = object : ActionBarDrawerToggle(this, mBinding!!.drawer, mBinding!!.toolBar, R.string.app_name, R.string.app_name) {
+            mActionBarDrawerToggle = object : ActionBarDrawerToggle(this, mBinding?.drawer, mBinding?.toolBar, R.string.app_name, R.string.app_name) {
                 override fun onDrawerClosed(drawerView: View) {
                     syncState()
                 }
@@ -125,16 +144,32 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 }
             }
 
-            mActionBarDrawerToggle!!.isDrawerIndicatorEnabled = true
+            mActionBarDrawerToggle?.isDrawerIndicatorEnabled = true
             actionBar.setDisplayHomeAsUpEnabled(true)
             actionBar.setHomeButtonEnabled(true)
 
-            mBinding!!.drawer.addDrawerListener(mActionBarDrawerToggle!!)
-            mBinding!!.drawerNavView.setNavigationItemSelectedListener(this)
-            mActionBarDrawerToggle!!.syncState()
+            mBinding?.drawer?.addDrawerListener(mActionBarDrawerToggle?: object: DrawerLayout.DrawerListener{
+                override fun onDrawerStateChanged(p0: Int) {
+
+                }
+
+                override fun onDrawerSlide(p0: View, p1: Float) {
+
+                }
+
+                override fun onDrawerClosed(p0: View) {
+
+                }
+
+                override fun onDrawerOpened(p0: View) {
+
+                }
+            })
+            mBinding?.drawerNavView?.setNavigationItemSelectedListener(this)
+            mActionBarDrawerToggle?.syncState()
         }
 
-        mBinding!!.bottomNav.setOnNavigationItemSelectedListener { inItem ->
+        mBinding?.bottomNav?.setOnNavigationItemSelectedListener { inItem ->
             var resultFragment: Fragment? = null
 
             when (inItem.itemId) {
@@ -156,12 +191,12 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             true
         }
 
-        mBinding!!.bottomNav.itemIconTintList = null
+        mBinding?.bottomNav?.itemIconTintList = null
 
-        val menuView = mBinding!!.bottomNav.getChildAt(0) as BottomNavigationMenuView
+        val menuView = mBinding?.bottomNav?.getChildAt(0) as BottomNavigationMenuView
 
 
-        for (i in 0 until mBinding!!.bottomNav.menu.size()) {
+        for (i in 0 until (mBinding?.bottomNav?.menu?.size()?: 0)) {
             val iconView = menuView.getChildAt(i).findViewById<View>(android.support.design.R.id.icon)
             val layoutParams = iconView.layoutParams
             val displayMetrics = resources.displayMetrics
@@ -178,14 +213,14 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         var selectedTab: Int = R.id.mesonetOption
 
         if (mBinding != null)
-            selectedTab = mBinding?.bottomNav?.selectedItemId!!
+            selectedTab = mBinding?.bottomNav?.selectedItemId?: 0
 
         LoadBinding(selectedTab)
     }
 
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putInt(kSelectedTabId, mBinding?.bottomNav?.selectedItemId!!)
+        outState.putInt(kSelectedTabId, mBinding?.bottomNav?.selectedItemId?: 0)
         super.onSaveInstanceState(outState)
     }
 
@@ -214,7 +249,20 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
 
     public override fun onDestroy() {
-        mBinding!!.drawer.removeDrawerListener(mActionBarDrawerToggle!!)
+        mBinding?.drawer?.removeDrawerListener(mActionBarDrawerToggle?: object: DrawerLayout.DrawerListener{
+            override fun onDrawerStateChanged(p0: Int) {
+            }
+
+            override fun onDrawerSlide(p0: View, p1: Float) {
+            }
+
+            override fun onDrawerClosed(p0: View) {
+            }
+
+            override fun onDrawerOpened(p0: View) {
+            }
+
+        })
 
         mActionBarDrawerToggle = null
 

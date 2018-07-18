@@ -7,7 +7,9 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import dagger.android.AndroidInjection
+import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import org.mesonet.app.MainActivity
 import org.mesonet.app.R
 import org.mesonet.core.PerActivity
@@ -41,11 +43,27 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
 
     internal open fun Update(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
-        mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
-            SetMesonetViews(inRemoteViews, inAppWidgetIds)
+        mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>
+        {
+            override fun onComplete() {
 
-            UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
-        }
+            }
+
+            override fun onSubscribe(d: Disposable) {
+
+            }
+
+            override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
+                SetMesonetViews(inRemoteViews)
+
+                UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+
+        })
     }
 
 
@@ -73,15 +91,30 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
     }
 
 
-    internal fun SetMesonetViews(inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
-        mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe {
-            inRemoteViews.setTextViewText(R.id.widget_place, mMesonetSiteDataController.CurrentStationName())
-            inRemoteViews.setTextViewText(R.id.widget_tair, it.GetAirTempString())
+    internal fun SetMesonetViews(inRemoteViews: RemoteViews) {
+        mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>{
+            override fun onComplete() {
 
-            inRemoteViews.setTextViewText(R.id.widget_feelslike, it.GetApparentTempString())
-            inRemoteViews.setTextViewText(R.id.widget_wind, it.GetWindString())
-            inRemoteViews.setTextViewText(R.id.widget_time, it.GetTimeString())
-        }
+            }
+
+            override fun onSubscribe(d: Disposable) {
+
+            }
+
+            override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
+                inRemoteViews.setTextViewText(R.id.widget_place, mMesonetSiteDataController.CurrentStationName())
+                inRemoteViews.setTextViewText(R.id.widget_tair, t.GetAirTempString())
+
+                inRemoteViews.setTextViewText(R.id.widget_feelslike, t.GetApparentTempString())
+                inRemoteViews.setTextViewText(R.id.widget_wind, t.GetWindString())
+                inRemoteViews.setTextViewText(R.id.widget_time, t.GetTimeString())
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+
+        })
     }
 
 

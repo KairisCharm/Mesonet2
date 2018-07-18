@@ -16,9 +16,9 @@ class RadarImageModelTests
         assertNull(builder.FindField(""))
         assertNull(builder.FindField("bad field name"))
         assertNotNull(builder.FindField("filename"))
-        assertEquals(builder.FindField("filename")!!.type, String::class.java)
+        assertEquals(builder.FindField("filename")?.type, String::class.java)
         assertNotNull(builder.FindField("timestring"))
-        assertEquals(builder.FindField("timestring")!!.type, String::class.java)
+        assertEquals(builder.FindField("timestring")?.type, String::class.java)
     }
 
     @Test

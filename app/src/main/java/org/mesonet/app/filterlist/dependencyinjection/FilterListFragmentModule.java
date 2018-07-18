@@ -14,4 +14,6 @@ abstract class FilterListFragmentModule
     @Binds
     @PerChildFragment
     abstract Fragment fragment(FilterListFragment inFilterListFragment);
+
+
 }

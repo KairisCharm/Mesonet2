@@ -9,7 +9,7 @@ import javax.inject.Inject
 
 
 class EmptyLocationProvider @Inject constructor() : LocationProvider {
-    override fun GetLocation(inContext: Context): Observable<LocationProvider.LocationResult> {
-        return Observable.create(ObservableOnSubscribe<LocationProvider.LocationResult> {  })
+    override fun GetLocation(inContext: Context?): Observable<LocationProvider.LocationResult> {
+        return Observable.create {  }
     }
 }

@@ -25,6 +25,14 @@ interface DefaultUnits {
     }
 
     enum class CompassDirections {
-        N, NNE, NE, ENE, E, ESE, SE, SSE, S, SSW, SW, WSW, W, WNW, NW, NNW
+        N, NNE, NE, ENE, E, ESE, SE, SSE, S, SSW, SW, WSW, W, WNW, NW, NNW;
+
+        fun CompareTo(other: CompassDirections?): Int
+        {
+            if(other == null)
+                return 1
+
+            return compareTo(other)
+        }
     }
 }

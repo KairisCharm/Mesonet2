@@ -15,17 +15,17 @@ import org.mesonet.dataprocessing.maps.MapsDataProvider
 class MapsSectionViewHolder(inBinding: MapsSectionViewHolderBinding,
                             val mIsFirst: Boolean) : RecyclerViewHolder<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection, MapsSectionViewHolderBinding>(inBinding) {
 
-    override fun SetData(inData: MapsDataProvider.MapFullGroupDisplayData.MapGroupSection) {
+    override fun SetData(inData: MapsDataProvider.MapFullGroupDisplayData.MapGroupSection?) {
         val binding = GetBinding()
 
-        binding!!.productRecyclerView.setAdapter(MapsProductRecyclerViewAdapter())
+        binding?.productRecyclerView?.setAdapter(MapsProductRecyclerViewAdapter())
 
-        binding.header!!.headerText.text = inData.GetTitle()
+        binding?.header?.headerText?.text = inData?.GetTitle()
 
-        if(mIsFirst && binding.header.headerText.text == MapsDataProvider.kGenericSectionHeaderText)
-            binding.header.headerText.visibility = View.GONE
+        if(mIsFirst && binding?.header?.headerText?.text == MapsDataProvider.kGenericSectionHeaderText)
+            binding.header.headerText?.visibility = View.GONE
 
-        binding.productRecyclerView.SetItems(ArrayList(inData.GetProducts().values))
+        binding?.productRecyclerView?.SetItems(ArrayList(inData?.GetProducts()?.values))
     }
 
     companion object {

@@ -15,6 +15,6 @@ import org.mesonet.dataprocessing.maps.MapsDataProvider
 
 class MapsGroupRecyclerViewAdapter(private val mBaseActivity: BaseActivity?) : RecyclerViewAdapter<MapsDataProvider.MapAbbreviatedGroupDisplayData, RecyclerViewHolder<MapsDataProvider.MapAbbreviatedGroupDisplayData, ViewDataBinding>>() {
     override fun onCreateViewHolder(inParent: ViewGroup, inViewType: Int): RecyclerViewHolder<MapsDataProvider.MapAbbreviatedGroupDisplayData, ViewDataBinding> {
-        return MapsGroupViewHolder.NewInstance(mBaseActivity!!, inParent)
+        return MapsGroupViewHolder.NewInstance(mBaseActivity, inParent)
     }
 }

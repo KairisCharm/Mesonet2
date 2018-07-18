@@ -17,8 +17,23 @@ class RadarHistoryConverterFactory: Converter.Factory()
 
     override fun responseBodyConverter(type: Type, annotations: Array<Annotation>, retrofit: Retrofit): Converter<ResponseBody, RadarHistoryModel>
     {
-        if(annotations.any { it is RadarHistoryConverter })
-            return mTickarooConverterFactory.responseBodyConverter(type, annotations, retrofit)!! as Converter<ResponseBody, RadarHistoryModel>
+        if(annotations.any { it is RadarHistoryConverter }) {
+            val converter = mTickarooConverterFactory.responseBodyConverter(type, annotations, retrofit)
+            if(converter != null) {
+                try {
+                    return (converter as Converter<ResponseBody, RadarHistoryModel>)
+                            ?: retrofit.nextResponseBodyConverter<RadarHistoryModel>(this, type, annotations)
+                }
+                catch (e: ClassCastException)
+                {
+                    e.printStackTrace()
+                }
+                catch (e: TypeCastException)
+                {
+                    e.printStackTrace()
+                }
+            }
+        }
 
         return retrofit.nextResponseBodyConverter(this, type, annotations)
     }

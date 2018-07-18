@@ -146,7 +146,7 @@ class DataDownloaderTests
 
         })
 
-        shadowOf(downloader.mThreadHandler.mThreads["Download0"]!!.first.looper).runToEndOfTasks()
+        shadowOf(downloader.mThreadHandler.mThreads["Download0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
 
@@ -171,7 +171,7 @@ class DataDownloaderTests
 
         })
 
-        shadowOf(downloader.mThreadHandler.mThreads["Download0"]!!.first.looper).runToEndOfTasks()
+        shadowOf(downloader.mThreadHandler.mThreads["Download0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
 
@@ -197,7 +197,7 @@ class DataDownloaderTests
 
         })
 
-        shadowOf(downloader.mThreadHandler.mThreads["Download0"]!!.first.looper).runToEndOfTasks()
+        shadowOf(downloader.mThreadHandler.mThreads["Download0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
 
@@ -222,7 +222,7 @@ class DataDownloaderTests
 
         })
 
-        shadowOf(downloader.mThreadHandler.mThreads["Download0"]!!.first.looper).runToEndOfTasks()
+        shadowOf(downloader.mThreadHandler.mThreads["Download0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
 
@@ -248,7 +248,7 @@ class DataDownloaderTests
 
         }, 5000)
 
-        shadowOf(downloader.mThreadHandler.mThreads["Download0"]!!.first.looper).runToEndOfTasks()
+        shadowOf(downloader.mThreadHandler.mThreads["Download0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
 
@@ -277,7 +277,7 @@ class DataDownloaderTests
 
         }, 5000)
 
-        shadowOf(downloader.mThreadHandler.mThreads["Download0"]!!.first.looper).runToEndOfTasks()
+        shadowOf(downloader.mThreadHandler.mThreads["Download0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
 
@@ -307,7 +307,7 @@ class DataDownloaderTests
 
         }, 5000)
 
-        shadowOf(downloader.mThreadHandler.mThreads["Download0"]!!.first.looper).runToEndOfTasks()
+        shadowOf(downloader.mThreadHandler.mThreads["Download0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
 
@@ -336,7 +336,7 @@ class DataDownloaderTests
 
         }, 5000)
 
-        shadowOf(downloader.mThreadHandler.mThreads["Download0"]!!.first.looper).runToEndOfTasks()
+        shadowOf(downloader.mThreadHandler.mThreads["Download0"]?.first.looper).runToEndOfTasks()
 
         latch.await()
 

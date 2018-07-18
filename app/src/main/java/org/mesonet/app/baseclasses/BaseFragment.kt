@@ -19,8 +19,8 @@ abstract class BaseFragment : Fragment(), HasSupportFragmentInjector {
 
     override fun onAttach(inContext: Context?) {
         AndroidSupportInjection.inject(this)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-            super.onAttach(inContext)
+
+        super.onAttach(inContext)
     }
 
 

@@ -13,7 +13,7 @@ class MesonetModelParserTests
         val model = parser.CreateMesonetData("")
 
         assertNotNull(model)
-        assertNull(model!!.GetTime())
+        assertNull(model?.GetTime())
         assertNull(model.GetRelH())
         assertNull(model.GetTAir())
         assertNull(model.GetWSpd())
@@ -33,7 +33,7 @@ class MesonetModelParserTests
         val model = parser.CreateMesonetData("ERROR!!! ERROR!!! ERROR!!!")
 
         assertNotNull(model)
-        assertNull(model!!.GetTime())
+        assertNull(model?.GetTime())
         assertNull(model.GetRelH())
         assertNull(model.GetTAir())
         assertNull(model.GetWSpd())
@@ -54,7 +54,7 @@ class MesonetModelParserTests
         val model = parser.CreateMesonetData("STNM=121,TIME=1526133900,RELH=80,TAIR=22.4,WSPD=7.3,WVEC=7.1,WDIR=190,WDSD=12.4,WSSD=1.5,WMAX=11.6,RAIN=0.00,PRES=970.80,SRAD=464,TA9M=22.1,WS2M=5.6,TS10=20.9,ERROR!!! ERROR!!! ERROR!!!, TB10=22.0,TS05=20.9,TS25=20.5,TS60=18.4,TR05=2.3,TR25=1.5,TR60=1.5,RAIN_24H=1.23,RAIN_24=0.00,STID=NRMN,YEAR=2018,MONTH=05,DAY=12,HOUR=14,MINUTE=05,SECOND=0")
 
         assertNotNull(model)
-        assertNotNull(model!!.GetTime())
+        assertNotNull(model?.GetTime())
         assertEquals(model.GetTime(), 1526133900L)
         assertNotNull(model.GetRelH())
         assertEquals(model.GetRelH(), 80.0)
@@ -84,7 +84,7 @@ class MesonetModelParserTests
         val model = parser.CreateMesonetData("STNM=121,TIME=1526133900,RELH=80,TAIR=22.4,WSPD=7.3,WVEC=7.1,WDIR=190,WDSD=12.4,WSSD=1.5,WMAX=11.6,RAIN=0.00,PRES=,SRAD=464,TA9M=22.1,WS2M=5.6,TS10=20.9,ERROR!!! ERROR!!! ERROR!!!, TB10=22.0,TS05=20.9,TS25=20.5,TS60=18.4,TR05=2.3,TR25=1.5,TR60=1.5,RAIN_24H=1.23,RAIN_24=0.00,STID=NRMN,YEAR=2018,MONTH=05,DAY=12,HOUR=14,MINUTE=05,SECOND=0")
 
         assertNotNull(model)
-        assertNotNull(model!!.GetTime())
+        assertNotNull(model?.GetTime())
         assertEquals(model.GetTime(), 1526133900L)
         assertNotNull(model.GetRelH())
         assertEquals(model.GetRelH(), 80.0)
@@ -112,7 +112,7 @@ class MesonetModelParserTests
         val model = parser.CreateMesonetData("STNM=121,TIME=1526133900,RELH=80,TAIR=22.4,WSPD=ERROR!!! ERROR!!! ERROR!!!,WVEC=7.1,WDIR=190,WDSD=12.4,WSSD=1.5,WMAX=11.6,RAIN=0.00,PRES=970.80,SRAD=464,TA9M=22.1,WS2M=5.6,TS10=20.9,TB10=22.0,TS05=20.9,TS25=20.5,TS60=18.4,TR05=2.3,TR25=1.5,TR60=1.5,RAIN_24H=1.23,RAIN_24=0.00,STID=NRMN,YEAR=2018,MONTH=05,DAY=12,HOUR=14,MINUTE=05,SECOND=0")
 
         assertNotNull(model)
-        assertNotNull(model!!.GetTime())
+        assertNotNull(model?.GetTime())
         assertEquals(model.GetTime(), 1526133900L)
         assertNotNull(model.GetRelH())
         assertEquals(model.GetRelH(), 80.0)
@@ -140,7 +140,7 @@ class MesonetModelParserTests
         val model = parser.CreateMesonetData("STNM=121,TIME=1526133900,RELH=80,TAIR=22.4,WSPD=7.3,WVEC=7.1,WDIR=190,WDSD=12.4,WSSD=1.5,WMAX=11.6,RAIN=0.00,PRES=970.80,SRAD=464,TA9M=22.1,WS2M=5.6,TS10=20.9,TB10=22.0,TS05=20.9,TS25=20.5,TS60=18.4,TR05=2.3,TR25=1.5,TR60=1.5,RAIN_24H=1.23,RAIN_24=0.00,STID=NRMN,YEAR=2018,MONTH=05,DAY=12,HOUR=14,MINUTE=05,SECOND=0")
 
         assertNotNull(model)
-        assertNotNull(model!!.GetTime())
+        assertNotNull(model?.GetTime())
         assertEquals(model.GetTime(), 1526133900L)
         assertNotNull(model.GetRelH())
         assertEquals(model.GetRelH(), 80.0)

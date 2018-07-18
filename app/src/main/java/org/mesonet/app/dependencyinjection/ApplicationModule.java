@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.BroadcastReceiver;
 
 import org.mesonet.androidsystem.DeviceLocation;
+import org.mesonet.androidsystem.Permissions;
+import org.mesonet.androidsystem.PermissionsImpl;
 import org.mesonet.androidsystem.UserSettings;
 import org.mesonet.app.MainActivity;
 import org.mesonet.app.widget.WidgetProvider;
@@ -14,10 +16,43 @@ import org.mesonet.app.usersettings.dependencyinjection.UserSettingsActivitySubc
 import org.mesonet.app.widget.WidgetProviderLarge;
 import org.mesonet.app.widget.dependencyinjection.WidgetProviderLargeSubcomponent;
 import org.mesonet.app.widget.dependencyinjection.WidgetProviderSubcomponent;
+import org.mesonet.cache.Cacher;
+import org.mesonet.cache.CacherImpl;
+import org.mesonet.cache.site.SiteCache;
+import org.mesonet.cache.site.SiteCacheImpl;
+import org.mesonet.cache.site.SiteListConverter;
+import org.mesonet.cache.site.SiteListConverterImpl;
+import org.mesonet.core.PerActivity;
 import org.mesonet.dataprocessing.LocationProvider;
+import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider;
+import org.mesonet.dataprocessing.advisories.AdvisoryDataProviderImpl;
+import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilder;
+import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilderImpl;
+import org.mesonet.dataprocessing.filterlist.FilterListController;
+import org.mesonet.dataprocessing.filterlist.FilterListControllerImpl;
+import org.mesonet.dataprocessing.formulas.UnitConverter;
+import org.mesonet.dataprocessing.formulas.UnitConverterImpl;
+import org.mesonet.dataprocessing.maps.MapsDataProvider;
+import org.mesonet.dataprocessing.maps.MapsDataProviderImpl;
+import org.mesonet.dataprocessing.radar.MapboxMapController;
+import org.mesonet.dataprocessing.radar.MapboxMapControllerImpl;
+import org.mesonet.dataprocessing.radar.RadarSiteDataProvider;
+import org.mesonet.dataprocessing.radar.RadarSiteDataProviderImpl;
+import org.mesonet.dataprocessing.site.MesonetSiteDataController;
+import org.mesonet.dataprocessing.site.MesonetSiteDataControllerImpl;
+import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController;
+import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataControllerImpl;
+import org.mesonet.dataprocessing.site.mesonetdata.DerivedValues;
+import org.mesonet.dataprocessing.site.mesonetdata.DerivedValuesImpl;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetDataController;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetDataControllerImpl;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIControllerImpl;
 import org.mesonet.dataprocessing.userdata.Preferences;
 import org.mesonet.models.radar.RadarDetailCreator;
 import org.mesonet.models.radar.RadarDetailModelCreator;
+import org.mesonet.network.DataDownloader;
+import org.mesonet.network.DataDownloaderImpl;
 
 import dagger.Binds;
 import dagger.Module;
@@ -75,4 +110,55 @@ abstract class ApplicationModule
 
     @Binds
     abstract LocationProvider LocationProvider(DeviceLocation inDeviceLocation);
+
+    @Binds
+    abstract AdvisoryDataProvider AdvisoryDataProvider(AdvisoryDataProviderImpl inProvider);
+
+    @Binds
+    abstract DataDownloader DataDownloader(DataDownloaderImpl inDownloader);
+
+    @Binds
+    abstract FiveDayForecastDataController FiveDataForecastDataController(FiveDayForecastDataControllerImpl inProvider);
+
+    @Binds
+    abstract MesonetSiteDataController MesonetSiteDataController(MesonetSiteDataControllerImpl inProvider);
+
+    @Binds
+    abstract MesonetDataController MesonetDataController(MesonetDataControllerImpl inProvider);
+
+    @Binds
+    abstract MesonetUIController MesonetUIController(MesonetUIControllerImpl inProvider);
+
+    @Binds
+    abstract Permissions Permissions(PermissionsImpl inPermissions);
+
+    @Binds
+    abstract SiteCache SiteCache(SiteCacheImpl inCache);
+
+    @Binds
+    abstract Cacher Cacher(CacherImpl inCache);
+
+    @Binds
+    abstract DerivedValues DerivedValues(DerivedValuesImpl inDerivedValues);
+
+    @Binds
+    abstract MapsDataProvider MapsDataProvider(MapsDataProviderImpl inMapsDataProvider);
+
+    @Binds
+    abstract RadarSiteDataProvider RadarSiteDataProvider(RadarSiteDataProviderImpl inRadarSiteDataProvider);
+
+    @Binds
+    abstract MapboxMapController MapboxMapController(MapboxMapControllerImpl inMapboxMapController);
+
+    @Binds
+    abstract AdvisoryDisplayListBuilder AdvisoryDisplayListBuilder(AdvisoryDisplayListBuilderImpl inMapboxMapController);
+
+    @Binds
+    abstract FilterListController FilterListController(FilterListControllerImpl inFilterListController);
+
+    @Binds
+    abstract SiteListConverter SiteListConverter(SiteListConverterImpl inSiteListConverter);
+
+    @Binds
+    abstract UnitConverter UnitConverter(UnitConverterImpl inUnitConverter);
 }

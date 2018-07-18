@@ -75,7 +75,7 @@ class RadarHistoryModel(@Attribute(name = "timeStampUTC") private val mTimeStamp
             if(mFrameId == null)
                 mFrameId = getMFilename().split("/").last().removeSuffix(".gif")
 
-            return mFrameId!!
+            return mFrameId?: ""
         }
 
         fun getMLooptime(): Long {
