@@ -1,6 +1,7 @@
 package org.mesonet.network
 
 import android.graphics.Bitmap
+import com.google.gson.Gson
 import com.tickaroo.tikxml.TikXml
 import com.tickaroo.tikxml.retrofit.TikXmlConverterFactory
 import io.reactivex.Observable
@@ -30,6 +31,9 @@ import java.util.*
 
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.google.gson.GsonBuilder
+
+
 
 
 @Singleton
@@ -41,7 +45,7 @@ class DataDownloaderImpl @Inject constructor(): DataDownloader {
             .addConverterFactory(AdvisoryModelConverterFactory())
             .addConverterFactory(RadarHistoryConverterFactory())
             .addConverterFactory(BitmapConverterFactory())
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create(GsonBuilder().registerTypeAdapter(MesonetSiteList.MesonetSite::class.java, MesonetSiteJsonDeserializer()).create()))
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .build()
             .create(MesonetService::class.java)

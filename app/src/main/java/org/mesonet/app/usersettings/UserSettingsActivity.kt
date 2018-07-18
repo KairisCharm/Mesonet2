@@ -50,16 +50,12 @@ class UserSettingsActivity: BaseActivity()
 
         })
 
-        mBinding.unitsRadioGroup.setOnCheckedChangeListener(object: RadioGroup.OnCheckedChangeListener{
-            override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
-                when(checkedId)
-                {
-                    R.id.imperialButton -> mPreferences.SetUnitPreference(Preferences.UnitPreference.kImperial)
-                    R.id.metricButton -> mPreferences.SetUnitPreference(Preferences.UnitPreference.kMetric)
-                }
+        mBinding.unitsRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            when(checkedId) {
+                R.id.imperialButton -> mPreferences.SetUnitPreference(Preferences.UnitPreference.kImperial)
+                R.id.metricButton -> mPreferences.SetUnitPreference(Preferences.UnitPreference.kMetric)
             }
-
-        })
+        }
     }
     override fun NavigateToPage(inFragment: Fragment, inPushToBackStack: Boolean, inAnimationIn: Int, inAnimationOut: Int) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.

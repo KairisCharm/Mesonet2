@@ -363,20 +363,22 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
     internal fun SetSnackbarText(inRadarId: String?, inRadarName: String?, inTimeString: String?)
     {
-        var timeString = ""
+        if(isAdded && !isDetached) {
+            var timeString = ""
 
-        if(inTimeString != null) {
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-                timeString = "\n"
-            else
-                timeString += ", "
+            if (inTimeString != null) {
+                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+                    timeString = "\n"
+                else
+                    timeString += ", "
+            }
+
+            timeString += inTimeString ?: ""
+
+            val radarId = inRadarId ?: ""
+            val radarName = inRadarName ?: ""
+
+            mSnackbar?.setText("$radarId - $radarName$timeString")
         }
-
-        timeString += inTimeString?: ""
-
-        val radarId = inRadarId ?: ""
-        val radarName = inRadarName ?: ""
-
-        mSnackbar?.setText("$radarId - $radarName$timeString")
     }
 }

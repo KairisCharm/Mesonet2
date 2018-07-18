@@ -56,6 +56,7 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
     override fun SetUnitPreference(inPreference: Preferences.UnitPreference) {
         Observable.create(ObservableOnSubscribe<Void> {
             SetPreference(UserSettings.kUnitPreference, inPreference.toString())
+            mUnitPreferenceSubject.onNext(inPreference)
         }).subscribeOn(Schedulers.computation()).subscribe()
     }
 
@@ -66,6 +67,7 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
     override fun SetSelectedStid(inStid: String) {
         Observable.create(ObservableOnSubscribe<Void>{
             SetPreference(UserSettings.kSelectedStid, inStid)
+            mStidSubject.onNext(inStid)
         }).subscribeOn(Schedulers.computation()).subscribe()
     }
 
@@ -76,6 +78,7 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
     override fun SetSelectedRadar(inRadarName: String) {
         Observable.create(ObservableOnSubscribe<Void> {
             SetPreference(UserSettings.kSelectedRadar, inRadarName)
+            mRadarSubject.onNext(inRadarName)
         }).subscribeOn(Schedulers.computation()).subscribe()
     }
 
