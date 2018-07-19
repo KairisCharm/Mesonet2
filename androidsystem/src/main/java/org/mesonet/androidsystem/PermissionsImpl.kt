@@ -48,7 +48,7 @@ constructor(): Permissions {
                     it.onNext(false)
                 }
             }
-        }).observeOn(Schedulers.computation())
+        }).subscribeOn(Schedulers.computation())
     }
 
 
@@ -61,7 +61,7 @@ constructor(): Permissions {
                     val j = 0
                     if (permissionListeners != null) {
                         while (j < permissionListeners.size) {
-                            permissionListeners.get(j).onNext(inGrantResults[i] == PackageManager.PERMISSION_GRANTED)
+                            permissionListeners[j].onNext(inGrantResults[i] == PackageManager.PERMISSION_GRANTED)
                             permissionListeners.removeAt(j)
                         }
                     }

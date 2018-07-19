@@ -11,6 +11,7 @@ import android.content.BroadcastReceiver
 import com.mapbox.mapboxsdk.Mapbox
 import dagger.android.*
 import org.mesonet.app.dependencyinjection.ApplicationContextModule
+import java.util.*
 
 
 @Singleton
@@ -27,7 +28,7 @@ constructor() : android.app.Application(), HasActivityInjector, HasBroadcastRece
         super.onCreate()
         DaggerApplicationComponent.builder().applicationContextModule(ApplicationContextModule(this)).build().Inject(this)
 
-        Mapbox.getInstance(applicationContext, getString(R.string.mapbox_access_token));
+        Mapbox.getInstance(applicationContext, getString(R.string.mapbox_access_token))
     }
 
 

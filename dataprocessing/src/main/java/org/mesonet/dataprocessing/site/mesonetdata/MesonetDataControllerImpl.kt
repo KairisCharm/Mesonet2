@@ -229,7 +229,7 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
 
             mDisposable?.dispose()
 
-            Observable.interval(0, 1, TimeUnit.MINUTES).observeOn(Schedulers.computation()).subscribe(object: Observer<Long>
+            Observable.interval(0, 1, TimeUnit.MINUTES).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Long>
             {
                 override fun onComplete() {
 
