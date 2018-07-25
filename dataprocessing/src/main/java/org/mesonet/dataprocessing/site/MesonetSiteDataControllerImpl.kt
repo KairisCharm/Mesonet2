@@ -37,6 +37,8 @@ constructor(internal var mLocationProvider: LocationProvider,
 {
     val kDefaultSelection = "nrmn"
 
+    private var mInit = false
+
     val mCurrentSelectionSubject: BehaviorSubject<String> = BehaviorSubject.create()
     var mMesonetSiteList: MesonetSiteList? = null
 
@@ -45,18 +47,22 @@ constructor(internal var mLocationProvider: LocationProvider,
     private var mCurrentStationName = ""
 
     private var mCurrentIsFavorite = false
-    init {
+    internal fun Init(inContext: Context) {
+        mInit = true
         fun FindCachedStid()
         {
-            mPreferences.SelectedStidSubject().observeOn(Schedulers.computation()).subscribe(object : Observer<String> {
+            mPreferences.SelectedStidSubject(inContext).observeOn(Schedulers.computation()).subscribe(object : Observer<String> {
                 override fun onComplete() {}
                 override fun onSubscribe(d: Disposable) {}
 
                 override fun onNext(t: String) {
-                    if (mMesonetSiteList?.keys?.contains(t) == true && (!mCurrentSelectionSubject.hasValue() || mCurrentSelectionSubject.value != t))
-                        FinalizeSelection(t)
+                    if (mMesonetSiteList?.keys?.contains(t) == true)
+                    {
+                        if(!mCurrentSelectionSubject.hasValue() || mCurrentSelectionSubject.value != t)
+                            FinalizeSelection(inContext, t)
+                    }
                     else
-                        FinalizeSelection(kDefaultSelection)
+                        FinalizeSelection(inContext, kDefaultSelection)
                 }
 
                 override fun onError(e: Throwable) {
@@ -80,7 +86,7 @@ constructor(internal var mLocationProvider: LocationProvider,
                     if(!mCurrentSelectionSubject.hasValue() || mCurrentSelectionSubject.value != nearestStid)
                     {
                         if (mMesonetSiteList?.keys?.contains(nearestStid) == true)
-                            FinalizeSelection(nearestStid)
+                            FinalizeSelection(inContext, nearestStid)
                         else
                             FindCachedStid()
                     }
@@ -95,7 +101,7 @@ constructor(internal var mLocationProvider: LocationProvider,
 
         fun GetFavorites()
         {
-            mCache.GetFavorites().observeOn(Schedulers.computation()).subscribe(object: Observer<MutableList<String>>{
+            mCache.GetFavorites(inContext).observeOn(Schedulers.computation()).subscribe(object: Observer<MutableList<String>>{
                 override fun onComplete() {}
                 override fun onSubscribe(d: Disposable) {}
                 override fun onNext(t: MutableList<String>) {
@@ -110,7 +116,7 @@ constructor(internal var mLocationProvider: LocationProvider,
             })
         }
 
-        mCache.GetSites().observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetSiteList>
+        mCache.GetSites(inContext).observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetSiteList>
         {
             override fun onComplete() {}
             override fun onSubscribe(d: Disposable) {}
@@ -129,7 +135,7 @@ constructor(internal var mLocationProvider: LocationProvider,
             override fun onSubscribe(d: Disposable) {}
             override fun onNext(t: MesonetSiteList) {
                 val cacheLoaded = mMesonetSiteList?.isEmpty() == true
-                SaveList(t)
+                SaveList(inContext, t)
 
                 if (!cacheLoaded) {
                     GetFavorites()
@@ -142,7 +148,10 @@ constructor(internal var mLocationProvider: LocationProvider,
         })
     }
 
-    override fun GetCurrentSelectionSubject(): Observable<String> {
+    override fun GetCurrentSelectionSubject(inContext: Context): Observable<String> {
+        if(!mInit)
+            Init(inContext)
+
         return mCurrentSelectionSubject
     }
 
@@ -160,20 +169,27 @@ constructor(internal var mLocationProvider: LocationProvider,
     }
 
 
-    override fun SetResult(inResult: String) {
+    override fun SetResult(inContext: Context, inResult: String) {
+        if(!mInit)
+            Init(inContext)
+
         if(mMesonetSiteList?.containsKey(inResult) == true) {
             mLocationDisposable?.dispose()
-            mPreferences.SetSelectedStid(inResult)
-            FinalizeSelection(inResult)
+            mPreferences.SetSelectedStid(inContext, inResult)
+            FinalizeSelection(inContext, inResult)
         }
     }
 
 
-    internal fun SaveList(inMesonetDataString: String) {
-        SaveList(Gson().fromJson(inMesonetDataString, MesonetSiteListModel::class.java))
+    internal fun SaveList(inContext: Context, inMesonetDataString: String) {
+        if(!mInit)
+            Init(inContext)
+        SaveList(inContext, Gson().fromJson(inMesonetDataString, MesonetSiteListModel::class.java))
     }
 
-    internal fun SaveList(inMesonetSiteList: MesonetSiteList) {
+    internal fun SaveList(inContext: Context, inMesonetSiteList: MesonetSiteList) {
+        if(!mInit)
+            Init(inContext)
         synchronized(this@MesonetSiteDataControllerImpl)
         {
             mMesonetSiteList = inMesonetSiteList
@@ -204,7 +220,7 @@ constructor(internal var mLocationProvider: LocationProvider,
             synchronized(this@MesonetSiteDataControllerImpl)
             {
                 if (mMesonetSiteList != null)
-                    mCache.SaveSites(mMesonetSiteList!!).subscribe(object: Observer<Void>
+                    mCache.SaveSites(inContext, mMesonetSiteList!!).subscribe(object: Observer<Void>
                     {
                         override fun onComplete() {}
                         override fun onSubscribe(d: Disposable) {}
@@ -218,13 +234,15 @@ constructor(internal var mLocationProvider: LocationProvider,
     }
 
 
-    private fun FinalizeSelection(inStid: String)
+    private fun FinalizeSelection(inContext: Context, inStid: String)
     {
         mCurrentStationName = mMesonetSiteList?.get(inStid)?.GetName()?: ""
         mCurrentIsFavorite = IsFavorite(inStid)
 
         if(mCurrentSelectionSubject.value != inStid)
             mCurrentSelectionSubject.onNext(inStid)
+
+        mPreferences.SetSelectedStid(inContext, inStid)
     }
 
 
@@ -297,13 +315,13 @@ constructor(internal var mLocationProvider: LocationProvider,
         return result
     }
 
-    override fun ToggleFavorite(inStid: String): Observable<Boolean>
+    override fun ToggleFavorite(inContext: Context, inStid: String): Observable<Boolean>
     {
         return Observable.create{
             if (IsFavorite(inStid)) {
-                RemoveFavorite(inStid)
+                RemoveFavorite(inContext, inStid)
             } else {
-                AddFavorite(inStid)
+                AddFavorite(inContext, inStid)
             }
 
             it.onNext(IsFavorite(inStid))
@@ -316,11 +334,11 @@ constructor(internal var mLocationProvider: LocationProvider,
         return mFavorites.contains(inStid)
     }
 
-    internal fun AddFavorite(inStid: String) {
+    internal fun AddFavorite(inContext: Context, inStid: String) {
         mFavorites.add(inStid)
         if(inStid == mCurrentSelectionSubject.value)
             mCurrentIsFavorite = IsFavorite(mCurrentSelectionSubject.value)
-        mCache.SaveFavorites(mFavorites).subscribe(object: Observer<Void>{
+        mCache.SaveFavorites(inContext, mFavorites).subscribe(object: Observer<Void>{
             override fun onComplete() {}
             override fun onSubscribe(d: Disposable) {}
             override fun onNext(t: Void) {}
@@ -330,10 +348,10 @@ constructor(internal var mLocationProvider: LocationProvider,
         })
     }
 
-    internal fun RemoveFavorite(inStid: String) {
+    internal fun RemoveFavorite(inContext: Context, inStid: String) {
         if (mFavorites.contains(inStid)) {
             mFavorites.remove(inStid)
-            mCache.SaveFavorites(mFavorites).subscribe(object: Observer<Void>{
+            mCache.SaveFavorites(inContext, mFavorites).subscribe(object: Observer<Void>{
                 override fun onComplete() {}
                 override fun onSubscribe(d: Disposable) {}
                 override fun onNext(t: Void) {}

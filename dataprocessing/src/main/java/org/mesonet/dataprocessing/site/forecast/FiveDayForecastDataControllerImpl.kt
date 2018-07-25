@@ -19,26 +19,32 @@ import javax.inject.Inject
 import kotlin.collections.ArrayList
 
 @PerActivity
-class FiveDayForecastDataControllerImpl @Inject constructor(inMesonetSiteDataController: MesonetSiteDataController,
+class FiveDayForecastDataControllerImpl @Inject constructor(private var mMesonetSiteDataController: MesonetSiteDataController,
                                                             private var mPreferences: Preferences,
                                                             private var mUnitConverter: UnitConverter,
-                                                            private var mContext: Context,
                                                             private var mDataProvider: DataProvider) : FiveDayForecastDataController, Observer<String> {
     private var mCurrentSite: String? = null
+    private var mContext: Context? = null
 
 
     private var mDataSubject: BehaviorSubject<List<SemiDayForecastDataController>> = BehaviorSubject.create()
 
     private var mUpdateDisposable: Disposable? = null
     private var mCurrentSiteDisposable: Disposable? = null
+    private var mInit = false
 
-    init {
-        inMesonetSiteDataController.GetCurrentSelectionSubject().observeOn(Schedulers.computation()).subscribe(this)
+    internal fun Init(inContext: Context) {
+        mInit = true
+        mContext = inContext
+        mMesonetSiteDataController.GetCurrentSelectionSubject(inContext).observeOn(Schedulers.computation()).subscribe(this)
     }
 
 
-    override fun GetForecastDataSubject(): BehaviorSubject<List<SemiDayForecastDataController>>
+    override fun GetForecastDataSubject(inContext: Context): BehaviorSubject<List<SemiDayForecastDataController>>
     {
+        if(!mInit)
+            Init(inContext)
+
         return mDataSubject
     }
 
@@ -103,11 +109,15 @@ class FiveDayForecastDataControllerImpl @Inject constructor(inMesonetSiteDataCon
         if (inForecast != null) {
             if(!mDataSubject.hasValue() || mDataSubject.value.isEmpty()) {
                 val result = ArrayList<SemiDayForecastDataController>()
-                for (i in 0..9) {
-                    if(i < inForecast.size)
-                        result.add(SemiDayForecastDataController(mContext, mPreferences, mUnitConverter, inForecast[i], mDataProvider))
-                    else
-                        result.add(SemiDayForecastDataController(mContext, mPreferences, mUnitConverter, null, mDataProvider))
+
+                val myContext = mContext
+                if(myContext != null) {
+                    for (i in 0..9) {
+                        if (i < inForecast.size)
+                            result.add(SemiDayForecastDataController(myContext, mPreferences, mUnitConverter, inForecast[i], mDataProvider))
+                        else
+                            result.add(SemiDayForecastDataController(myContext, mPreferences, mUnitConverter, null, mDataProvider))
+                    }
                 }
 
                 mDataSubject.onNext(result)

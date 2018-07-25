@@ -43,15 +43,18 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
 
     internal open fun Update(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
-        mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>
+        mMesonetUIController.GetDisplayFieldsSubject(inContext).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>
         {
+            var disposable: Disposable? = null
             override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {}
+            override fun onSubscribe(d: Disposable)
+            {
+                disposable = d
+            }
 
             override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
-                SetMesonetViews(inRemoteViews)
-
-                UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
+                disposable?.dispose()
+                SetMesonetViews(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
             }
 
             override fun onError(e: Throwable) {
@@ -85,22 +88,44 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
     }
 
 
-    internal fun SetMesonetViews(inRemoteViews: RemoteViews) {
-        mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>{
+    internal fun SetMesonetViews(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
+        mMesonetSiteDataController.GetCurrentSelectionSubject(inContext).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<String>{
+            var siteDisposable: Disposable? = null
             override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {}
-
-            override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
-                inRemoteViews.setTextViewText(R.id.widget_place, mMesonetSiteDataController.CurrentStationName())
-                inRemoteViews.setTextViewText(R.id.widget_tair, t.GetAirTempString())
-
-                inRemoteViews.setTextViewText(R.id.widget_feelslike, t.GetApparentTempString())
-                inRemoteViews.setTextViewText(R.id.widget_wind, t.GetWindString())
-                inRemoteViews.setTextViewText(R.id.widget_time, t.GetTimeString())
+            override fun onSubscribe(d: Disposable) {
+                siteDisposable = d
             }
 
             override fun onError(e: Throwable) {
                 e.printStackTrace()
+            }
+
+            override fun onNext(t: String) {
+                siteDisposable?.dispose()
+                mMesonetUIController.GetDisplayFieldsSubject(inContext).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<MesonetUIController.MesonetDisplayFields> {
+                    var uiDisposable: Disposable? = null
+                    override fun onComplete() {}
+                    override fun onSubscribe(d: Disposable)
+                    {
+                        uiDisposable = d
+                    }
+
+                    override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
+                        uiDisposable?.dispose()
+                        inRemoteViews.setTextViewText(R.id.widget_place, t.GetStationName())
+                        inRemoteViews.setTextViewText(R.id.widget_tair, t.GetAirTempString())
+
+                        inRemoteViews.setTextViewText(R.id.widget_feelslike, t.GetApparentTempString())
+                        inRemoteViews.setTextViewText(R.id.widget_wind, t.GetWindString())
+                        inRemoteViews.setTextViewText(R.id.widget_time, t.GetTimeString())
+
+                        UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
+                    }
+
+                    override fun onError(e: Throwable) {
+                        e.printStackTrace()
+                    }
+                })
             }
         })
     }

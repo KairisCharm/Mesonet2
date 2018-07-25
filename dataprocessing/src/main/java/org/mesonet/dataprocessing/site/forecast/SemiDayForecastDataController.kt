@@ -20,7 +20,7 @@ import org.mesonet.models.site.forecast.Forecast
 import org.mesonet.network.DataProvider
 
 
-class SemiDayForecastDataController(private var mContext: Context?, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, inForecast: Forecast?, val mDataProvider: DataProvider){
+class SemiDayForecastDataController(private var mContext: Context, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, inForecast: Forecast?, val mDataProvider: DataProvider){
     val mDataSubject: BehaviorSubject<ForecastData> = BehaviorSubject.create()
 
     var mUnitPreferenceDisposable: Disposable? = null
@@ -79,7 +79,7 @@ class SemiDayForecastDataController(private var mContext: Context?, private var 
     }
 
     internal fun SetData(inForecast: Forecast?) {
-        mPreferences.UnitPreferencesSubject().subscribe(object: Observer<Preferences.UnitPreference>{
+        mPreferences.UnitPreferencesSubject(mContext).subscribe(object: Observer<Preferences.UnitPreference>{
             override fun onComplete() {}
 
             override fun onSubscribe(d: Disposable) {

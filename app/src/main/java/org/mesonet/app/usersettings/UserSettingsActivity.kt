@@ -29,7 +29,7 @@ class UserSettingsActivity: BaseActivity()
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.user_settings_activity)
 
-        mPreferences.UnitPreferencesSubject().subscribe (object: Observer<Preferences.UnitPreference>
+        mPreferences.UnitPreferencesSubject(this).subscribe (object: Observer<Preferences.UnitPreference>
         {
             override fun onComplete() {}
             override fun onSubscribe(d: Disposable) {}
@@ -49,8 +49,8 @@ class UserSettingsActivity: BaseActivity()
 
         mBinding.unitsRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             when(checkedId) {
-                R.id.imperialButton -> mPreferences.SetUnitPreference(Preferences.UnitPreference.kImperial)
-                R.id.metricButton -> mPreferences.SetUnitPreference(Preferences.UnitPreference.kMetric)
+                R.id.imperialButton -> mPreferences.SetUnitPreference(this, Preferences.UnitPreference.kImperial)
+                R.id.metricButton -> mPreferences.SetUnitPreference(this, Preferences.UnitPreference.kMetric)
             }
         }
     }
@@ -58,7 +58,7 @@ class UserSettingsActivity: BaseActivity()
 
     override fun onBackPressed() {
         val returnIntent = Intent()
-        returnIntent.putExtra(MainActivity.kUserSettingsResultName, mPreferences.UnitPreferencesSubject().value.name)
+        returnIntent.putExtra(MainActivity.kUserSettingsResultName, mPreferences.UnitPreferencesSubject(this).value.name)
         setResult(MainActivity.kUserSettingsRequestCode, returnIntent
         )
         finish()

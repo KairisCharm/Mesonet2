@@ -341,7 +341,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
         else if (requestCode == kUserSettingsRequestCode)
         {
-            mPreferences.SetUnitPreference(Preferences.UnitPreference.valueOf(data.getStringExtra(kUserSettingsResultName)))
+            mPreferences.SetUnitPreference(this, Preferences.UnitPreference.valueOf(data.getStringExtra(kUserSettingsResultName)))
         }
     }
 

@@ -1,5 +1,6 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
+import android.content.Context
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
@@ -35,9 +36,11 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
 
     private var mDataSubject: BehaviorSubject<MesonetData> = BehaviorSubject.create()
 
+    private var mInit = false
 
-    init {
-        mSiteDataController.GetCurrentSelectionSubject().observeOn(Schedulers.computation()).subscribe(this)
+    internal fun Init(inContext: Context) {
+        mInit = true
+        mSiteDataController.GetCurrentSelectionSubject(inContext).observeOn(Schedulers.computation()).subscribe(this)
     }
 
 
@@ -71,7 +74,6 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
     }
 
 
-
     override fun ProcessApparentTemp(inUnitPreference: Preferences.UnitPreference): Double? {
         if (mMesonetData == null)
             return null
@@ -91,6 +93,7 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
 
         return result.toDouble()
     }
+
 
 
     override fun ProcessDewpoint(inUnitPreference: Preferences.UnitPreference): Double? {
@@ -208,8 +211,11 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
     }
 
 
-    override fun GetDataSubject(): BehaviorSubject<MesonetData>
+    override fun GetDataSubject(inContext: Context): BehaviorSubject<MesonetData>
     {
+        if(!mInit)
+            Init(inContext)
+
         return mDataSubject
     }
 
@@ -217,6 +223,11 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
     override fun GetStationName(): String
     {
         return mSiteDataController.CurrentStationName()
+    }
+
+
+    override fun StationIsFavorite(): Boolean {
+        return mSiteDataController.CurrentIsFavorite()
     }
 
 

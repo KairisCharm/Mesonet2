@@ -21,38 +21,27 @@ import java.util.concurrent.Executors
 
 @PerActivity
 class CacherImpl @Inject
-constructor(inContext: Context): Cacher {
+constructor(): Cacher {
 private var mRealm: Realm? = null
 
     val mRealmScheduler = Schedulers.from(Executors.newSingleThreadExecutor())
 
-    init {
-        Observable.create(ObservableOnSubscribe<Void>{
-            synchronized(this@CacherImpl) {
-                Realm.init(inContext)
+    internal fun Init(inContext: Context) {
+        Realm.init(inContext)
 
-                val configuration = RealmConfiguration.Builder().schemaVersion(26)
-                                                                                .modules(MesonetRealmModule())
-                                                                                .name(inContext.packageName)
-                                                                                .build()
-                mRealm = Realm.getInstance(configuration)
-
-                it.onComplete()
-            }
-        }).subscribeOn(mRealmScheduler).subscribe(object: Observer<Void> {
-            override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {}
-            override fun onNext(t: Void) {}
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-        })
+        val configuration = RealmConfiguration.Builder().schemaVersion(26)
+                                                                        .modules(MesonetRealmModule())
+                                                                        .name(inContext.packageName)
+                                                                        .build()
+        mRealm = Realm.getInstance(configuration)
     }
 
 
-    override fun <T: RealmModel> SaveToCache(inClass: Class<T>, inList: List<T>): Observable<Void> {
+    override fun <T: RealmModel> SaveToCache(inContext: Context, inClass: Class<T>, inList: List<T>): Observable<Void> {
         return Observable.create(ObservableOnSubscribe<Void>{
             synchronized(this@CacherImpl) {
+                if(mRealm == null)
+                    Init(inContext)
                 mRealm?.executeTransaction { inRealm ->
                     inRealm.where(inClass).findAll().deleteAllFromRealm()
                     inRealm.copyToRealm(inList)
@@ -64,9 +53,11 @@ private var mRealm: Realm? = null
     }
 
 
-    override fun <T : RealmModel> FindAll(inClass: Class<T>): Observable<RealmResults<T>> {
+    override fun <T : RealmModel> FindAll(inContext: Context, inClass: Class<T>): Observable<RealmResults<T>> {
         return Observable.create(ObservableOnSubscribe<RealmResults<T>> {
             synchronized(this@CacherImpl) {
+                if(mRealm == null)
+                    Init(inContext)
                 try {
                     it.onNext(mRealm?.where(inClass)?.findAll()!!)
                 }

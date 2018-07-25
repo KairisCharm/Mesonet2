@@ -1,7 +1,8 @@
 package org.mesonet.dataprocessing
 
+import android.content.Context
 
 
 interface SelectSiteListener {
-    fun SetResult(inResult: String)
+    fun SetResult(inContext: Context, inResult: String)
 }

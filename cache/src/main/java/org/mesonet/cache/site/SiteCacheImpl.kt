@@ -1,5 +1,6 @@
 package org.mesonet.cache.site
 
+import android.content.Context
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
@@ -24,9 +25,9 @@ constructor(): SiteCache {
     internal lateinit var mConverter: SiteListConverter
 
 
-    override fun SaveSites(inMesonetSites: MesonetSiteList): Observable<Void> {
+    override fun SaveSites(inContext: Context, inMesonetSites: MesonetSiteList): Observable<Void> {
         return Observable.create(ObservableOnSubscribe<Void> {
-            mCacher.SaveToCache(SiteRealmModel::class.java, mConverter.SitesToRealmModels(inMesonetSites)).subscribe(object: Observer<Void> {
+            mCacher.SaveToCache(inContext, SiteRealmModel::class.java, mConverter.SitesToRealmModels(inMesonetSites)).subscribe(object: Observer<Void> {
                 override fun onComplete() {}
                 override fun onSubscribe(d: Disposable) {}
                 override fun onNext(t: Void) {}
@@ -40,16 +41,16 @@ constructor(): SiteCache {
     }
 
 
-    override fun GetSites(): Observable<MesonetSiteList> {
-        return mCacher.FindAll(SiteRealmModel::class.java).map{
+    override fun GetSites(inContext: Context): Observable<MesonetSiteList> {
+        return mCacher.FindAll(inContext, SiteRealmModel::class.java).map{
             mConverter.SitesFromRealmModels(it)
         }
     }
 
 
-    override fun SaveFavorites(inFavorites: List<String>): Observable<Void> {
+    override fun SaveFavorites(inContext: Context, inFavorites: List<String>): Observable<Void> {
         return Observable.create(ObservableOnSubscribe<Void> {
-            mCacher.SaveToCache(FavoriteSiteRealmModel::class.java, mConverter.FavoritesToRealmModels(inFavorites)).subscribe(object: Observer<Void> {
+            mCacher.SaveToCache(inContext, FavoriteSiteRealmModel::class.java, mConverter.FavoritesToRealmModels(inFavorites)).subscribe(object: Observer<Void> {
                 override fun onComplete() {}
                 override fun onSubscribe(d: Disposable) {}
                 override fun onNext(t: Void) {}
@@ -63,8 +64,8 @@ constructor(): SiteCache {
     }
 
 
-    override fun GetFavorites(): Observable<MutableList<String>> {
-        return mCacher.FindAll(FavoriteSiteRealmModel::class.java).map {
+    override fun GetFavorites(inContext: Context): Observable<MutableList<String>> {
+        return mCacher.FindAll(inContext, FavoriteSiteRealmModel::class.java).map {
             mConverter.FavoriteFromRealmModels(it)
         }
     }

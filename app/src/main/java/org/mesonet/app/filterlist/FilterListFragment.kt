@@ -1,6 +1,7 @@
 package org.mesonet.app.filterlist
 
 
+import android.content.Context
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.text.Editable
@@ -138,10 +139,10 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
     }
 
 
-    override fun SetResult(inResult: String) {
+    override fun SetResult(inContext: Context, inResult: String) {
         Observable.create(ObservableOnSubscribe<Void> {
             Close()
-            mSelectedListener.SetResult(inResult)
+            mSelectedListener.SetResult(inContext, inResult)
             it.onComplete()
         }).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void> {
             override fun onComplete() {}

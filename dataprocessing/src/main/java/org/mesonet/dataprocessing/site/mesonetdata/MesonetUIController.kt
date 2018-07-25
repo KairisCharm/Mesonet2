@@ -1,10 +1,11 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
+import android.content.Context
 import io.reactivex.subjects.BehaviorSubject
 
 interface MesonetUIController
 {
-    fun GetDisplayFieldsSubject(): BehaviorSubject<MesonetDisplayFields>
+    fun GetDisplayFieldsSubject(inContext: Context): BehaviorSubject<MesonetDisplayFields>
 
     interface MesonetDisplayFields
     {
@@ -18,5 +19,6 @@ interface MesonetUIController
         fun GetWindGustsString(): String
         fun GetPressureString(): String
         fun GetTimeString(): String
+        fun IsFavorite(): Boolean
     }
 }

@@ -1,6 +1,7 @@
 package org.mesonet.dataprocessing.radar
 
 import android.app.Activity
+import android.content.Context
 import android.location.Location
 import android.util.Xml
 import io.reactivex.Observable
@@ -158,7 +159,7 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : 
     }
 
 
-    override fun SetResult(inResult: String) {
+    override fun SetResult(inContext: Context, inResult: String) {
         mSelectedSiteNameSubject.onNext(inResult)
     }
 
