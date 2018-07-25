@@ -6,11 +6,15 @@ import android.support.v4.app.Fragment
 import android.widget.RadioGroup
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
+import org.mesonet.app.MainActivity
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.databinding.UserSettingsActivityBinding
 import org.mesonet.dataprocessing.userdata.Preferences
 import javax.inject.Inject
+import android.content.Intent
+
+
 
 class UserSettingsActivity: BaseActivity()
 {
@@ -49,6 +53,15 @@ class UserSettingsActivity: BaseActivity()
                 R.id.metricButton -> mPreferences.SetUnitPreference(Preferences.UnitPreference.kMetric)
             }
         }
+    }
+
+
+    override fun onBackPressed() {
+        val returnIntent = Intent()
+        returnIntent.putExtra(MainActivity.kUserSettingsResultName, mPreferences.UnitPreferencesSubject().value.name)
+        setResult(MainActivity.kUserSettingsRequestCode, returnIntent
+        )
+        finish()
     }
 
 

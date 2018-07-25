@@ -59,7 +59,8 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.site_overview_fragment, inParent, false)
 
-        SetMesonetBinding(mBinding?.mesonetDataContainer)
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+            SetMesonetBinding(mBinding?.mesonetDataContainer)
 
         mBinding?.mesonetDataContainer?.mesonetData?.mesonetLayout?.visibility = View.GONE
 
@@ -192,7 +193,8 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     override fun onResume() {
         super.onResume()
 
-        SetMesonetBinding(mBinding?.mesonetDataContainer)
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+            SetMesonetBinding(mBinding?.mesonetDataContainer)
 
         mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>{
             override fun onComplete() {}

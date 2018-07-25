@@ -47,8 +47,10 @@ import java.util.concurrent.TimeUnit
 
 @PerActivity
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener {
-
-
+    companion object {
+        val kUserSettingsRequestCode = 1
+        val kUserSettingsResultName = "UserSettings"
+    }
 
     private val kSelectedTabId = "selectedTabId"
 
@@ -297,7 +299,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             R.id.userSettings -> {
                 val userSettingsIntent = Intent(baseContext, UserSettingsActivity::class.java)
 
-                startActivity(userSettingsIntent)
+                startActivityForResult(userSettingsIntent, kUserSettingsRequestCode)
             }
             R.id.contact -> {
                 val contactIntent = Intent(baseContext, ContactActivity::class.java)
@@ -336,6 +338,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         if(requestCode == mPermissions.LocationRequestCode())
         {
             mLocationProvider.RegisterGpsResult(resultCode)
+        }
+        else if (requestCode == kUserSettingsRequestCode)
+        {
+            mPreferences.SetUnitPreference(Preferences.UnitPreference.valueOf(data.getStringExtra(kUserSettingsResultName)))
         }
     }
 

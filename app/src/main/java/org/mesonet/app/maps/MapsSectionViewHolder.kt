@@ -22,8 +22,8 @@ class MapsSectionViewHolder(inBinding: MapsSectionViewHolderBinding,
 
         binding?.header?.headerText?.text = inData?.GetTitle()
 
-        if(mIsFirst && binding?.header?.headerText?.text == MapsDataProvider.kGenericSectionHeaderText)
-            binding.header.headerText?.visibility = View.GONE
+        if(mIsFirst && binding?.header?.headerText?.text.isNullOrBlank())
+            binding?.header?.headerText?.visibility = View.GONE
 
         binding?.productRecyclerView?.SetItems(ArrayList(inData?.GetProducts()?.values))
     }

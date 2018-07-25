@@ -39,7 +39,7 @@ class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerV
                 it.isEnabled = false
                 val intent = Intent(binding.root.context, WebViewActivity::class.java)
                 intent.putExtra(WebViewActivity.kTitle, inData.GetTitle())
-                intent.putExtra(WebViewActivity.kUrl, inData.GetImageUrl()?.removeSuffix(".png") + "?" + Date().time)
+                intent.putExtra(WebViewActivity.kUrl, inData.GetImageUrl())
                 intent.putExtra(WebViewActivity.kAllowShare, true)
                 intent.putExtra(WebViewActivity.kInitialZoom, 1)
                 intent.putExtra(WebViewActivity.kAllowUserZoom, true)

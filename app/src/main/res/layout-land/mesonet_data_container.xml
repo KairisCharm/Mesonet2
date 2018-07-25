@@ -34,8 +34,7 @@
                     android:elevation="2dp"
                     android:layout_alignParentTop="true"
                     android:titleTextAppearance="@style/MesonetCardToolbarStyle"
-                    app:titleTextAppearance="@style/MesonetCardToolbarStyle"
-                    app:title="@{displayFields.GetStationName()}"/>
+                    app:titleTextAppearance="@style/MesonetCardToolbarStyle"/>
 
                 <!--<Toolbar-->
                 <!--android:layout_width="match_parent"-->

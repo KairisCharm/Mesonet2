@@ -181,6 +181,8 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                         mSnackbar?.show()
                         mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
                         mMapFragment?.getMapAsync { map ->
+                            map.uiSettings.isRotateGesturesEnabled = false
+                            map.uiSettings.isTiltGesturesEnabled = false
                             val sourceId = mRadarImageSource?.id ?: ""
                             val layerId = mRadarLayer?.id ?: ""
                             if (sourceId.isNotEmpty() && map.getSource(sourceId) == null)
