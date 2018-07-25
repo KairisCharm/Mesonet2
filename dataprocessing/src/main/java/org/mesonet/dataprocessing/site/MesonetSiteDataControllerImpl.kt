@@ -219,8 +219,9 @@ constructor(internal var mLocationProvider: LocationProvider,
 
             synchronized(this@MesonetSiteDataControllerImpl)
             {
-                if (mMesonetSiteList != null)
-                    mCache.SaveSites(inContext, mMesonetSiteList!!).subscribe(object: Observer<Void>
+                val list = mMesonetSiteList
+                if (list != null)
+                    mCache.SaveSites(inContext, list).subscribe(object: Observer<Void>
                     {
                         override fun onComplete() {}
                         override fun onSubscribe(d: Disposable) {}
@@ -289,8 +290,9 @@ constructor(internal var mLocationProvider: LocationProvider,
         return Observable.create(ObservableOnSubscribe<Pair<Map<String, BasicListData>, String>> {
             synchronized(this@MesonetSiteDataControllerImpl)
             {
-                if(mMesonetSiteList != null) {
-                    it.onNext(Pair(MakeMesonetStidNamePairs(mMesonetSiteList!!, mFavorites), mCurrentSelectionSubject.value))
+                val list = mMesonetSiteList
+                if(list != null) {
+                    it.onNext(Pair(MakeMesonetStidNamePairs(list, mFavorites), mCurrentSelectionSubject.value))
                     it.onComplete()
                 }
             }

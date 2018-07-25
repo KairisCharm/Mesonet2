@@ -59,7 +59,9 @@ private var mRealm: Realm? = null
                 if(mRealm == null)
                     Init(inContext)
                 try {
-                    it.onNext(mRealm?.where(inClass)?.findAll()!!)
+                    val result = mRealm?.where(inClass)?.findAll()
+                    if(result != null)
+                        it.onNext(result)
                 }
                 catch (e: Exception)
                 {

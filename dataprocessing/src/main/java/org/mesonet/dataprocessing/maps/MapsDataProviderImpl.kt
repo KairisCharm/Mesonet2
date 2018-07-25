@@ -58,8 +58,6 @@ class MapsDataProviderImpl @Inject constructor(internal var mDataProvider: DataP
 
     internal fun LoadMapsList(inMapsList: MapsList?): MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>
     {
-        val uncategorizedKey = "uncategorized"
-
         val allGroups = inMapsList?.GetMain()
         val allSections = inMapsList?.GetSections()
         val allProducts = inMapsList?.GetProducts()
@@ -148,91 +146,6 @@ class MapsDataProviderImpl @Inject constructor(internal var mDataProvider: DataP
 
             abbreviatedGroups.add(MapAbbreviatedGroupDisplayDataImpl(fullGroupList[i].mTitle, totalProducts, productList as MutableList<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct>, fullGroupList[i]))
         }
-
-
-//        var groupsWithSectionsWithGoodProducts = ArrayList<MapFullGroupDisplayDataImpl>()
-//        val sectionsWithGoodProducts = LinkedHashMap<String, MapFullGroupDisplayDataImpl.MapGroupSectionImpl>()
-//        var goodProducts = LinkedHashMap<String, MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl>()
-//
-//
-//        val orphanedGoodProducts = ArrayList<String>()
-//        val orphanedSectionsWithGoodProducts = ArrayList<String>()
-//
-//        if(allProducts != null)
-//        {
-//            goodProducts = LinkedHashMap(allProducts.filter { !it.value.GetUrl().isNullOrBlank() }.mapValues {
-//                MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(it.value.GetTitle(), null, mDataProvider.GetMapImageUrl((it.value.GetUrl()?: "")))
-//            })
-//
-//            orphanedGoodProducts.addAll(goodProducts.keys)
-//        }
-//
-//        if(goodProducts.isNotEmpty())
-//        {
-//            if(allSections != null) {
-//                sectionsWithGoodProducts.putAll( LinkedHashMap(allSections.filter { it.value.GetProducts().intersect(goodProducts.keys).isNotEmpty()}
-//                                                              .mapValues {
-//                                                                  var title = it.value.GetTitle()
-//                                                                  var titleAsSubtext = it.value.GetTitle()
-//                                                                  if(title == null || title.isBlank())
-//                                                                  {
-//                                                                      title = kGenericSectionHeaderText
-//                                                                      titleAsSubtext = ""
-//                                                                  }
-//                                                                  MapFullGroupDisplayDataImpl.MapGroupSectionImpl(title, titleAsSubtext, HashMap(it.value.GetProducts().filter { goodProducts.keys.contains(it) }
-//                                                                                                                                                                            .associate { it to goodProducts[it]!!}))
-//                                                              }))
-//
-//                sectionsWithGoodProducts.forEach{ orphanedGoodProducts.removeAll(it.value.GetProducts().keys) }
-//            }
-//        }
-//
-//        if(sectionsWithGoodProducts.isNotEmpty())
-//        {
-//            if(allGroups != null)
-//            {
-//                groupsWithSectionsWithGoodProducts = ArrayList(allGroups.filter { it.GetSections().intersect(sectionsWithGoodProducts.keys).isNotEmpty() }.map {
-//                    MapFullGroupDisplayDataImpl(it.GetTitle(), HashMap(it.GetSections().filter{sectionsWithGoodProducts.keys.contains(it)}.associate { it to sectionsWithGoodProducts[it]!! }))
-//                })
-//
-//                groupsWithSectionsWithGoodProducts.forEach{ orphanedSectionsWithGoodProducts.removeAll(it.GetSections().keys)}
-//            }
-//        }
-//
-//        if(orphanedGoodProducts.isNotEmpty())
-//        {
-//            sectionsWithGoodProducts[uncategorizedKey] = MapFullGroupDisplayDataImpl.MapGroupSectionImpl("Other", "", HashMap(orphanedGoodProducts.associate { it to goodProducts[it]!! }))
-//            orphanedSectionsWithGoodProducts.add(uncategorizedKey)
-//        }
-//
-//        if(orphanedSectionsWithGoodProducts.isNotEmpty())
-//        {
-//            groupsWithSectionsWithGoodProducts.add(MapFullGroupDisplayDataImpl("Uncategorized", HashMap(orphanedSectionsWithGoodProducts.associate { it to sectionsWithGoodProducts[it]!! })))
-//        }
-//
-//
-//        for(group in groupsWithSectionsWithGoodProducts)
-//        {
-//            var totalProducts = 0
-//            val groupProducts = ArrayList<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct>()
-//
-//            for(section in group.GetSections())
-//            {
-//                totalProducts += section.value.GetProducts().size
-//                for(product in section.value.GetProducts()) {
-//                    if (groupProducts.size >= kAbbreviatedDisplayLimit) {
-//                        break
-//                    }
-//
-//                    groupProducts.add(MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(product.value.GetTitle(), section.value.GetTitleAsSubtext(), product.value.GetImageUrl()))
-//                }
-//            }
-//
-//            if(totalProducts > kAbbreviatedDisplayLimit)
-//                groupProducts.remove(groupProducts.last())
-//
-//            abbreviatedGroups.add(MapAbbreviatedGroupDisplayDataImpl(group.GetTitle(), totalProducts, groupProducts, group))
-//        }
 
         return abbreviatedGroups
     }

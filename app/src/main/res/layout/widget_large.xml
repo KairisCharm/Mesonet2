@@ -9,7 +9,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="horizontal"
         android:background="#d0404040"
         android:baselineAligned="false">
@@ -18,8 +18,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
             android:orientation="vertical"
             android:baselineAligned="false">
             <TextView
@@ -38,7 +36,7 @@
             <RelativeLayout
                 android:id="@+id/widget_forecast_middle1"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_gravity="center_horizontal">
 
                 <ImageView
@@ -51,18 +49,16 @@
                     android:contentDescription="-"/>
 
                 <RelativeLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="50dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:layout_toEndOf="@id/widget_forecast_image1">
 
                     <TextView
-                        android:id="@+id/widget_forecast_loworhigh1"
+                        android:id="@+id/widget_forecast_loworhightemp1"
                         android:lines="1"
-                        android:layout_width="0px"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_alignStart="@+id/widget_forecast_loworhightemp1"
-                        android:layout_alignEnd="@id/widget_forecast_loworhightemp1"
                         android:text="-"
                         android:textSize="16sp"
                         android:textColor="@color/lightTextColor"
@@ -70,12 +66,12 @@
 
 
                     <TextView
-                        android:id="@+id/widget_forecast_loworhightemp1"
+                        android:id="@+id/widget_forecast_loworhigh1"
                         android:lines="1"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="-2dp"
-                        android:layout_below="@id/widget_forecast_loworhigh1"
+                        android:layout_below="@id/widget_forecast_loworhightemp1"
                         android:text="-"
                         android:textSize="18sp"
                         android:textStyle="bold"
@@ -132,7 +128,7 @@
 
             <RelativeLayout
                 android:id="@+id/widget_forecast_middle2"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal">
 
@@ -146,34 +142,46 @@
                     android:contentDescription="-"/>
 
                 <RelativeLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="50dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:layout_toEndOf="@id/widget_forecast_image2">
                     <TextView
-                        android:id="@+id/widget_forecast_loworhigh2"
+                        android:id="@+id/widget_forecast_loworhightemp2"
                         android:lines="1"
-                        android:layout_width="0px"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_alignStart="@+id/widget_forecast_loworhightemp2"
-                        android:layout_alignEnd="@id/widget_forecast_loworhightemp2"
                         android:text="-"
                         android:textSize="16sp"
                         android:textColor="@color/lightTextColor"
                         android:gravity="center"/>
 
                     <TextView
-                        android:id="@+id/widget_forecast_loworhightemp2"
+                        android:id="@+id/widget_forecast_loworhigh2"
                         android:lines="1"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="-2dp"
-                        android:layout_below="@id/widget_forecast_loworhigh2"
+                        android:layout_below="@id/widget_forecast_loworhightemp2"
                         android:text="-"
                         android:textSize="18sp"
                         android:textStyle="bold"
                         android:textColor="@color/lightTextColor"
-                        android:gravity="center" />
+                        android:gravity="center"/>
+                    <!--<TextView-->
+                        <!--android:id="@+id/widget_forecast_loworhightemp2"-->
+                        <!--android:lines="1"-->
+                        <!--android:layout_width="wrap_content"-->
+                        <!--android:layout_height="wrap_content"-->
+                        <!--android:layout_marginTop="-2dp"-->
+                        <!--android:maxLines="1"-->
+                        <!--android:breakStrategy="simple"-->
+                        <!--android:layout_below="@id/widget_forecast_loworhigh2"-->
+                        <!--android:text="-"-->
+                        <!--android:textSize="18sp"-->
+                        <!--android:textStyle="bold"-->
+                        <!--android:textColor="@color/lightTextColor"-->
+                        <!--android:gravity="center" />-->
 
                 </RelativeLayout>
             </RelativeLayout>

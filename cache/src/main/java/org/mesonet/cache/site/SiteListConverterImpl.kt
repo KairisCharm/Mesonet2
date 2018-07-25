@@ -23,7 +23,10 @@ constructor(): SiteListConverter {
 
         for (i in 0 until inSiteModels.size) {
             try {
-                result.add(inSiteModels[keySet[i]]?.let { SiteRealmModel(keySet[i], it) }!!)
+                val realmModel = inSiteModels[keySet[i]]?.let { SiteRealmModel(keySet[i], it) }
+
+                if(realmModel != null)
+                    result.add(realmModel)
             }
             finally {
 
