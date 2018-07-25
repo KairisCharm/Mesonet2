@@ -1,5 +1,7 @@
 package org.mesonet.app.baseclasses
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.support.annotation.AnimRes
 import android.support.v4.app.Fragment
@@ -12,9 +14,12 @@ import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.support.HasSupportFragmentInjector
 import org.mesonet.androidsystem.Permissions
+import org.mesonet.dataprocessing.LocationProvider
 
 
 abstract class BaseActivity : AppCompatActivity(), HasSupportFragmentInjector {
+
+
     @Inject
     lateinit var mFragmentInjector: DispatchingAndroidInjector<Fragment>
 

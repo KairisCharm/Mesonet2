@@ -17,16 +17,26 @@ import org.mesonet.dataprocessing.R
 
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.site.forecast.Forecast
-import org.mesonet.network.DataDownloader
+import org.mesonet.network.DataProvider
 
 
-class SemiDayForecastDataController(private var mContext: Context?, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, inForecast: Forecast?, val mDataDownloader: DataDownloader){
+class SemiDayForecastDataController(private var mContext: Context?, private var mPreferences: Preferences, private var mUnitConverter: UnitConverter?, inForecast: Forecast?, val mDataProvider: DataProvider){
     val mDataSubject: BehaviorSubject<ForecastData> = BehaviorSubject.create()
+
+    var mUnitPreferenceDisposable: Disposable? = null
 
     init {
         Observable.create(ObservableOnSubscribe<Void>{
             SetData(inForecast)
-        }).subscribeOn(Schedulers.computation()).subscribe()
+            it.onComplete()
+        }).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Void> {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 
 
@@ -35,36 +45,68 @@ class SemiDayForecastDataController(private var mContext: Context?, private var 
         return mDataSubject
     }
 
+    fun StartReloading()
+    {
+        mDataSubject.onNext(object: ForecastData{
+            override fun IsLoading(): Boolean {
+                return true
+            }
+
+            override fun GetTime(): String {
+                return ""
+            }
+
+            override fun GetIconUrl(): String {
+                return ""
+            }
+
+            override fun GetStatus(): String {
+                return ""
+            }
+
+            override fun GetHighOrLowTemp(): String {
+                return ""
+            }
+
+            override fun GetWindDescription(): String {
+                return ""
+            }
+
+            override fun compareTo(other: ForecastData): Int {
+                return 1
+            }
+        })
+    }
+
     internal fun SetData(inForecast: Forecast?) {
         mPreferences.UnitPreferencesSubject().subscribe(object: Observer<Preferences.UnitPreference>{
-            override fun onComplete() {
-
-            }
+            override fun onComplete() {}
 
             override fun onSubscribe(d: Disposable) {
-
+                mUnitPreferenceDisposable = d
             }
 
-            override fun onNext(t: Preferences.UnitPreference) {
+            override fun onNext(t: Preferences.UnitPreference)
+            {
                 val result = ForecastDataImpl()
-                if(inForecast != null)
-                {
+                if (inForecast != null) {
                     if (inForecast.GetTime() != null)
-                        result.mTime = inForecast.GetTime()?: ""
+                        result.mTime = inForecast.GetTime() ?: ""
 
                     if (mContext != null && mContext?.resources?.getBoolean(R.bool.forceWrapForecasts) == true && !result.mTime.contains(" "))
                         result.mTime += "\n"
 
                     if (inForecast.GetIconUrl() != null) {
                         val sizeModifier = mContext?.resources?.getString(R.string.forecastImageRes)
-                        result.mIconUrl = mDataDownloader.GetForecastImage(inForecast.GetIconUrl()?.removePrefix("http://www.nws.noaa.gov/weather/images/fcicons/")?.removeSuffix(".jpg")?: "", sizeModifier?: "")
+                        result.mIconUrl = mDataProvider.GetForecastImage(inForecast.GetIconUrl()?.removePrefix("http://www.nws.noaa.gov/weather/images/fcicons/")?.removeSuffix(".jpg")
+                                ?: "", sizeModifier ?: "")
                     }
 
                     if (inForecast.GetStatus() != null)
                         result.mStatus = inForecast.GetStatus() + "\n"
 
                     if (inForecast.GetHighOrLow() != null)
-                        result.mHighOrLowTemp = inForecast.GetHighOrLow()?.name?: ""
+                        result.mHighOrLowTemp = inForecast.GetHighOrLow()?.name ?: ""
 
                     var tempUnits: DefaultUnits.TempUnits = DefaultUnits.TempUnits.kCelsius
 
@@ -104,7 +146,7 @@ class SemiDayForecastDataController(private var mContext: Context?, private var 
                         var directionDesc: String
 
                         if (inForecast.GetWindDirectionStart() != null) {
-                            directionDesc = inForecast.GetWindDirectionStart()?.name?: ""
+                            directionDesc = inForecast.GetWindDirectionStart()?.name ?: ""
 
                             if (inForecast.GetWindDirectionStart() != inForecast.GetWindDirectionEnd())
                                 directionDesc += "-" + inForecast.GetWindDirectionEnd()
@@ -120,7 +162,7 @@ class SemiDayForecastDataController(private var mContext: Context?, private var 
                         }
                     }
 
-                    if(!mDataSubject.hasValue() || mDataSubject.value.compareTo(result) != 0)
+                    if (!mDataSubject.hasValue() || mDataSubject.value.compareTo(result) != 0)
                         mDataSubject.onNext(result)
                 }
             }
@@ -133,11 +175,20 @@ class SemiDayForecastDataController(private var mContext: Context?, private var 
         })
     }
 
+    fun Dispose(){
+        mUnitPreferenceDisposable?.dispose()
+        mDataSubject.onComplete()
+    }
+
     class ForecastDataImpl(internal var mTime: String = "",
                            internal var mIconUrl: String = "",
                            internal var mStatus: String = "",
                            internal var mHighOrLowTemp: String = "",
                            internal var mWindDescription: String = ""): ForecastData {
+        override fun IsLoading(): Boolean {
+            return false
+        }
+
         override fun compareTo(other: ForecastData): Int {
             var result = GetTime().compareTo(other.GetTime())
 

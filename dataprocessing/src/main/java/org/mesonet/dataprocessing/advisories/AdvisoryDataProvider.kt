@@ -6,4 +6,5 @@ import org.mesonet.models.advisories.Advisory
 interface AdvisoryDataProvider
 {
     fun GetDataObservable(): Observable<Advisory.AdvisoryList>
+    fun Dispose()
 }

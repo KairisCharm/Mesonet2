@@ -25,144 +25,156 @@
             app:cardElevation="4dp"
             app:cardUseCompatPadding="true">
 
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="center_horizontal"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp">
+                android:layout_height="match_parent">
 
-                <View
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="2"/>
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="7"
-                    android:gravity="top|center_horizontal"
-                    android:autoSizeMinTextSize="10sp"
-                    app:autoSizeMinTextSize="10sp"
-                    android:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
-                    app:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
-                    android:autoSizeTextType="uniform"
-                    app:autoSizeTextType="uniform"
-                    android:layout_gravity="fill"
-                    android:breakStrategy="simple"
-                    android:text="@{forecastDisplayData.GetData().GetTime()}"
-                    android:textColor="@color/lightTextColor"
-                    android:textAllCaps="true"
-                    android:textStyle="bold" />
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="2"/>
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="7"
+                        android:gravity="top|center_horizontal"
+                        android:autoSizeMinTextSize="10sp"
+                        app:autoSizeMinTextSize="10sp"
+                        android:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
+                        app:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
+                        android:autoSizeTextType="uniform"
+                        app:autoSizeTextType="uniform"
+                        android:layout_gravity="fill"
+                        android:breakStrategy="simple"
+                        android:text="@{forecastDisplayData.GetData().GetTime()}"
+                        android:textColor="@color/lightTextColor"
+                        android:textAllCaps="true"
+                        android:textStyle="bold" />
 
-                <ImageView
-                    android:id="@+id/image"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="10"
-                    android:scaleType="fitCenter"/>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"/>
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"/>
+                    <ImageView
+                        android:id="@+id/image"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="10"
+                        android:scaleType="fitCenter"/>
 
-                <!--<LinearLayout-->
-                    <!--android:layout_width="match_parent"-->
-                    <!--android:layout_height="0dp"-->
-                    <!--android:layout_weight="2"-->
-                    <!--android:orientation="horizontal"-->
-                    <!--android:baselineAligned="true">-->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"/>
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="4"
-                    android:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
-                    app:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
-                    android:layout_gravity="fill"
-                    android:breakStrategy="simple"
-                    android:maxLines="1"
-                    android:autoSizeTextType="uniform"
-                    app:autoSizeTextType="uniform"
-                    android:textColor="@color/lightTextColor"
-                    android:textAllCaps="true"
-                    android:textStyle="bold"
-                    android:text="@{forecastDisplayData.GetData().GetHighOrLowTemp()}" />
-
-                    <!--<TextView-->
-                        <!--android:layout_width="wrap_content"-->
+                    <!--<LinearLayout-->
+                        <!--android:layout_width="match_parent"-->
                         <!--android:layout_height="0dp"-->
                         <!--android:layout_weight="2"-->
-                        <!--android:layout_gravity="fill"-->
-                        <!--android:breakStrategy="simple"-->
-                        <!--android:maxLines="1"-->
-                        <!--android:autoSizeTextType="uniform"-->
-                        <!--app:autoSizeTextType="uniform"-->
-                        <!--android:layout_marginStart="4dp"-->
-                        <!--android:textColor="@color/whiteTextColor"-->
-                        <!--android:text="@{forecastDisplayData.GetData().GetTemp()}"-->
-                        <!--android:text="104°F"/>-->
-                <!--</LinearLayout>-->
+                        <!--android:orientation="horizontal"-->
+                        <!--android:baselineAligned="true">-->
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="4"
+                        android:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
+                        app:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
+                        android:layout_gravity="fill"
+                        android:breakStrategy="simple"
+                        android:maxLines="1"
+                        android:autoSizeTextType="uniform"
+                        app:autoSizeTextType="uniform"
+                        android:textColor="@color/lightTextColor"
+                        android:textAllCaps="true"
+                        android:textStyle="bold"
+                        android:text="@{forecastDisplayData.GetData().GetHighOrLowTemp()}" />
 
-                <TextView
-                    android:id="@+id/statusTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="8"
-                    android:autoSizeMinTextSize="10sp"
-                    app:autoSizeMinTextSize="10sp"
-                    android:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
-                    app:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
-                    android:layout_gravity="fill"
-                    android:breakStrategy="simple"
-                    android:autoSizeTextType="uniform"
-                    app:autoSizeTextType="uniform"
-                    android:textColor="@color/lightTextColor"
-                    android:text="@{forecastDisplayData.GetData().GetStatus()}"
-                    android:minLines="2"
-                    android:maxLines="2" />
+                        <!--<TextView-->
+                            <!--android:layout_width="wrap_content"-->
+                            <!--android:layout_height="0dp"-->
+                            <!--android:layout_weight="2"-->
+                            <!--android:layout_gravity="fill"-->
+                            <!--android:breakStrategy="simple"-->
+                            <!--android:maxLines="1"-->
+                            <!--android:autoSizeTextType="uniform"-->
+                            <!--app:autoSizeTextType="uniform"-->
+                            <!--android:layout_marginStart="4dp"-->
+                            <!--android:textColor="@color/whiteTextColor"-->
+                            <!--android:text="@{forecastDisplayData.GetData().GetTemp()}"-->
+                            <!--android:text="104°F"/>-->
+                    <!--</LinearLayout>-->
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"/>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"/>
 
-                <TextView
-                    android:id="@+id/windTextView"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="6"
-                    android:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
-                    app:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
-                    android:autoSizeMinTextSize="10sp"
-                    app:autoSizeMinTextSize="10sp"
-                    android:layout_gravity="fill"
-                    android:breakStrategy="simple"
-                    android:autoSizeTextType="uniform"
-                    app:autoSizeTextType="uniform"
-                    android:textColor="@color/whiteTextColor"
-                    android:text="@{forecastDisplayData.GetData().GetWindDescription()}"
-                    android:minLines="2"
-                    android:maxLines="2" />
+                    <TextView
+                        android:id="@+id/statusTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="8"
+                        android:autoSizeMinTextSize="10sp"
+                        app:autoSizeMinTextSize="10sp"
+                        android:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
+                        app:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
+                        android:layout_gravity="fill"
+                        android:breakStrategy="simple"
+                        android:autoSizeTextType="uniform"
+                        app:autoSizeTextType="uniform"
+                        android:textColor="@color/lightTextColor"
+                        android:text="@{forecastDisplayData.GetData().GetStatus()}"
+                        android:minLines="2"
+                        android:maxLines="2" />
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="2"/>
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="1"/>
 
-            </LinearLayout>
+                    <TextView
+                        android:id="@+id/windTextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="6"
+                        android:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
+                        app:autoSizeMaxTextSize="@dimen/max_forecast_time_size"
+                        android:autoSizeMinTextSize="10sp"
+                        app:autoSizeMinTextSize="10sp"
+                        android:layout_gravity="fill"
+                        android:breakStrategy="simple"
+                        android:autoSizeTextType="uniform"
+                        app:autoSizeTextType="uniform"
+                        android:textColor="@color/whiteTextColor"
+                        android:text="@{forecastDisplayData.GetData().GetWindDescription()}"
+                        android:minLines="2"
+                        android:maxLines="2" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight="2"/>
+
+                </LinearLayout>
+                <ProgressBar
+                    android:id="@+id/forecastProgressBar"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_centerInParent="true"
+                    android:indeterminateTint="@color/lightTextColor"/>
+
+            </RelativeLayout>
         </android.support.v7.widget.CardView>
     </RelativeLayout>
 </layout>

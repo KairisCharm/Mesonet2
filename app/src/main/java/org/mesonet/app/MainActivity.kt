@@ -36,10 +36,16 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import org.mesonet.app.contact.ContactActivity
 import org.mesonet.app.usersettings.UserSettingsActivity
+import org.mesonet.core.PerActivity
+import org.mesonet.dataprocessing.LocationProvider
+import org.mesonet.dataprocessing.site.MesonetSiteDataController
+import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController
+import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.advisories.Advisory
 import java.util.concurrent.TimeUnit
 
 
+@PerActivity
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener {
 
 
@@ -53,6 +59,18 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     @Inject
     internal lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
+
+    @Inject
+    internal lateinit var mMesonetSiteDataController: MesonetSiteDataController
+
+    @Inject
+    internal lateinit var mFiveDayForecastDataController: FiveDayForecastDataController
+
+    @Inject
+    lateinit var mLocationProvider: LocationProvider
+
+    @Inject
+    lateinit var mPreferences: Preferences
 
     var mAdvisoryDisposable: Disposable? = null
 
@@ -75,9 +93,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         super.onResume()
 
         mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Advisory.AdvisoryList>{
-            override fun onComplete() {
-
-            }
+            override fun onComplete() {}
 
             override fun onSubscribe(d: Disposable) {
                 mAdvisoryDisposable = d
@@ -266,6 +282,11 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         mActionBarDrawerToggle = null
 
+        mMesonetSiteDataController.Dispose()
+        mFiveDayForecastDataController.Dispose()
+        mAdvisoryDataProvider.Dispose()
+        mPreferences.Dispose()
+
         super.onDestroy()
     }
 
@@ -306,6 +327,16 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         item.isEnabled = true
 
         return false
+    }
+
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int,
+                                  data: Intent)
+    {
+        if(requestCode == mPermissions.LocationRequestCode())
+        {
+            mLocationProvider.RegisterGpsResult(resultCode)
+        }
     }
 
 

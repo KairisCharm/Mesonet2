@@ -40,8 +40,6 @@ import javax.inject.Inject
 class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser, Toolbar.OnMenuItemClickListener, Observer<String> {
     private var mMesonetDataBinding: MesonetDataContainerBinding? = null
 
-
-
     private var mBinding: SiteOverviewFragmentBinding? = null
 
     @Inject
@@ -62,6 +60,9 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.site_overview_fragment, inParent, false)
 
         SetMesonetBinding(mBinding?.mesonetDataContainer)
+
+        mBinding?.mesonetDataContainer?.mesonetData?.mesonetLayout?.visibility = View.GONE
+
         mMesonetSiteDataController.GetCurrentSelectionSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(this)
 
         mBinding?.previousFab?.setOnClickListener {
@@ -142,7 +143,15 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     override fun Close() {
         Observable.create(ObservableOnSubscribe<Void> {
             RevealView(mBinding?.mesonetDataContainer?.siteToolbar)
-        }).subscribeOn(AndroidSchedulers.mainThread()).subscribe()
+            it.onComplete()
+        }).subscribeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void> {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 
     override fun onMenuItemClick(menuItem: MenuItem): Boolean {
@@ -162,13 +171,8 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
 
     private fun ToggleFavorite() {
         mMesonetSiteDataController.ToggleFavorite(mMesonetSiteDataController.CurrentSelection()).subscribe (object: Observer<Boolean>{
-            override fun onComplete() {
-
-            }
-
-            override fun onSubscribe(d: Disposable) {
-            }
-
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
             override fun onNext(t: Boolean) {
                 if (t) {
                     mMesonetDataBinding?.siteToolbar?.menu?.findItem(R.id.favorite)?.setIcon(R.drawable.ic_favorite_white_36dp)
@@ -189,13 +193,9 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         super.onResume()
 
         SetMesonetBinding(mBinding?.mesonetDataContainer)
-        mMesonetDataBinding?.mesonetData?.mesonetLayout?.visibility = View.GONE
-        mBinding?.mesonetProgressBar?.visibility = View.VISIBLE
 
         mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>{
-            override fun onComplete() {
-
-            }
+            override fun onComplete() {}
 
             override fun onSubscribe(d: Disposable) {
                 mMesonetDisposable = d
@@ -248,19 +248,15 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
             }
 
             override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
-                if (isAdded) {
-                    mBinding?.mesonetDataContainer?.displayFields = t
-                    mBinding?.mesonetProgressBar?.visibility = View.GONE
-                    mMesonetDataBinding?.mesonetData?.mesonetLayout?.visibility = View.VISIBLE
-                }
+                mBinding?.mesonetDataContainer?.displayFields = t
+                mBinding?.mesonetProgressBar?.visibility = View.GONE
+                mMesonetDataBinding?.mesonetData?.mesonetLayout?.visibility = View.VISIBLE
             }
         })
 
         mFiveDayForecastDataController.GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<List<SemiDayForecastDataController>>
         {
-            override fun onComplete() {
-
-            }
+            override fun onComplete() {}
 
             override fun onSubscribe(d: Disposable) {
                 mForecastDisposable = d
@@ -274,7 +270,6 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
             }
 
             override fun onNext(t: List<SemiDayForecastDataController>) {
-                
                 if (mBinding?.forecastViewPager?.adapter == null || mBinding?.forecastViewPager?.adapter?.count == 0) {
                     val forecastsPerPage = resources.getInteger(R.integer.forecastsPerPage)
                     var pageCount = mFiveDayForecastDataController.GetCount() / forecastsPerPage
@@ -282,7 +277,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                     val forecastPages = ArrayList<ForecastListView>()
                     var i = 0
                     while (i < mFiveDayForecastDataController.GetCount()) {
-                        val forecastListView = ForecastListView(activity?: Activity())
+                        val forecastListView = ForecastListView(activity ?: Activity())
 
                         var j = 0
                         while (j < forecastsPerPage && i + j < mFiveDayForecastDataController.GetCount()) {
@@ -335,9 +330,11 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                         }
 
                         mBinding?.forecastViewPager?.adapter = pagerAdapter
-                        pagerAdapter.notifyDataSetChanged()
-                        mBinding?.forecastViewPager?.visibility = View.VISIBLE
+                        mBinding?.forecastViewPager?.adapter?.notifyDataSetChanged()
                     }
+
+                    mBinding?.forecastProgressBar?.visibility = View.GONE
+                    mBinding?.forecastViewPager?.visibility = View.VISIBLE
                 }
             }
         })
@@ -352,6 +349,16 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     }
 
 
+    override fun onDestroyView() {
+        for(i in 0..(mBinding?.forecastViewPager?.childCount?: 0 - 1))
+        {
+            if(mBinding?.forecastViewPager?.getChildAt(i) is ForecastListView)
+                (mBinding?.forecastViewPager?.getChildAt(i) as ForecastListView).Dispose()
+        }
+        super.onDestroyView()
+    }
+
+
     override fun onComplete() {}
     override fun onSubscribe(d: Disposable) {}
     override fun onError(e: Throwable)
@@ -360,15 +367,10 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
     }
 
     override fun onNext(t: String) {
-        if(isAdded && t != mCurrentStid)
-        {
+        if (isAdded && t != mCurrentStid) {
             mBinding?.mesonetDataContainer?.siteToolbar?.title = ""
             mMesonetDataBinding?.mesonetData?.mesonetLayout?.visibility = View.GONE
             mBinding?.mesonetProgressBar?.visibility = View.VISIBLE
-            mBinding?.forecastViewPager?.visibility = View.GONE
-
-            if(resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-                mBinding?.forecastProgressBar?.visibility = View.VISIBLE
         }
     }
 
@@ -404,13 +406,8 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         }
 
         mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>{
-            override fun onComplete() {
-
-            }
-
-            override fun onSubscribe(d: Disposable) {
-
-            }
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
 
             override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
                 mMesonetDataBinding?.mesonetData?.displayFields = t
@@ -422,9 +419,6 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
             }
 
         })
-
-        mMesonetDataBinding?.mesonetData?.mesonetLayout?.visibility = View.VISIBLE
-        mBinding?.mesonetProgressBar?.visibility = View.GONE
 
         mBinding?.invalidateAll()
     }

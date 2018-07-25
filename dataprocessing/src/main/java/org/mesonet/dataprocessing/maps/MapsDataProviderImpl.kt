@@ -2,19 +2,20 @@ package org.mesonet.dataprocessing.maps
 
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.dataprocessing.maps.MapsDataProvider.Companion.kAbbreviatedDisplayLimit
 import org.mesonet.dataprocessing.maps.MapsDataProvider.Companion.kGenericSectionHeaderText
 import org.mesonet.models.maps.MapsList
-import org.mesonet.network.DataDownloader
-import java.io.Serializable
+import org.mesonet.network.DataProvider
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 
-class MapsDataProviderImpl @Inject constructor(internal var mDataDownloader: DataDownloader): MapsDataProvider
+class MapsDataProviderImpl @Inject constructor(internal var mDataProvider: DataProvider): MapsDataProvider
 {
     private var mLastUpdate = 0L
 
@@ -23,17 +24,27 @@ class MapsDataProviderImpl @Inject constructor(internal var mDataDownloader: Dat
 
 
     var mMapsListObservable = Observable.create(ObservableOnSubscribe<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>> {subscriber ->
-        if(mMapsList != null)
+        if(mMapsList != null) {
             subscriber.onNext(LoadMapsList(mMapsList))
+            subscriber.onComplete()
+        }
 
         if(mLastUpdate == 0L || (mLastUpdate - Date().time) > 300000) {
-            (mDataDownloader.GetMaps().observeOn(Schedulers.computation()).map {
+            (mDataProvider.GetMaps().observeOn(Schedulers.computation()).map {
                 mLastUpdate = Date().time
                 mMapsList = it
                 val result = LoadMapsList(mMapsList)
                 subscriber.onNext(result)
+                subscriber.onComplete()
                 result
-            }).subscribe()
+            }).subscribe(object: Observer<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>> {
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
+                override fun onNext(t: MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>) {}
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
         }
     }).subscribeOn(Schedulers.computation())
 
@@ -64,7 +75,7 @@ class MapsDataProviderImpl @Inject constructor(internal var mDataDownloader: Dat
         if(allProducts != null)
         {
             goodProducts = LinkedHashMap(allProducts.filter { !it.value.GetUrl().isNullOrBlank() }.mapValues {
-                MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(it.value.GetTitle(), null, mDataDownloader.GetMapImageUrl((it.value.GetUrl()?: "")))
+                MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(it.value.GetTitle(), null, mDataProvider.GetMapImageUrl((it.value.GetUrl()?: "")))
             })
 
             orphanedGoodProducts.addAll(goodProducts.keys)

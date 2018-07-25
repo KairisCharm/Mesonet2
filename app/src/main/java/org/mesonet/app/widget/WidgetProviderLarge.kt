@@ -32,14 +32,8 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
     internal fun SetForecastViews(inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
         if (mFiveDayForecastDataController.GetCount() > 1) {
             mFiveDayForecastDataController.GetForecast(0).GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<ForecastData>{
-                override fun onComplete() {
-
-                }
-
-                override fun onSubscribe(d: Disposable) {
-
-                }
-
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
                 override fun onNext(t: ForecastData) {
                     val iconUrl1 = t.GetIconUrl()
                     val highOrLow = t.GetHighOrLowTemp().split(" ")
@@ -54,6 +48,10 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
                     onNext(object: ForecastData{
+                        override fun IsLoading(): Boolean {
+                            return false
+                        }
+
                         override fun GetTime(): String {
                             return ""
                         }
@@ -84,14 +82,8 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
             })
 
             mFiveDayForecastDataController.GetForecast(1).GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<ForecastData>{
-                override fun onComplete() {
-
-                }
-
-                override fun onSubscribe(d: Disposable) {
-
-                }
-
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
                 override fun onNext(t: ForecastData) {
                     val iconUrl2 = t.GetIconUrl()
                     val highOrLow = t.GetHighOrLowTemp().split(" ")
@@ -106,6 +98,10 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
                     onNext(object: ForecastData{
+                        override fun IsLoading(): Boolean {
+                            return false
+                        }
+
                         override fun GetTime(): String {
                             return ""
                         }
@@ -129,10 +125,8 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
                         override fun compareTo(other: ForecastData): Int {
                             return 1
                         }
-
                     })
                 }
-
             })
         }
     }
@@ -143,13 +137,8 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
 
         mFiveDayForecastDataController.GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<List<SemiDayForecastDataController>>
         {
-            override fun onComplete() {
-
-            }
-
-            override fun onSubscribe(d: Disposable) {
-
-            }
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
 
             override fun onNext(t: List<SemiDayForecastDataController>) {
                 SetForecastViews(inRemoteViews, inAppWidgetIds)
@@ -173,5 +162,11 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
 
     override fun GetWidgetClickIntent(inContext: Context): Intent {
         return Intent(inContext, WidgetProviderLarge::class.java)
+    }
+
+
+    override fun onDeleted(context: Context?, appWidgetIds: IntArray?) {
+        mFiveDayForecastDataController.Dispose()
+        super.onDeleted(context, appWidgetIds)
     }
 }

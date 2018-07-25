@@ -1,7 +1,6 @@
 package org.mesonet.dataprocessing.site
 
 
-import android.content.Context
 import android.location.Location
 import com.google.gson.Gson
 import io.reactivex.Observable
@@ -11,127 +10,177 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.cache.site.SiteCache
+import org.mesonet.core.PerActivity
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.LocationProvider
-import org.mesonet.dataprocessing.SelectSiteListener
-import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.site.MesonetSiteList
 import org.mesonet.models.site.MesonetSiteListModel
-import org.mesonet.models.site.mesonetdata.MesonetData
-import org.mesonet.network.DataDownloader
+import org.mesonet.network.DataProvider
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
 import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import android.content.Context
 
 
-@Singleton
+@PerActivity
 class MesonetSiteDataControllerImpl @Inject
 constructor(internal var mLocationProvider: LocationProvider,
             internal var mCache: SiteCache,
             internal var mPreferences: Preferences,
-            internal var mContext: Context,
-            internal val mDataDownloader: DataDownloader): MesonetSiteDataController
+            internal val mDataProvider: DataProvider): MesonetSiteDataController
 {
-    override fun GetMeteogramUrl(): String {
-        if(!mCurrentSelectionSubject.hasValue())
-            return ""
-        return mDataDownloader.GetMeteogramImageUrl(mCurrentSelectionSubject.value)
-    }
+    val kDefaultSelection = "nrmn"
 
-    private var mMesonetSiteList: MesonetSiteList? = null
+    val mCurrentSelectionSubject: BehaviorSubject<String> = BehaviorSubject.create()
+    var mMesonetSiteList: MesonetSiteList? = null
 
-    private var mFavorites: MutableList<String>? = ArrayList()
-
+    var mFavorites: MutableList<String> = ArrayList()
+    var mLocationDisposable: Disposable? = null
     private var mCurrentStationName = ""
+
     private var mCurrentIsFavorite = false
-
-    private var mCurrentSelectionSubject: BehaviorSubject<String> = BehaviorSubject.create()
-
-
     init {
-        mCurrentSelectionSubject.onNext("nrmn")
-        Observable.create (ObservableOnSubscribe<Void>{
-            mCache.GetSites().subscribe(object: Observer<MesonetSiteList>{
-                override fun onComplete() {
+        fun FindCachedStid()
+        {
+            mPreferences.SelectedStidSubject().observeOn(Schedulers.computation()).subscribe(object : Observer<String> {
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
 
-                }
-
-                override fun onSubscribe(d: Disposable) {
-
-                }
-
-                override fun onNext(t: MesonetSiteList) {
-                    if (mMesonetSiteList == null) {
-                        synchronized(this@MesonetSiteDataControllerImpl)
-                        {
-                            mMesonetSiteList = t
-                        }
-                    }
-
-                    mCache.GetFavorites().subscribe(object: Observer<MutableList<String>>{
-                        override fun onComplete() {
-
-                        }
-
-                        override fun onSubscribe(d: Disposable) {
-
-                        }
-
-                        override fun onNext(t: MutableList<String>) {
-                            mFavorites = t
-
-                            if (mFavorites == null)
-                                mFavorites = ArrayList()
-
-                            LoadData(mContext)
-                        }
-
-                        override fun onError(e: Throwable) {
-                            e.printStackTrace()
-                            onNext(ArrayList())
-                        }
-
-                    })
+                override fun onNext(t: String) {
+                    if (mMesonetSiteList?.keys?.contains(t) == true && (!mCurrentSelectionSubject.hasValue() || mCurrentSelectionSubject.value != t))
+                        FinalizeSelection(t)
+                    else
+                        FinalizeSelection(kDefaultSelection)
                 }
 
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
-                    onNext(HashMap<String, MesonetSiteListModel.MesonetSiteModel>() as MesonetSiteList)
+                    onNext("")
+                }
+            })
+        }
+
+        fun FindNearestStid()
+        {
+            mLocationProvider.GetLocation().observeOn(Schedulers.computation()).subscribe(object: Observer<LocationProvider.LocationResult>{
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {
+                    mLocationDisposable = d
                 }
 
-            })
+                override fun onNext(t: LocationProvider.LocationResult) {
+                    val nearestStid = GetNearestSite(t.LocationResult())
 
-            LoadData(mContext)
-        }).subscribe()
+                    if(!mCurrentSelectionSubject.hasValue() || mCurrentSelectionSubject.value != nearestStid)
+                    {
+                        if (mMesonetSiteList?.keys?.contains(nearestStid) == true)
+                            FinalizeSelection(nearestStid)
+                        else
+                            FindCachedStid()
+                    }
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                    FindCachedStid()
+                }
+            })
+        }
+
+        fun GetFavorites()
+        {
+            mCache.GetFavorites().observeOn(Schedulers.computation()).subscribe(object: Observer<MutableList<String>>{
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
+                override fun onNext(t: MutableList<String>) {
+                    mFavorites = t
+                    FindNearestStid()
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                    onNext(ArrayList())
+                }
+            })
+        }
+
+        mCache.GetSites().observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetSiteList>
+        {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: MesonetSiteList) {
+                mMesonetSiteList = t
+                GetFavorites()
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
+
+        mDataProvider.GetMesonetSites().observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetSiteList> {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: MesonetSiteList) {
+                val cacheLoaded = mMesonetSiteList?.isEmpty() == true
+                SaveList(t)
+
+                if (!cacheLoaded) {
+                    GetFavorites()
+                }
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 
-
-    override fun GetCurrentSelectionSubject(): Observable<String>
-    {
+    override fun GetCurrentSelectionSubject(): Observable<String> {
         return mCurrentSelectionSubject
     }
 
 
-    internal fun SetData(inMesonetDataString: String?) {
-        SetData(Gson().fromJson(inMesonetDataString, MesonetSiteListModel::class.java))
+    override fun CurrentStationName(): String {
+        return mCurrentStationName
+    }
+
+    override fun CurrentIsFavorite(): Boolean {
+        return mCurrentIsFavorite
+    }
+
+    override fun CurrentSelection(): String {
+        return mCurrentSelectionSubject.value
     }
 
 
-    internal fun SetData(inMesonetSiteList: MesonetSiteList) {
+    override fun SetResult(inResult: String) {
+        if(mMesonetSiteList?.containsKey(inResult) == true) {
+            mLocationDisposable?.dispose()
+            mPreferences.SetSelectedStid(inResult)
+            FinalizeSelection(inResult)
+        }
+    }
+
+
+    internal fun SaveList(inMesonetDataString: String) {
+        SaveList(Gson().fromJson(inMesonetDataString, MesonetSiteListModel::class.java))
+    }
+
+    internal fun SaveList(inMesonetSiteList: MesonetSiteList) {
         synchronized(this@MesonetSiteDataControllerImpl)
         {
             mMesonetSiteList = inMesonetSiteList
 
             val dateFormat = SimpleDateFormat("yyyy-MM-dd hh:mm:ss z", Locale.US)
 
-            val keys = ArrayList(mMesonetSiteList?.keys)
+            val keys = ArrayList(mMesonetSiteList?.keys?: ArrayList())
             var i = 0
             while (i < keys.size) {
                 var date: Date? = null
@@ -152,19 +201,26 @@ constructor(internal var mLocationProvider: LocationProvider,
                 i++
             }
 
-            mCache.SaveSites(mMesonetSiteList?: HashMap<String, MesonetSiteListModel.MesonetSiteModel>() as MesonetSiteList).subscribe()
-
-            SetResult(mCurrentSelectionSubject.value)
+            synchronized(this@MesonetSiteDataControllerImpl)
+            {
+                if (mMesonetSiteList != null)
+                    mCache.SaveSites(mMesonetSiteList!!).subscribe(object: Observer<Void>
+                    {
+                        override fun onComplete() {}
+                        override fun onSubscribe(d: Disposable) {}
+                        override fun onNext(t: Void) {}
+                        override fun onError(e: Throwable) {
+                            e.printStackTrace()
+                        }
+                    })
+            }
         }
     }
 
 
     private fun FinalizeSelection(inStid: String)
     {
-        if(mMesonetSiteList != null && mMesonetSiteList?.get(inStid) != null && mMesonetSiteList?.get(mCurrentSelectionSubject.value)?.GetName() != null) {
-            mCurrentStationName = mMesonetSiteList?.get(inStid)?.GetName()?: ""
-        }
-
+        mCurrentStationName = mMesonetSiteList?.get(inStid)?.GetName()?: ""
         mCurrentIsFavorite = IsFavorite(inStid)
 
         if(mCurrentSelectionSubject.value != inStid)
@@ -172,7 +228,17 @@ constructor(internal var mLocationProvider: LocationProvider,
     }
 
 
+    override fun GetMeteogramUrl(): String {
+        if(!mCurrentSelectionSubject.hasValue())
+            return ""
+        return mDataProvider.GetMeteogramImageUrl(mCurrentSelectionSubject.value.toUpperCase())
+    }
+
+
     private fun GetNearestSite(inLocation: Location?): String {
+        if(inLocation == null)
+            return ""
+
         val keys = ArrayList(mMesonetSiteList?.keys)
 
         var shortestDistanceIndex = -1
@@ -203,26 +269,21 @@ constructor(internal var mLocationProvider: LocationProvider,
 
     override fun AsBasicListData(): Observable<Pair<Map<String, BasicListData>, String>> {
         return Observable.create(ObservableOnSubscribe<Pair<Map<String, BasicListData>, String>> {
-            if (mMesonetSiteList != null) it.onNext(Pair(MakeMesonetStidNamePairs(mMesonetSiteList?: HashMap<String, MesonetSiteListModel.MesonetSiteModel>() as MesonetSiteList, mFavorites?: ArrayList()), mCurrentSelectionSubject.value))
+            synchronized(this@MesonetSiteDataControllerImpl)
+            {
+                if(mMesonetSiteList != null) {
+                    it.onNext(Pair(MakeMesonetStidNamePairs(mMesonetSiteList!!, mFavorites), mCurrentSelectionSubject.value))
+                    it.onComplete()
+                }
+            }
         }).subscribeOn(Schedulers.computation())
-    }
-
-
-    override fun CurrentSelection(): String {
-        return mCurrentSelectionSubject.value
-    }
-
-
-
-    override fun CurrentStationName(): String {
-        return mCurrentStationName
     }
 
 
     override fun CurrentStationElevation(): Number? {
         val currentSelection = CurrentSelection()
 
-        if (mMesonetSiteList == null || mMesonetSiteList?.containsKey(currentSelection) != true || mMesonetSiteList?.get(currentSelection) == null || mMesonetSiteList?.get(currentSelection)?.GetElev() == null)
+        if (mMesonetSiteList?.containsKey(currentSelection) != true || mMesonetSiteList?.get(currentSelection) == null || mMesonetSiteList?.get(currentSelection)?.GetElev() == null)
             return null
 
         val result: Double?
@@ -236,8 +297,6 @@ constructor(internal var mLocationProvider: LocationProvider,
         return result
     }
 
-
-
     override fun ToggleFavorite(inStid: String): Observable<Boolean>
     {
         return Observable.create{
@@ -248,135 +307,45 @@ constructor(internal var mLocationProvider: LocationProvider,
             }
 
             it.onNext(IsFavorite(inStid))
+            it.onComplete()
         }
-    }
-
-
-    override fun CurrentIsFavorite(): Boolean
-    {
-        return mCurrentIsFavorite
     }
 
 
     internal fun IsFavorite(inStid: String): Boolean {
-        return mFavorites != null && mFavorites?.contains(inStid) == true
+        return mFavorites.contains(inStid)
     }
-
 
     internal fun AddFavorite(inStid: String) {
-        if (mFavorites != null) {
-            mFavorites?.add(inStid)
-            if(inStid == mCurrentSelectionSubject.value)
-                mCurrentIsFavorite = IsFavorite(mCurrentSelectionSubject.value)
-            mCache.SaveFavorites(mFavorites?: ArrayList()).subscribe()
-        }
-    }
-
-
-    internal fun RemoveFavorite(inStid: String) {
-        if (mFavorites != null && mFavorites?.contains(inStid) == true) {
-            mFavorites?.remove(inStid)
-            mCache.SaveFavorites(mFavorites?: ArrayList()).subscribe()
-            if(inStid == mCurrentSelectionSubject.value)
-                mCurrentIsFavorite = IsFavorite(mCurrentSelectionSubject.value)
-        }
-    }
-
-
-    override fun SetResult(inResult: String) {
-        Observable.create(ObservableOnSubscribe<Void> {
-            mPreferences.SetSelectedStid(inResult)
-
-            FinalizeSelection(inResult)
-        }).subscribe()
-    }
-
-
-    internal fun LoadData(inContext: Context) {
-        mPreferences.SelectedStidSubject().subscribe (object: Observer<String>{
-            override fun onComplete() {
-
-            }
-
-            override fun onSubscribe(d: Disposable) {
-            }
-
+        mFavorites.add(inStid)
+        if(inStid == mCurrentSelectionSubject.value)
+            mCurrentIsFavorite = IsFavorite(mCurrentSelectionSubject.value)
+        mCache.SaveFavorites(mFavorites).subscribe(object: Observer<Void>{
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
             override fun onError(e: Throwable) {
                 e.printStackTrace()
-            }
-
-            override fun onNext(stid: String) {
-                mCache.GetSites().subscribe(object : Observer<MesonetSiteList> {
-                    override fun onComplete() {
-                    }
-
-                    override fun onSubscribe(d: Disposable) {
-                    }
-
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-                    }
-
-                    override fun onNext(t: MesonetSiteList) {
-                        if (mMesonetSiteList == null || mMesonetSiteList?.size == 0)
-                            SetData(t)
-
-                        if (stid.isEmpty()) {
-                            mLocationProvider.GetLocation(inContext).observeOn(Schedulers.computation()).subscribe(object : Observer<LocationProvider.LocationResult> {
-                                override fun onComplete() {
-
-                                }
-
-                                override fun onSubscribe(d: Disposable) {
-                                }
-
-                                override fun onError(e: Throwable) {
-                                    e.printStackTrace()
-
-                                    onNext(object : LocationProvider.LocationResult {
-                                        override fun LocationResult(): Location? {
-                                            return null
-                                        }
-                                    })
-                                }
-
-                                override fun onNext(t: LocationProvider.LocationResult) {
-                                    var result = "nrmn"
-
-                                    if (t.LocationResult() != null)
-                                        result = GetNearestSite(t.LocationResult())
-
-                                    mPreferences.SetSelectedStid(result)
-
-                                    FinalizeSelection(result)
-                                }
-                            })
-                        } else
-                            FinalizeSelection(stid)
-                    }
-                })
-
-                mDataDownloader.GetMesonetSites().observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetSiteList> {
-                    override fun onComplete() {
-
-                    }
-
-                    override fun onSubscribe(d: Disposable) {
-
-                    }
-
-                    override fun onNext(t: MesonetSiteList) {
-                        SetData(t)
-                    }
-
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-                    }
-                })
             }
         })
     }
 
+    internal fun RemoveFavorite(inStid: String) {
+        if (mFavorites.contains(inStid)) {
+            mFavorites.remove(inStid)
+            mCache.SaveFavorites(mFavorites).subscribe(object: Observer<Void>{
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
+                override fun onNext(t: Void) {}
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+
+            })
+            if(inStid == mCurrentSelectionSubject.value)
+                mCurrentIsFavorite = IsFavorite(mCurrentSelectionSubject.value)
+        }
+    }
 
 
     internal fun MakeMesonetStidNamePairs(inSiteList : MesonetSiteList, inFavorites : List<String>) : Map<String, BasicListData>
@@ -404,5 +373,10 @@ constructor(internal var mLocationProvider: LocationProvider,
         }
 
         return result
+    }
+
+    override fun Dispose() {
+        mLocationDisposable?.dispose()
+        mCurrentSelectionSubject.onComplete()
     }
 }

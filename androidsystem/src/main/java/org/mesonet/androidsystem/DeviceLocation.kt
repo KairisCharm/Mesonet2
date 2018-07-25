@@ -1,6 +1,7 @@
 package org.mesonet.androidsystem
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.location.Location
 import android.support.v4.content.ContextCompat
@@ -8,57 +9,101 @@ import android.support.v4.content.ContextCompat
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationServices
-
 import org.mesonet.dataprocessing.LocationProvider
 import android.content.Context
-import com.google.android.gms.location.LocationResult
+import android.content.IntentSender
+import android.os.Looper
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.*
+import com.google.android.gms.tasks.Task
+import io.reactivex.ObservableEmitter
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
+import org.mesonet.core.PerActivity
 
 import javax.inject.Inject
 import javax.inject.Singleton
 
 
-@Singleton
+@PerActivity
 class DeviceLocation @Inject
-constructor() : LocationProvider {
-
+constructor(var mContext: Context) : LocationProvider
+{
     @Inject
     internal lateinit var mPermissions: Permissions
 
+    val mLocationProviderClient = LocationServices.getFusedLocationProviderClient(mContext)
 
-    override fun GetLocation(inContext: Context?): Observable<LocationProvider.LocationResult> {
+    val mWaitingObservers: ArrayList<ObservableEmitter<LocationProvider.LocationResult>> = ArrayList()
+
+    override fun GetLocation(): Observable<LocationProvider.LocationResult> {
         return Observable.create (ObservableOnSubscribe<LocationProvider.LocationResult>{ locationSubscriber ->
-            if(inContext == null)
-            {
-                locationSubscriber.onNext(object: LocationProvider.LocationResult{
-                    override fun LocationResult(): Location? {
-                        return null
-                    }
-                })
-
-                return@ObservableOnSubscribe
-            }
-            mPermissions.RequestPermission(inContext, Manifest.permission.ACCESS_FINE_LOCATION).observeOn(Schedulers.computation()).subscribe(object: Observer<Boolean>{
-                override fun onComplete() {
-                }
-
-                override fun onSubscribe(d: Disposable) {
-                }
+            mPermissions.RequestPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION).observeOn(Schedulers.computation()).subscribe(object: Observer<Boolean>{
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
 
                 override fun onNext(t: Boolean) {
-                    if (t && ContextCompat.checkSelfPermission(inContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        LocationServices.getFusedLocationProviderClient(inContext).requestLocationUpdates(LocationRequest.create(), object : LocationCallback() {
-                            override fun onLocationResult(inResult: com.google.android.gms.location.LocationResult?) {
-                                locationSubscriber.onNext(LocationResultImpl(inResult?.lastLocation))
+                    if (t && ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        if (Looper.myLooper() == null)
+                            Looper.prepare()
+                        val locationRequest = LocationRequest().apply {
+                            interval = 1000
+                            fastestInterval = 1000
+                            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+                        }
 
-                                LocationServices.getFusedLocationProviderClient(inContext).removeLocationUpdates(this)
+                        val builder = LocationSettingsRequest.Builder()
+                                .addLocationRequest(locationRequest)
+
+                        val client: SettingsClient = LocationServices.getSettingsClient(mContext)
+                        val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
+
+                        task.addOnSuccessListener { locationSettingsResponse ->
+                            mLocationProviderClient.requestLocationUpdates(locationRequest,
+                                    object : LocationCallback() {
+                                        override
+
+
+                                        fun onLocationResult(locationResult: LocationResult?) {
+                                            if (locationResult == null) {
+                                                locationSubscriber.onNext(LocationResultImpl(null))
+                                                locationSubscriber.onComplete()
+                                                return
+                                            }
+
+                                            locationSubscriber.onNext(LocationResultImpl(locationResult.locations.first()))
+                                            locationSubscriber.onComplete()
+                                            mLocationProviderClient.removeLocationUpdates(this)
+                                        }
+                                    },
+                                    null)
+                        }
+
+                        task.addOnFailureListener { exception ->
+                            if (exception is ResolvableApiException) {
+                                if (mContext is Activity) {
+                                    try {
+                                        mWaitingObservers.add(locationSubscriber)
+                                        exception.startResolutionForResult(mContext as Activity, mPermissions.LocationRequestCode())
+                                    } catch (sendEx: IntentSender.SendIntentException) {
+                                        locationSubscriber.onNext(LocationResultImpl(null))
+                                        locationSubscriber.onComplete()
+                                    }
+                                } else {
+                                    locationSubscriber.onNext(LocationResultImpl(null))
+                                    locationSubscriber.onComplete()
+                                }
                             }
-                        }, null)
+                            else {
+                                locationSubscriber.onNext(LocationResultImpl(null))
+                                locationSubscriber.onComplete()
+                            }
+                        }
+
+                    } else {
+                        locationSubscriber.onNext(LocationResultImpl(null))
+                        locationSubscriber.onComplete()
                     }
                 }
 
@@ -66,9 +111,53 @@ constructor() : LocationProvider {
                     e.printStackTrace()
                     onNext(false)
                 }
-
             })
+
         }).subscribeOn(Schedulers.computation())
+    }
+
+
+    override fun RegisterGpsResult(inResultCode: Int) {
+        synchronized(mWaitingObservers)
+        {
+            while (mWaitingObservers.size > 0) {
+                if (inResultCode == Activity.RESULT_OK) {
+                    val locationRequest = LocationRequest().apply {
+                        interval = 1000
+                        fastestInterval = 1000
+                        priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+                    }
+
+                    val locationSubscriber = mWaitingObservers[0]
+
+                    if(ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                        mLocationProviderClient.requestLocationUpdates(locationRequest,
+                                object : LocationCallback() {
+                                    override
+
+
+                                    fun onLocationResult(locationResult: LocationResult?) {
+                                        if (locationResult == null) {
+                                            locationSubscriber.onNext(LocationResultImpl(null))
+                                            locationSubscriber.onComplete()
+                                            return
+                                        }
+
+                                        locationSubscriber.onNext(LocationResultImpl(locationResult.locations.first()))
+                                        locationSubscriber.onComplete()
+                                        mLocationProviderClient.removeLocationUpdates(this)
+                                    }
+                                },
+                                null)
+                    }
+                } else {
+                    mWaitingObservers[0].onNext(LocationResultImpl(null))
+                    mWaitingObservers[0].onComplete()
+                }
+
+                mWaitingObservers.removeAt(0)
+            }
+        }
     }
 
 

@@ -6,8 +6,10 @@ import android.content.pm.PackageManager
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import io.reactivex.Observable
+import io.reactivex.ObservableEmitter
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
 import javax.inject.Inject
@@ -18,7 +20,11 @@ import javax.inject.Singleton
 @Singleton
 class PermissionsImpl @Inject
 constructor(): Permissions {
-    private val mPermissionsObservers = HashMap<String, MutableList<Observer<Boolean>>>()
+    override fun LocationRequestCode(): Int {
+        return 0
+    }
+
+    private val mPermissionsObservers = HashMap<String, MutableList<ObservableEmitter<Boolean>>>()
 
 
     override fun RequestPermission(inContext: Context?, inPermission: String): Observable<Boolean> {
@@ -28,12 +34,13 @@ constructor(): Permissions {
                 if (!mPermissionsObservers.containsKey(inPermission))
                     mPermissionsObservers[inPermission] = ArrayList()
 
-                if (it is Observer<*> && mPermissionsObservers[inPermission]?.contains(it as Observer<*>) != true)
-                    mPermissionsObservers[inPermission]?.add(it as Observer<Boolean>)
+                if (mPermissionsObservers[inPermission]?.contains(it) == false)
+                    mPermissionsObservers[inPermission]?.add(it)
 
                 if(inContext == null)
                 {
                     it.onNext(false)
+                    it.onComplete()
                     return@ObservableOnSubscribe
                 }
                 if (ContextCompat.checkSelfPermission(inContext, inPermission) != PackageManager.PERMISSION_GRANTED) {
@@ -43,9 +50,11 @@ constructor(): Permissions {
                                 0)
                     } else {
                         it.onNext(false)
+                        it.onComplete()
                     }
                 } else {
-                    it.onNext(false)
+                    it.onNext(true)
+                    it.onComplete()
                 }
             }
         }).subscribeOn(Schedulers.computation())
@@ -62,11 +71,21 @@ constructor(): Permissions {
                     if (permissionListeners != null) {
                         while (j < permissionListeners.size) {
                             permissionListeners[j].onNext(inGrantResults[i] == PackageManager.PERMISSION_GRANTED)
+                            permissionListeners[j].onComplete()
                             permissionListeners.removeAt(j)
                         }
                     }
                 }
             }
-        }).subscribeOn(Schedulers.computation()).subscribe()
+
+            it.onComplete()
+        }).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Void>{
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 }

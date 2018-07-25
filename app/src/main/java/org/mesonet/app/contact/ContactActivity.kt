@@ -14,7 +14,9 @@ import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.os.SystemClock
 import android.support.v4.content.ContextCompat
+import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import org.mesonet.androidsystem.Permissions
 import java.util.*
 
@@ -63,16 +65,24 @@ class ContactActivity: BaseActivity()
 
         binding.phoneButton.setOnClickListener {
             it.isEnabled = false
-            mPermissions.RequestPermission(this, Manifest.permission.CALL_PHONE).observeOn(AndroidSchedulers.mainThread()).subscribe {
-                if (it && ContextCompat.checkSelfPermission(this@ContactActivity, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
-                    try {
-                        startActivity(Intent(Intent.ACTION_CALL, Uri.parse("tel:4053252541")))
-                    } catch (e: Exception) {
+            mPermissions.RequestPermission(this, Manifest.permission.CALL_PHONE).observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<Boolean> {
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
+                override fun onNext(t: Boolean) {
+                    if (t && ContextCompat.checkSelfPermission(this@ContactActivity, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
+                        try {
+                            startActivity(Intent(Intent.ACTION_CALL, Uri.parse("tel:4053252541")))
+                        } catch (e: Exception) {
 
+                        }
                     }
+                    it.isEnabled = true
                 }
-            }
-            it.isEnabled = true
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
         }
 
         binding.addressButton.setOnClickListener {

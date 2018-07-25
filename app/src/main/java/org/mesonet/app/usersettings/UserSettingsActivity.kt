@@ -27,17 +27,10 @@ class UserSettingsActivity: BaseActivity()
 
         mPreferences.UnitPreferencesSubject().subscribe (object: Observer<Preferences.UnitPreference>
         {
-            override fun onComplete() {
-
-            }
-
-            override fun onSubscribe(d: Disposable) {
-
-            }
-
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
             override fun onNext(t: Preferences.UnitPreference) {
-                when(t)
-                {
+                when (t) {
                     Preferences.UnitPreference.kImperial -> mBinding.imperialButton.isChecked = true
                     Preferences.UnitPreference.kMetric -> mBinding.metricButton.isChecked = true
                 }
@@ -57,8 +50,12 @@ class UserSettingsActivity: BaseActivity()
             }
         }
     }
-    override fun NavigateToPage(inFragment: Fragment, inPushToBackStack: Boolean, inAnimationIn: Int, inAnimationOut: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+
+    override fun onDestroy() {
+        mPreferences.Dispose()
+        super.onDestroy()
     }
 
+    override fun NavigateToPage(inFragment: Fragment, inPushToBackStack: Boolean, inAnimationIn: Int, inAnimationOut: Int) {}
 }

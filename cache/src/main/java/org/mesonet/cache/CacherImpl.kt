@@ -3,6 +3,8 @@ package org.mesonet.cache
 import android.content.Context
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
 import javax.inject.Inject
@@ -13,10 +15,11 @@ import io.realm.RealmModel
 import org.mesonet.cache.site.mesonetdata.MesonetRealmModule
 import javax.inject.Singleton
 import io.realm.RealmResults
+import org.mesonet.core.PerActivity
 import java.util.concurrent.Executors
 
 
-@Singleton
+@PerActivity
 class CacherImpl @Inject
 constructor(inContext: Context): Cacher {
 private var mRealm: Realm? = null
@@ -25,18 +28,25 @@ private var mRealm: Realm? = null
 
     init {
         Observable.create(ObservableOnSubscribe<Void>{
-        synchronized(this@CacherImpl) {
-            Realm.init(inContext)
+            synchronized(this@CacherImpl) {
+                Realm.init(inContext)
 
-            val configuration = RealmConfiguration.Builder().schemaVersion(26)
-                                                                            .modules(MesonetRealmModule())
-                                                                            .name(inContext.packageName)
-                                                                            .build()
-            mRealm = Realm.getInstance(configuration)
+                val configuration = RealmConfiguration.Builder().schemaVersion(26)
+                                                                                .modules(MesonetRealmModule())
+                                                                                .name(inContext.packageName)
+                                                                                .build()
+                mRealm = Realm.getInstance(configuration)
 
-            false
+                it.onComplete()
             }
-        }).subscribeOn(mRealmScheduler).subscribe()
+        }).subscribeOn(mRealmScheduler).subscribe(object: Observer<Void> {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 
 
@@ -48,7 +58,7 @@ private var mRealm: Realm? = null
                     inRealm.copyToRealm(inList)
                 }
 
-            false
+                it.onComplete()
             }
         }).subscribeOn(mRealmScheduler)
     }
@@ -65,6 +75,8 @@ private var mRealm: Realm? = null
                     it.onError(e)
                 }
             }
+
+            it.onComplete()
         }).subscribeOn(mRealmScheduler)
     }
 }

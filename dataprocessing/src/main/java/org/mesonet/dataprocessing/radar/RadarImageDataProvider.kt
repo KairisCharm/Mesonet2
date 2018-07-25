@@ -13,4 +13,5 @@ interface RadarImageDataProvider {
     fun GetSiteNameSubject(): BehaviorSubject<String>
     fun GetSiteDetailSubject(): BehaviorSubject<RadarDetails>
     fun GetRadarAnimationObservable(): Observable<List<RadarDataController.ImageSubject>>
+    fun Dispose()
 }

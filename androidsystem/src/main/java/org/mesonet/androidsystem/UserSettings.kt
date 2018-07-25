@@ -1,29 +1,30 @@
 package org.mesonet.androidsystem
 
+import android.app.Application
 import android.content.Context
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
+import org.mesonet.core.PerActivity
 import org.mesonet.dataprocessing.userdata.Preferences
 
 import javax.inject.Inject
-import javax.inject.Singleton
 
 
-@Singleton
+@PerActivity
 class UserSettings @Inject constructor(var mContext: Context) : Preferences {
-
     val mUnitPreferenceSubject: BehaviorSubject<Preferences.UnitPreference> = BehaviorSubject.create()
+
     val mStidSubject: BehaviorSubject<String> = BehaviorSubject.create()
     val mRadarSubject: BehaviorSubject<String> = BehaviorSubject.create()
-
     init {
         mUnitPreferenceSubject.onNext(Preferences.UnitPreference.valueOf(GetStringPreference(kUnitPreference, Preferences.UnitPreference.kImperial.name)))
-        mStidSubject.onNext(GetStringPreference(UserSettings.kSelectedStid, "nrmn"))
-        mRadarSubject.onNext(GetStringPreference(UserSettings.kSelectedRadar, "KTLX"))
+        mStidSubject.onNext(GetStringPreference(UserSettings.kSelectedStid, ""))
+        mRadarSubject.onNext(GetStringPreference(UserSettings.kSelectedRadar, ""))
     }
-
 
     internal fun SetPreference(inName: String, inValue: String) {
         Observable.create (ObservableOnSubscribe<Void>{
@@ -34,8 +35,17 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
                 val editor = preferences.edit()
                 editor.putString(inName, inValue)
                 editor.apply()
+
+                it.onComplete()
             }
-        }).subscribe()
+        }).subscribe(object: Observer<Void> {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 
 
@@ -53,11 +63,20 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
         return mUnitPreferenceSubject
     }
 
+
     override fun SetUnitPreference(inPreference: Preferences.UnitPreference) {
         Observable.create(ObservableOnSubscribe<Void> {
             SetPreference(UserSettings.kUnitPreference, inPreference.toString())
             mUnitPreferenceSubject.onNext(inPreference)
-        }).subscribeOn(Schedulers.computation()).subscribe()
+            it.onComplete()
+        }).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Void> {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 
     override fun SelectedStidSubject(): BehaviorSubject<String> {
@@ -68,7 +87,15 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
         Observable.create(ObservableOnSubscribe<Void>{
             SetPreference(UserSettings.kSelectedStid, inStid)
             mStidSubject.onNext(inStid)
-        }).subscribeOn(Schedulers.computation()).subscribe()
+            it.onComplete()
+        }).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Void> {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 
     override fun SelectedRadarSubject(): BehaviorSubject<String> {
@@ -79,7 +106,21 @@ class UserSettings @Inject constructor(var mContext: Context) : Preferences {
         Observable.create(ObservableOnSubscribe<Void> {
             SetPreference(UserSettings.kSelectedRadar, inRadarName)
             mRadarSubject.onNext(inRadarName)
-        }).subscribeOn(Schedulers.computation()).subscribe()
+            it.onComplete()
+        }).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Void> {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
+    }
+
+    override fun Dispose() {
+        mUnitPreferenceSubject.onComplete()
+        mStidSubject.onComplete()
+        mRadarSubject.onComplete()
     }
 
 

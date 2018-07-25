@@ -6,26 +6,18 @@ import org.mesonet.app.Application;
 import org.mesonet.app.widget.dependencyinjection.WidgetProviderLargeSubcomponent;
 import org.mesonet.app.widget.dependencyinjection.WidgetProviderSubcomponent;
 
+import javax.inject.Singleton;
+
+import dagger.Binds;
 import dagger.Module;
 import dagger.Provides;
 
 @Module(subcomponents = {WidgetProviderSubcomponent.class,
                          WidgetProviderLargeSubcomponent.class})
-public class ApplicationContextModule
+public abstract class ApplicationContextModule
 {
-    private Context sContext;
-
-    public ApplicationContextModule(Application inApplication)
-    {
-        sContext = inApplication;
-    }
-
-
-
-    @Provides
-    public Context Context()
-    {
-        return sContext;
-    }
+    @Binds
+    @Singleton
+    abstract android.app.Application Application(Application inApplication);
 }
 

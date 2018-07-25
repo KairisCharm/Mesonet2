@@ -26,7 +26,7 @@ constructor() : android.app.Application(), HasActivityInjector, HasBroadcastRece
 
     override fun onCreate() {
         super.onCreate()
-        DaggerApplicationComponent.builder().applicationContextModule(ApplicationContextModule(this)).build().Inject(this)
+        DaggerApplicationComponent.builder().build().Inject(this)
 
         Mapbox.getInstance(applicationContext, getString(R.string.mapbox_access_token))
     }

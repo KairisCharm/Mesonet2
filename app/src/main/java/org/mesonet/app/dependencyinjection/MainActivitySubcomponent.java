@@ -10,8 +10,7 @@ import dagger.android.AndroidInjector;
 
 
 @PerActivity
-@Subcomponent(modules = {MainActivityModule.class,
-                         BaseActivityModule.class})
+@Subcomponent(modules = {MainActivityModule.class})
 public interface MainActivitySubcomponent extends AndroidInjector<MainActivity> {
 
     @Subcomponent.Builder

@@ -2,8 +2,11 @@ package org.mesonet.cache.site
 
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.cache.Cacher
+import org.mesonet.core.PerActivity
 import org.mesonet.models.site.MesonetSiteList
 
 import javax.inject.Inject
@@ -11,7 +14,7 @@ import javax.inject.Singleton
 
 
 
-@Singleton
+@PerActivity
 class SiteCacheImpl @Inject
 constructor(): SiteCache {
     @Inject
@@ -23,7 +26,16 @@ constructor(): SiteCache {
 
     override fun SaveSites(inMesonetSites: MesonetSiteList): Observable<Void> {
         return Observable.create(ObservableOnSubscribe<Void> {
-            mCacher.SaveToCache(SiteRealmModel::class.java, mConverter.SitesToRealmModels(inMesonetSites)).subscribe()
+            mCacher.SaveToCache(SiteRealmModel::class.java, mConverter.SitesToRealmModels(inMesonetSites)).subscribe(object: Observer<Void> {
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
+                override fun onNext(t: Void) {}
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
+
+            it.onComplete()
         }).subscribeOn(Schedulers.computation())
     }
 
@@ -37,7 +49,16 @@ constructor(): SiteCache {
 
     override fun SaveFavorites(inFavorites: List<String>): Observable<Void> {
         return Observable.create(ObservableOnSubscribe<Void> {
-            mCacher.SaveToCache(FavoriteSiteRealmModel::class.java, mConverter.FavoritesToRealmModels(inFavorites)).subscribe()
+            mCacher.SaveToCache(FavoriteSiteRealmModel::class.java, mConverter.FavoritesToRealmModels(inFavorites)).subscribe(object: Observer<Void> {
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
+                override fun onNext(t: Void) {}
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
+
+            it.onComplete()
         }).subscribeOn(Schedulers.computation())
     }
 

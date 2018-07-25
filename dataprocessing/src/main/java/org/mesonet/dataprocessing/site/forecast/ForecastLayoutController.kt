@@ -32,8 +32,8 @@ class ForecastLayoutController constructor(private var mContext: Context, privat
 
         forecastData.mBackgroundColor = mContext.resources.getColor(colorResource, mContext.theme)
 
-
         it.onNext(forecastData)
+        it.onComplete()
     }).subscribeOn(Schedulers.computation())
 
 

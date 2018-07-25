@@ -50,10 +50,7 @@ class AdvisoriesFragment : BaseFragment()
 
         mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Advisory.AdvisoryList>
         {
-            override fun onComplete() {
-
-            }
-
+            override fun onComplete() {}
             override fun onSubscribe(d: Disposable) {
                 mAdvisoryDisposable = d
             }
@@ -64,17 +61,12 @@ class AdvisoriesFragment : BaseFragment()
 
             override fun onNext(list: Advisory.AdvisoryList) {
                 mAdvisoryListBuilder.BuildList(list).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<ArrayList<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>>> {
-                    override fun onComplete() {
-
-                    }
-
-                    override fun onSubscribe(d: Disposable) {
-                    }
+                    override fun onComplete() {}
+                    override fun onSubscribe(d: Disposable) {}
 
                     override fun onError(e: Throwable) {
                         e.printStackTrace()
-                        if(mBinding != null)
-                        {
+                        if (mBinding != null) {
                             mBinding?.progressBar?.visibility = View.GONE
                             mBinding?.emptyListText?.visibility = View.VISIBLE
                         }

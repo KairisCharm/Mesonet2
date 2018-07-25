@@ -12,4 +12,5 @@ interface MapboxMapController
     fun GetCameraPositionObservable(inLat: Double, inLon: Double, inZoom: Double): Observable<CameraPosition>
     fun SetFrameCount(inFrameCount: Int)
     fun GetActiveImageIndexObservable(): Observable<Int>
+    fun Dispose()
 }

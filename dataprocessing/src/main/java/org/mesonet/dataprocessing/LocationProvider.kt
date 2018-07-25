@@ -6,7 +6,8 @@ import io.reactivex.Observable
 
 interface LocationProvider
 {
-    fun GetLocation(inContext: Context?): Observable<LocationResult>
+    fun GetLocation(): Observable<LocationResult>
+    fun RegisterGpsResult(inResultCode: Int)
 
 
     interface LocationResult

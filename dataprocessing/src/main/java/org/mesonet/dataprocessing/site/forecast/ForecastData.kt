@@ -7,4 +7,5 @@ interface ForecastData: Comparable<ForecastData> {
     fun GetStatus(): String
     fun GetHighOrLowTemp(): String
     fun GetWindDescription(): String
+    fun IsLoading(): Boolean
 }

@@ -1,16 +1,10 @@
 package org.mesonet.dataprocessing.radar
 
-import android.graphics.Bitmap
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
-
 import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.geometry.LatLng
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
-import io.reactivex.Scheduler
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
@@ -27,11 +21,13 @@ class MapboxMapControllerImpl @Inject constructor(): MapboxMapController
     private var mPlayPauseSubject: BehaviorSubject<Boolean> = BehaviorSubject.create()
     private var mSelectedImageIndexSubject: BehaviorSubject<Int> = BehaviorSubject.create()
 
-    private var mPlayPauseDisposable: Disposable? = null
+    private var mPlayPauseStateDisposable: Disposable? = null
+    private var mPlayPauseTimerDisposable: Disposable? = null
 
     private var mFrameCount = 0
 
     private var mTransparencySubject: BehaviorSubject<Float> = BehaviorSubject.create()
+
 
     init {
         mTransparencySubject.onNext(0.7f)
@@ -40,26 +36,20 @@ class MapboxMapControllerImpl @Inject constructor(): MapboxMapController
 
         mPlayPauseSubject.observeOn(Schedulers.computation()).subscribe(object: Observer<Boolean>
         {
-            override fun onComplete() {
-
-            }
-
+            override fun onComplete() {}
             override fun onSubscribe(d: Disposable) {
-
+                mPlayPauseStateDisposable = d
             }
 
             override fun onNext(t: Boolean) {
-                mPlayPauseDisposable?.dispose()
+                mPlayPauseTimerDisposable?.dispose()
 
                 if(t)
                 {
                     Observable.interval(0, 1, TimeUnit.SECONDS).observeOn(Schedulers.computation()).subscribe (object: Observer<Long>{
-                        override fun onComplete() {
-
-                        }
-
+                        override fun onComplete() {}
                         override fun onSubscribe(d: Disposable) {
-                            mPlayPauseDisposable = d
+                            mPlayPauseTimerDisposable = d
                         }
 
                         override fun onNext(t: Long) {
@@ -100,7 +90,6 @@ class MapboxMapControllerImpl @Inject constructor(): MapboxMapController
                 e.printStackTrace()
                 onNext(false)
             }
-
         })
     }
 
@@ -112,6 +101,7 @@ class MapboxMapControllerImpl @Inject constructor(): MapboxMapController
                     .target(LatLng(inLat, inLon))
                     .zoom(inZoom)
                     .build())
+            it.onComplete()
         }).subscribeOn(Schedulers.computation())
     }
 
@@ -146,5 +136,14 @@ class MapboxMapControllerImpl @Inject constructor(): MapboxMapController
     override fun GetTransparencySubject(): BehaviorSubject<Float>
     {
         return mTransparencySubject
+    }
+
+
+    override fun Dispose()
+    {
+        mPlayPauseStateDisposable?.dispose()
+        mPlayPauseSubject.onComplete()
+        mSelectedImageIndexSubject.onComplete()
+        mTransparencySubject.onComplete()
     }
 }

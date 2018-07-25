@@ -14,15 +14,15 @@ import java.util.concurrent.CountDownLatch
 
 @RunWith(RobolectricTestRunner::class)
 @PrepareForTest(Looper::class)
-class DataDownloaderTests
+class DataProviderTests
 {
     @Test(timeout = 10000)
     fun DownloadEmptyUrlTests()
     {
         val latch = CountDownLatch(1)
-        val downloader = DataDownloader(ThreadHandler())
-        val downloadInfo = DataDownloader.DownloadInfo("",-1)
-        val result = downloader.Download(downloadInfo, object: DataDownloader.DownloadCallback{
+        val downloader = DataProvider(ThreadHandler())
+        val downloadInfo = DataProvider.DownloadInfo("",-1)
+        val result = downloader.Download(downloadInfo, object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 throw Exception("Should have failed")
             }
@@ -49,9 +49,9 @@ class DataDownloaderTests
     fun DownloadBadFormatUrlTests()
     {
         val latch = CountDownLatch(1)
-        val downloader = DataDownloader(ThreadHandler())
-        val downloadInfo = DataDownloader.DownloadInfo("bad format bad format",-1)
-        val result = downloader.Download(downloadInfo, object: DataDownloader.DownloadCallback{
+        val downloader = DataProvider(ThreadHandler())
+        val downloadInfo = DataProvider.DownloadInfo("bad format bad format",-1)
+        val result = downloader.Download(downloadInfo, object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 throw Exception("Should have Failed")
             }
@@ -77,9 +77,9 @@ class DataDownloaderTests
     fun DownloadInvalidUrlTests()
     {
         val latch = CountDownLatch(1)
-        val downloader = DataDownloader(ThreadHandler())
-        val downloadInfo = DataDownloader.DownloadInfo("https://www.bekahtesting.com/",-1)
-        val result = downloader.Download(downloadInfo, object: DataDownloader.DownloadCallback{
+        val downloader = DataProvider(ThreadHandler())
+        val downloadInfo = DataProvider.DownloadInfo("https://www.bekahtesting.com/",-1)
+        val result = downloader.Download(downloadInfo, object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 throw Exception("Should have failed")
             }
@@ -105,9 +105,9 @@ class DataDownloaderTests
     fun DownloadGoodUrlTests()
     {
         val latch = CountDownLatch(1)
-        val downloader = DataDownloader(ThreadHandler())
-        val downloadInfo = DataDownloader.DownloadInfo("https://www.mesonet.org/index.php/weather/local",-1)
-        val result = downloader.Download(downloadInfo, object: DataDownloader.DownloadCallback{
+        val downloader = DataProvider(ThreadHandler())
+        val downloadInfo = DataProvider.DownloadInfo("https://www.mesonet.org/index.php/weather/local",-1)
+        val result = downloader.Download(downloadInfo, object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 latch.countDown()
             }
@@ -133,9 +133,9 @@ class DataDownloaderTests
     fun SingleUpdateEmptyUrlTests()
     {
         val latch = CountDownLatch(1)
-        val downloader = DataDownloader(ThreadHandler())
+        val downloader = DataProvider(ThreadHandler())
 
-        downloader.SingleUpdate("", object: DataDownloader.DownloadCallback{
+        downloader.SingleUpdate("", object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 throw Exception("Should have failed")
             }
@@ -158,9 +158,9 @@ class DataDownloaderTests
     fun SingleUpdateBadUrlTests()
     {
         val latch = CountDownLatch(1)
-        val downloader = DataDownloader(ThreadHandler())
+        val downloader = DataProvider(ThreadHandler())
 
-        downloader.SingleUpdate("bad format bad format bad format", object: DataDownloader.DownloadCallback{
+        downloader.SingleUpdate("bad format bad format bad format", object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 throw Exception("Should have failed")
             }
@@ -184,9 +184,9 @@ class DataDownloaderTests
     fun SingleUpdateInvalidUrlTests()
     {
         val latch = CountDownLatch(1)
-        val downloader = DataDownloader(ThreadHandler())
+        val downloader = DataProvider(ThreadHandler())
 
-        downloader.SingleUpdate("https://www.bekahtesting.com/", object: DataDownloader.DownloadCallback{
+        downloader.SingleUpdate("https://www.bekahtesting.com/", object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 throw Exception("Should have failed")
             }
@@ -209,9 +209,9 @@ class DataDownloaderTests
     fun SingleUpdateGoodUrlTests()
     {
         val latch = CountDownLatch(1)
-        val downloader = DataDownloader(ThreadHandler())
+        val downloader = DataProvider(ThreadHandler())
 
-        downloader.SingleUpdate("https://www.mesonet.org/index.php/weather/local/", object: DataDownloader.DownloadCallback{
+        downloader.SingleUpdate("https://www.mesonet.org/index.php/weather/local/", object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 latch.countDown()
             }
@@ -235,9 +235,9 @@ class DataDownloaderTests
     fun TimedUpdateEmptyUrlTests()
     {
         val latch = CountDownLatch(2)
-        val downloader = DataDownloader(ThreadHandler())
+        val downloader = DataProvider(ThreadHandler())
 
-        downloader.StartDownloads("", object: DataDownloader.DownloadCallback{
+        downloader.StartDownloads("", object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 throw Exception("Should have failed")
             }
@@ -264,9 +264,9 @@ class DataDownloaderTests
     fun TimedUpdateBadUrlTests()
     {
         val latch = CountDownLatch(2)
-        val downloader = DataDownloader(ThreadHandler())
+        val downloader = DataProvider(ThreadHandler())
 
-        downloader.StartDownloads("bad format bad format bad format", object: DataDownloader.DownloadCallback{
+        downloader.StartDownloads("bad format bad format bad format", object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 throw Exception("Should have failed")
             }
@@ -294,9 +294,9 @@ class DataDownloaderTests
     fun TimedUpdateInvalidUrlTests()
     {
         val latch = CountDownLatch(2)
-        val downloader = DataDownloader(ThreadHandler())
+        val downloader = DataProvider(ThreadHandler())
 
-        downloader.StartDownloads("https://www.bekahtesting.com/", object: DataDownloader.DownloadCallback{
+        downloader.StartDownloads("https://www.bekahtesting.com/", object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 throw Exception("Should have failed")
             }
@@ -323,9 +323,9 @@ class DataDownloaderTests
     fun TimedUpdateGoodUrlTests()
     {
         val latch = CountDownLatch(2)
-        val downloader = DataDownloader(ThreadHandler())
+        val downloader = DataProvider(ThreadHandler())
 
-        downloader.StartDownloads("https://www.mesonet.org/index.php/weather/local/", object: DataDownloader.DownloadCallback{
+        downloader.StartDownloads("https://www.mesonet.org/index.php/weather/local/", object: DataProvider.DownloadCallback{
             override fun DownloadComplete(inResponseCode: Int, inResult: String?) {
                 latch.countDown()
             }

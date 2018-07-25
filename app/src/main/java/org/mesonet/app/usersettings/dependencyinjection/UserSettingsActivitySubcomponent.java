@@ -1,5 +1,6 @@
 package org.mesonet.app.usersettings.dependencyinjection;
 
+import org.mesonet.app.dependencyinjection.BaseActivityModule;
 import org.mesonet.app.usersettings.UserSettingsActivity;
 import org.mesonet.core.PerActivity;
 
@@ -9,7 +10,7 @@ import dagger.android.AndroidInjector;
 
 
 @PerActivity
-@Subcomponent(modules = UserSettingsActivityModule.class)
+@Subcomponent(modules = { UserSettingsActivityModule.class})
 public interface UserSettingsActivitySubcomponent extends AndroidInjector<UserSettingsActivity> {
 
     @Subcomponent.Builder

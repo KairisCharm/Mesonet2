@@ -52,6 +52,10 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
     internal lateinit var mMapController: MapboxMapController
 
     private var mRadarImageDisposable: Disposable? = null
+    private var mTransparencyDisposable: Disposable? = null
+    private var mSelectedRadarDisposable: Disposable? = null
+    private var mSelectedRadarDetailDisposable: Disposable? = null
+    private var mActiveImageDisposable: Disposable? = null
 
 
     private var mBinding: RadarFragmentBinding? = null
@@ -102,11 +106,10 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
         mBinding?.transparencySeekBar?.max = 255
         mBinding?.transparencySeekBar?.progress = Math.round(mMapController.GetTransparencySubject().value * 255.0f)
         mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<Float> {
-            override fun onComplete() {
-
-            }
+            override fun onComplete() {}
 
             override fun onSubscribe(d: Disposable) {
+                mTransparencyDisposable = d
             }
 
             override fun onError(e: Throwable) {
@@ -150,6 +153,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             }
 
             override fun onSubscribe(d: Disposable) {
+                mSelectedRadarDisposable = d
             }
 
             override fun onError(e: Throwable) {
@@ -159,13 +163,11 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             }
 
             override fun onNext(radarId: String) {
-                mRadarImageDataProvider.GetSiteDetailSubject().observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<RadarDetails>{
-                    override fun onComplete() {
-
-                    }
+                mRadarImageDataProvider.GetSiteDetailSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<RadarDetails> {
+                    override fun onComplete() {}
 
                     override fun onSubscribe(d: Disposable) {
-
+                        mSelectedRadarDetailDisposable = d
                     }
 
                     override fun onError(e: Throwable) {
@@ -182,9 +184,9 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                             val sourceId = mRadarImageSource?.id ?: ""
                             val layerId = mRadarLayer?.id ?: ""
                             if (sourceId.isNotEmpty() && map.getSource(sourceId) == null)
-                                map.addSource(mRadarImageSource?: ImageSource(0))
+                                map.addSource(mRadarImageSource ?: ImageSource(0))
                             if (radarId.isNotEmpty() && map.getLayer(layerId) == null)
-                                map.addLayer(mRadarLayer?: RasterLayer(0))
+                                map.addLayer(mRadarLayer ?: RasterLayer(0))
                             mRadarImageSource?.setCoordinates(LatLngQuad(LatLng(radarDetails.GetNorthEastCorner()?.GetLatitude()?.toDouble()
                                     ?: 0.0, radarDetails.GetSouthWestCorner()?.GetLongitude()?.toDouble()
                                     ?: 0.0),
@@ -199,17 +201,12 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                             ?: 0.0)))
                             mMapController.GetCameraPositionObservable(radarDetails.GetLatitude()?.toDouble()
                                     ?: 0.0, radarDetails.GetLongitude()?.toDouble()
-                                    ?: 0.0, 5.0).observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<CameraPosition>{
-                                override fun onComplete() {
+                                    ?: 0.0, 5.0).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<CameraPosition>
+                            {
+                                override fun onComplete() {}
+                                override fun onSubscribe(d: Disposable) {}
 
-                                }
-
-                                override fun onSubscribe(d: Disposable) {
-
-                                }
-
-                                override fun onNext(t: CameraPosition)
-                                {
+                                override fun onNext(t: CameraPosition) {
                                     map.cameraPosition = t
                                 }
 
@@ -219,58 +216,42 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
                             })
 
-                            mRadarImageDataProvider.GetRadarAnimationObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<List<RadarDataController.ImageSubject>>{
-                                override fun onComplete() {
+                            mRadarImageDataProvider.GetRadarAnimationObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<RadarDataController.ImageSubject>> {
+                                override fun onComplete() {}
+                                override fun onSubscribe(d: Disposable) {}
 
-                                }
-
-                                override fun onSubscribe(d: Disposable) {
-
-                                }
-
-                                override fun onNext(imageList: List<RadarDataController.ImageSubject>)
-                                {
+                                override fun onNext(imageList: List<RadarDataController.ImageSubject>) {
                                     mMapController.SetFrameCount(imageList.size)
 
                                     mBinding?.playPauseButton?.visibility = View.VISIBLE
+                                    mActiveImageDisposable?.dispose()
 
-                                    mMapController.GetActiveImageIndexObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Int>{
-                                        override fun onComplete() {
-
-                                        }
-
+                                    mMapController.GetActiveImageIndexObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Int> {
+                                        override fun onComplete() {}
                                         override fun onSubscribe(d: Disposable) {
-
+                                            mActiveImageDisposable = d
                                         }
 
-                                        override fun onNext(index: Int)
-                                        {
+                                        override fun onNext(index: Int) {
                                             mRadarImageDisposable?.dispose()
-                                            imageList[index].GetSubject().observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<Bitmap>{
-                                                override fun onComplete() {
-
-                                                }
-
+                                            mTransparencyDisposable?.dispose()
+                                            imageList[index].GetSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Bitmap> {
+                                                override fun onComplete() {}
                                                 override fun onSubscribe(d: Disposable) {
                                                     mRadarImageDisposable = d
                                                 }
 
                                                 override fun onNext(t: Bitmap) {
-                                                    if (!t.isRecycled) {
+                                                    if (!t.isRecycled && mRadarImageDisposable?.isDisposed != true) {
                                                         mRadarImageSource?.setImage(t)
 
-                                                        mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<Float>
-                                                        {
-                                                            override fun onComplete() {
-
-                                                            }
-
+                                                        mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Float> {
+                                                            override fun onComplete() {}
                                                             override fun onSubscribe(d: Disposable) {
-
+                                                                mTransparencyDisposable = d
                                                             }
 
-                                                            override fun onNext(t: Float)
-                                                            {
+                                                            override fun onNext(t: Float) {
                                                                 mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(t))
                                                             }
 
@@ -289,7 +270,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                                     SetSnackbarText(radarId, radarDetails.GetName(), "Error")
                                                     e.printStackTrace()
                                                 }
-
                                             })
                                         }
 
@@ -297,7 +277,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                             SetSnackbarText(radarId, radarDetails.GetName(), "Error")
                                             e.printStackTrace()
                                         }
-
                                     })
                                 }
 
@@ -320,13 +299,37 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
         super.onPause()
     }
 
+    override fun onDestroyView() {
+        mBinding?.playPauseButton?.Dispose()
+        super.onDestroyView()
+    }
+
+
+    override fun onDestroy() {
+        mRadarImageDataProvider.Dispose()
+        mMapController.Dispose()
+        mTransparencyDisposable?.dispose()
+        mSelectedRadarDisposable?.dispose()
+        mSelectedRadarDetailDisposable?.dispose()
+        mActiveImageDisposable?.dispose()
+        super.onDestroy()
+    }
+
 
     override fun Close() {
         Observable.create(ObservableOnSubscribe<Void>{
             RevealView(mBinding?.radarLayout)
             mSnackbar?.show()
             mBinding?.playPauseButton?.show()
-        }).subscribeOn(AndroidSchedulers.mainThread()).subscribe()
+            it.onComplete()
+        }).subscribeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void> {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onNext(t: Void) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 
 

@@ -15,4 +15,5 @@ interface Preferences {
     fun SetSelectedStid(inStid: String)
     fun SelectedRadarSubject(): BehaviorSubject<String>
     fun SetSelectedRadar(inRadarName: String)
+    fun Dispose()
 }

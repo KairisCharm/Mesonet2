@@ -7,4 +7,5 @@ interface FiveDayForecastDataController
     fun GetCount(): Int
     fun GetForecast(inIndex: Int): SemiDayForecastDataController
     fun GetForecastDataSubject(): BehaviorSubject<List<SemiDayForecastDataController>>
+    fun Dispose()
 }

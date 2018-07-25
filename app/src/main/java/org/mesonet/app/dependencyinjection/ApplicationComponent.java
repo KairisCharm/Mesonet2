@@ -15,7 +15,5 @@ import dagger.Component;
                       ApplicationContextModule.class})
 public interface ApplicationComponent
 {
-    Context Context();
-
     void Inject(Application inApplication);
 }

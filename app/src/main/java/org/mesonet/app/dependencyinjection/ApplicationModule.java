@@ -22,7 +22,6 @@ import org.mesonet.cache.site.SiteCache;
 import org.mesonet.cache.site.SiteCacheImpl;
 import org.mesonet.cache.site.SiteListConverter;
 import org.mesonet.cache.site.SiteListConverterImpl;
-import org.mesonet.core.PerActivity;
 import org.mesonet.dataprocessing.LocationProvider;
 import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider;
 import org.mesonet.dataprocessing.advisories.AdvisoryDataProviderImpl;
@@ -51,8 +50,8 @@ import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIControllerImpl;
 import org.mesonet.dataprocessing.userdata.Preferences;
 import org.mesonet.models.radar.RadarDetailCreator;
 import org.mesonet.models.radar.RadarDetailModelCreator;
-import org.mesonet.network.DataDownloader;
-import org.mesonet.network.DataDownloaderImpl;
+import org.mesonet.network.DataProvider;
+import org.mesonet.network.DataProviderImpl;
 
 import dagger.Binds;
 import dagger.Module;
@@ -109,34 +108,13 @@ abstract class ApplicationModule
     abstract Preferences Preferences(UserSettings inSettings);
 
     @Binds
-    abstract LocationProvider LocationProvider(DeviceLocation inDeviceLocation);
-
-    @Binds
     abstract AdvisoryDataProvider AdvisoryDataProvider(AdvisoryDataProviderImpl inProvider);
 
     @Binds
-    abstract DataDownloader DataDownloader(DataDownloaderImpl inDownloader);
-
-    @Binds
-    abstract FiveDayForecastDataController FiveDataForecastDataController(FiveDayForecastDataControllerImpl inProvider);
-
-    @Binds
-    abstract MesonetSiteDataController MesonetSiteDataController(MesonetSiteDataControllerImpl inProvider);
-
-    @Binds
-    abstract MesonetDataController MesonetDataController(MesonetDataControllerImpl inProvider);
-
-    @Binds
-    abstract MesonetUIController MesonetUIController(MesonetUIControllerImpl inProvider);
+    abstract DataProvider DataDownloader(DataProviderImpl inDownloader);
 
     @Binds
     abstract Permissions Permissions(PermissionsImpl inPermissions);
-
-    @Binds
-    abstract SiteCache SiteCache(SiteCacheImpl inCache);
-
-    @Binds
-    abstract Cacher Cacher(CacherImpl inCache);
 
     @Binds
     abstract DerivedValues DerivedValues(DerivedValuesImpl inDerivedValues);

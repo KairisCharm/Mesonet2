@@ -4,6 +4,7 @@ import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
+import org.mesonet.core.PerActivity
 import org.mesonet.dataprocessing.userdata.Preferences
 
 import java.text.SimpleDateFormat
@@ -15,20 +16,21 @@ import javax.inject.Singleton
 
 
 
-@Singleton
+@PerActivity
 class MesonetUIControllerImpl @Inject
 constructor(private var mDataController: MesonetDataController, inPreferences: Preferences): MesonetUIController
 {
     private var mUISubject: BehaviorSubject<MesonetUIController.MesonetDisplayFields> = BehaviorSubject.create()
+
+    private var mUnitPreferenceDisposable: Disposable? = null
+
     init
     {
         inPreferences.UnitPreferencesSubject().observeOn(Schedulers.computation()).subscribe(object: Observer<Preferences.UnitPreference>{
-            override fun onComplete() {
-
-            }
+            override fun onComplete() {}
 
             override fun onSubscribe(d: Disposable) {
-
+                mUnitPreferenceDisposable = d
             }
 
             override fun onNext(unitPreference: Preferences.UnitPreference) {
@@ -162,15 +164,9 @@ constructor(private var mDataController: MesonetDataController, inPreferences: P
                     }
 
                     displayFields as MesonetUIController.MesonetDisplayFields
-                }.subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>{
-                    override fun onComplete() {
-
-                    }
-
-                    override fun onSubscribe(d: Disposable) {
-
-                    }
-
+                }.subscribe(object : Observer<MesonetUIController.MesonetDisplayFields> {
+                    override fun onComplete() {}
+                    override fun onSubscribe(d: Disposable) {}
                     override fun onError(e: Throwable) {
                         e.printStackTrace()
                     }
@@ -199,7 +195,9 @@ constructor(private var mDataController: MesonetDataController, inPreferences: P
 
     fun Dispose()
     {
+        mUnitPreferenceDisposable?.dispose()
         mDataController.Dispose()
+        mUISubject.onComplete()
     }
 
 

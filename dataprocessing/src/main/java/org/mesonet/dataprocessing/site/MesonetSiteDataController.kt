@@ -14,4 +14,5 @@ interface MesonetSiteDataController: FilterListDataProvider, SelectSiteListener
     fun CurrentIsFavorite(): Boolean
     fun CurrentStationElevation(): Number?
     fun GetMeteogramUrl(): String
+    fun Dispose()
 }

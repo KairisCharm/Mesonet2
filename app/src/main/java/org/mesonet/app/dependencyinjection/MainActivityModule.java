@@ -19,8 +19,20 @@ import org.mesonet.app.radar.dependencyinjection.RadarSiteDataProviderSubcompone
 import org.mesonet.app.site.dependencyinjection.SiteOverviewFragmentSubcomponent;
 import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetSiteDataControllerSubcomponent;
 import org.mesonet.app.site.SiteOverviewFragment;
+import org.mesonet.cache.Cacher;
+import org.mesonet.cache.CacherImpl;
+import org.mesonet.cache.site.SiteCache;
+import org.mesonet.cache.site.SiteCacheImpl;
 import org.mesonet.dataprocessing.radar.RadarDataController;
 import org.mesonet.dataprocessing.radar.RadarImageDataProvider;
+import org.mesonet.dataprocessing.site.MesonetSiteDataController;
+import org.mesonet.dataprocessing.site.MesonetSiteDataControllerImpl;
+import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController;
+import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataControllerImpl;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetDataController;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetDataControllerImpl;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController;
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIControllerImpl;
 import org.mesonet.dataprocessing.userdata.Preferences;
 import org.mesonet.core.PerActivity;
 import org.mesonet.dataprocessing.LocationProvider;
@@ -76,8 +88,39 @@ public abstract class MainActivityModule
     @PerActivity
     abstract Activity Activity(MainActivity inMainActivity);
 
+    @Binds
+    @PerActivity
+    abstract Context Context(MainActivity inContext);
 
     @Binds
     @PerActivity
     abstract BaseActivity BaseActivity(MainActivity inMainActivity);
+
+    @Binds
+    @PerActivity
+    abstract MesonetSiteDataController MesonetSiteDataController(MesonetSiteDataControllerImpl inProvider);
+
+    @Binds
+    @PerActivity
+    abstract MesonetDataController MesonetDataController(MesonetDataControllerImpl inProvider);
+
+    @Binds
+    @PerActivity
+    abstract MesonetUIController MesonetUIController(MesonetUIControllerImpl inProvider);
+
+    @Binds
+    @PerActivity
+    abstract FiveDayForecastDataController FiveDataForecastDataController(FiveDayForecastDataControllerImpl inProvider);
+
+    @Binds
+    @PerActivity
+    abstract SiteCache SiteCache(SiteCacheImpl inCache);
+
+    @Binds
+    @PerActivity
+    abstract Cacher Cacher(CacherImpl inCache);
+
+    @Binds
+    @PerActivity
+    abstract LocationProvider LocationProvider(DeviceLocation inDeviceLocation);
 }

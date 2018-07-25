@@ -34,39 +34,39 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : 
 
     private var mSiteSubject: BehaviorSubject<Map<String, RadarDetails>> = BehaviorSubject.create()
 
+    private var mSiteDisposable: Disposable? = null
+
     init {
         mSelectedSiteNameSubject.observeOn(Schedulers.computation()).subscribe(object: Observer<String>{
-            override fun onComplete() {
-
-            }
-
+            override fun onComplete() {}
             override fun onSubscribe(d: Disposable) {
-
+                mSiteDisposable = d
             }
 
             override fun onNext(t: String) {
-                if(mSiteSubject.hasValue() && mSiteSubject.value.containsKey(t))
-                    mSelectedSiteDetailSubject.onNext(mSiteSubject.value[t]?: object: RadarDetails{
-                        override fun GetLatitude(): Float? {
-                            return null
-                        }
+                if (mSiteSubject.hasValue() && mSiteSubject.value.containsKey(t))
+                    mSelectedSiteDetailSubject.onNext(mSiteSubject.value[t]
+                            ?: object : RadarDetails {
+                                override fun GetLatitude(): Float? {
+                                    return null
+                                }
 
-                        override fun GetLongitude(): Float? {
-                            return null
-                        }
+                                override fun GetLongitude(): Float? {
+                                    return null
+                                }
 
-                        override fun GetSouthWestCorner(): RadarDetails.Corner? {
-                            return null
-                        }
+                                override fun GetSouthWestCorner(): RadarDetails.Corner? {
+                                    return null
+                                }
 
-                        override fun GetNorthEastCorner(): RadarDetails.Corner? {
-                            return null
-                        }
+                                override fun GetNorthEastCorner(): RadarDetails.Corner? {
+                                    return null
+                                }
 
-                        override fun GetName(): String? {
-                            return null
-                        }
-                    })
+                                override fun GetName(): String? {
+                                    return null
+                                }
+                            })
             }
 
             override fun onError(e: Throwable) {
@@ -78,14 +78,12 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : 
 
         Observable.create(ObservableOnSubscribe<String> {
             it.onNext(inContext.resources.openRawResource(inContext.resources.getIdentifier("radar_list", "raw", inContext.packageName)).bufferedReader().use { it.readText() })
+            it.onComplete()
         }).subscribeOn(Schedulers.io()).observeOn(Schedulers.computation()).map {
             mRadarDetailCreator.ParseRadarJson(it)
         }.subscribe(object: Observer<Map<String, RadarDetails>> {
-            override fun onComplete() {
-            }
-
-            override fun onSubscribe(d: Disposable) {
-            }
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
 
             override fun onError(e: Throwable) {
                 e.printStackTrace()
@@ -99,7 +97,7 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : 
                     initRadar = t.keys.first()
 
                 mSelectedSiteNameSubject.onNext(initRadar)
-                mSelectedSiteDetailSubject.onNext(t[initRadar]?: t.values.first())
+                mSelectedSiteDetailSubject.onNext(t[initRadar] ?: t.values.first())
             }
         })
     }
@@ -155,11 +153,21 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : 
             }
 
             it.onNext(Pair(resultMap, mSelectedSiteNameSubject.value))
+            it.onComplete()
         }).subscribeOn(Schedulers.computation())
     }
 
 
     override fun SetResult(inResult: String) {
         mSelectedSiteNameSubject.onNext(inResult)
+    }
+
+
+    override fun Dispose()
+    {
+        mSiteDisposable?.dispose()
+        mSelectedSiteNameSubject.onComplete()
+        mSelectedSiteDetailSubject.onComplete()
+        mSiteSubject.onComplete()
     }
 }

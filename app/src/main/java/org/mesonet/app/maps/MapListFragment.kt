@@ -46,13 +46,8 @@ class MapListFragment : BaseFragment()
 
             mDataProvider.GetMapsListObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>>
             {
-                override fun onComplete() {
-
-                }
-
-                override fun onSubscribe(d: Disposable) {
-
-                }
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
 
                 override fun onNext(t: MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>)
                 {
@@ -68,7 +63,6 @@ class MapListFragment : BaseFragment()
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
                 }
-
             })
         }
         else

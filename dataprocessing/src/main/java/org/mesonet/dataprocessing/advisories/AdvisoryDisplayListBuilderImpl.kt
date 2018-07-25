@@ -6,14 +6,14 @@ import io.reactivex.schedulers.Schedulers
 import org.mesonet.core.PerActivity
 import org.mesonet.models.advisories.Advisory
 import org.mesonet.models.advisories.AdvisoryModel
-import org.mesonet.network.DataDownloader
+import org.mesonet.network.DataProvider
 import javax.inject.Inject
 
 
 @PerActivity
 class AdvisoryDisplayListBuilderImpl @Inject constructor(): AdvisoryDisplayListBuilder {
     @Inject
-    lateinit var mDataDownloader: DataDownloader
+    lateinit var mDataProvider: DataProvider
 
     override fun BuildList(inOriginalList: MutableList<Advisory>?): Observable<ArrayList<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>>> {
         return Observable.create (ObservableOnSubscribe<ArrayList<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>>>{
@@ -48,7 +48,7 @@ class AdvisoryDisplayListBuilderImpl @Inject constructor(): AdvisoryDisplayListB
                         var url: String? = null
 
                         if (advisories[i].GetFilePath() != null)
-                            url = mDataDownloader.GetAdvisoryUrl(advisories[i].GetFilePath()?: "")
+                            url = mDataProvider.GetAdvisoryUrl(advisories[i].GetFilePath()?: "")
                         if (advisories[i].GetCounties() != null)
                             counties = MakeCountyListString(advisories[i].GetCounties()?: ArrayList())
                         if (counties.isEmpty())

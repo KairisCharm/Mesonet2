@@ -6,11 +6,12 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.core.DefaultUnits
+import org.mesonet.core.PerActivity
 import org.mesonet.dataprocessing.formulas.UnitConverter
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.site.mesonetdata.MesonetData
-import org.mesonet.network.DataDownloader
+import org.mesonet.network.DataProvider
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -18,17 +19,19 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 
-@Singleton
+@PerActivity
 class MesonetDataControllerImpl @Inject constructor(private var mSiteDataController: MesonetSiteDataController,
                                                 private var mDerivedValues: DerivedValues,
                                                 private var mUnitConverter: UnitConverter,
-                                                private var mDataDownloader: DataDownloader) : MesonetDataController, Observer<String>
+                                                private var mDataProvider: DataProvider) : MesonetDataController, Observer<String>
 
 
 {
     private var mMesonetData: MesonetData? = null
 
     private var mDisposable: Disposable? = null
+
+    private var mCurrentSiteDisposable: Disposable? = null
 
     private var mDataSubject: BehaviorSubject<MesonetData> = BehaviorSubject.create()
 
@@ -181,7 +184,7 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
 
 
     override fun ProcessHumidity(): Int? {
-        return if (mMesonetData == null || mMesonetData?.GetRelH() == null) null else mMesonetData?.GetRelH()?.toInt()
+        return if (mMesonetData == null || mMesonetData?.GetRelH() == null || mMesonetData?.GetRelH()?.toDouble()?: -900.0 < -900.0) null else mMesonetData?.GetRelH()?.toInt()
 
     }
 
@@ -229,92 +232,83 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
 
             mDisposable?.dispose()
 
-            Observable.interval(0, 1, TimeUnit.MINUTES).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Long>
-            {
-                override fun onComplete() {
-
-                }
+            Observable.interval(0, 1, TimeUnit.MINUTES).subscribeOn(Schedulers.computation()).subscribe(object : Observer<Long> {
+                override fun onComplete() {}
 
                 override fun onSubscribe(d: Disposable) {
                     mDisposable = d
                 }
 
                 override fun onNext(t: Long) {
-                    mDataDownloader.GetMesonetData(mSiteDataController.CurrentSelection()).observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetData>
-                    {
-                        override fun onComplete() {
-
-                        }
-
-                        override fun onSubscribe(d: Disposable) {
-                            mDisposable = d
-                        }
-
+                    mDataProvider.GetMesonetData(mSiteDataController.CurrentSelection()).observeOn(Schedulers.computation()).subscribe(object : Observer<MesonetData> {
+                        override fun onComplete() {}
+                        override fun onSubscribe(d: Disposable) {}
                         override fun onNext(t: MesonetData) {
                             SetData(t)
-                            if (mMesonetData != null && (!mDataSubject.hasValue() ||  mMesonetData?.compareTo(mDataSubject.value) != 0))
-                                mDataSubject.onNext(mMesonetData?: object: MesonetData{
-                                    override fun GetTime(): Long? {
-                                        return null
-                                    }
+                            if (mMesonetData != null && (!mDataSubject.hasValue() || mMesonetData?.compareTo(mDataSubject.value) != 0))
+                                mDataSubject.onNext(mMesonetData
+                                        ?: object : MesonetData {
+                                            override fun GetTime(): Long? {
+                                                return null
+                                            }
 
-                                    override fun GetRelH(): Number? {
-                                        return null
-                                    }
+                                            override fun GetRelH(): Number? {
+                                                return null
+                                            }
 
-                                    override fun GetTAir(): Number? {
-                                        return null
-                                    }
+                                            override fun GetTAir(): Number? {
+                                                return null
+                                            }
 
-                                    override fun GetWSpd(): Number? {
-                                        return null
-                                    }
+                                            override fun GetWSpd(): Number? {
+                                                return null
+                                            }
 
-                                    override fun GetWDir(): Number? {
-                                        return null
-                                    }
+                                            override fun GetWDir(): Number? {
+                                                return null
+                                            }
 
-                                    override fun GetWMax(): Number? {
-                                        return null
-                                    }
+                                            override fun GetWMax(): Number? {
+                                                return null
+                                            }
 
-                                    override fun GetPres(): Number? {
-                                        return null
-                                    }
+                                            override fun GetPres(): Number? {
+                                                return null
+                                            }
 
-                                    override fun GetRain24H(): Number? {
-                                        return null
-                                    }
+                                            override fun GetRain24H(): Number? {
+                                                return null
+                                            }
 
-                                    override fun GetStID(): String? {
-                                        return null
-                                    }
+                                            override fun GetStID(): String? {
+                                                return null
+                                            }
 
-                                    override fun GetDefaultTempUnit(): DefaultUnits.TempUnits? {
-                                        return null
-                                    }
+                                            override fun GetDefaultTempUnit(): DefaultUnits.TempUnits? {
+                                                return null
+                                            }
 
-                                    override fun GetDefaultLengthUnit(): DefaultUnits.LengthUnits? {
-                                        return null
-                                    }
+                                            override fun GetDefaultLengthUnit(): DefaultUnits.LengthUnits? {
+                                                return null
+                                            }
 
-                                    override fun GetDefaultSpeedUnit(): DefaultUnits.SpeedUnits? {
-                                        return null
-                                    }
+                                            override fun GetDefaultSpeedUnit(): DefaultUnits.SpeedUnits? {
+                                                return null
+                                            }
 
-                                    override fun GetDefaultPressureUnit(): DefaultUnits.PressureUnits? {
-                                        return null
-                                    }
+                                            override fun GetDefaultPressureUnit(): DefaultUnits.PressureUnits? {
+                                                return null
+                                            }
 
-                                    override fun compareTo(other: MesonetData): Int {
-                                        return 1
-                                    }
-                                })
+                                            override fun compareTo(other: MesonetData): Int {
+                                                return 1
+                                            }
+                                        })
                         }
 
                         override fun onError(e: Throwable) {
                             e.printStackTrace()
-                            onNext(mMesonetData?: object: MesonetData{
+                            onNext(mMesonetData ?: object : MesonetData {
                                 override fun GetTime(): Long? {
                                     return null
                                 }
@@ -379,14 +373,16 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
                 }
-
             })
         }
     }
 
 
     override fun onComplete() {}
-    override fun onSubscribe(d: Disposable) {}
+    override fun onSubscribe(d: Disposable)
+    {
+        mCurrentSiteDisposable = d
+    }
     override fun onError(e: Throwable)
     {
         e.printStackTrace()
@@ -395,6 +391,8 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
 
     override fun Dispose()
     {
+        mCurrentSiteDisposable?.dispose()
         mDisposable?.dispose()
+        mDataSubject.onComplete()
     }
 }

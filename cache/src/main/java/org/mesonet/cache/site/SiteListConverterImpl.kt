@@ -1,6 +1,7 @@
 package org.mesonet.cache.site
 
 
+import org.mesonet.core.PerActivity
 import org.mesonet.models.site.MesonetSiteList
 import org.mesonet.models.site.MesonetSiteListModel
 

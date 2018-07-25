@@ -9,4 +9,5 @@ interface RadarSiteDataProvider: FilterListDataProvider, SelectSiteListener
 {
     fun GetSelectedSiteNameSubject(): BehaviorSubject<String>
     fun GetSelectedSiteDetailSubject(): BehaviorSubject<RadarDetails>
+    fun Dispose()
 }

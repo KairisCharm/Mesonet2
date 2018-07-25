@@ -16,6 +16,8 @@ import org.mesonet.dataprocessing.site.forecast.SemiDayForecastDataController
 class ForecastListView(inActivity: Activity) : LinearLayout(inActivity) {
 	private var mBinding: ForecastListViewBinding? = null
 
+	private var mDisposable: Disposable? = null
+
 	init {
 		mBinding = DataBindingUtil.inflate(LayoutInflater.from(inActivity), R.layout.forecast_list_view, this, true)
 
@@ -34,12 +36,9 @@ class ForecastListView(inActivity: Activity) : LinearLayout(inActivity) {
 			if (inForecastIndex < mBinding?.layout?.childCount?: 0) {
 				inController.GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<ForecastData>
 				{
-					override fun onComplete() {
-
-					}
-
+					override fun onComplete() {}
 					override fun onSubscribe(d: Disposable) {
-
+						mDisposable = d
 					}
 
 					override fun onNext(t: ForecastData) {
@@ -49,6 +48,10 @@ class ForecastListView(inActivity: Activity) : LinearLayout(inActivity) {
 					override fun onError(e: Throwable) {
 						e.printStackTrace()
 						onNext(object: ForecastData{
+							override fun IsLoading(): Boolean {
+								return false
+							}
+
 							override fun GetTime(): String {
 								return ""
 							}
@@ -72,11 +75,21 @@ class ForecastListView(inActivity: Activity) : LinearLayout(inActivity) {
 							override fun compareTo(other: ForecastData): Int {
 								return 1
 							}
-
 						})
 					}
 				})
 			}
+		}
+	}
+
+
+	fun Dispose()
+	{
+		mDisposable?.dispose()
+		for(i in 0..(mBinding?.layout?.childCount?: 0 - 1))
+		{
+			if(mBinding?.layout?.getChildAt(i) is ForecastLayout)
+				(mBinding?.layout?.getChildAt(i) as ForecastLayout).Dispose()
 		}
 	}
 }

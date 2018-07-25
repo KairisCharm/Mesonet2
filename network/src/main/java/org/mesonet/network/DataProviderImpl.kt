@@ -1,9 +1,6 @@
 package org.mesonet.network
 
 import android.graphics.Bitmap
-import com.google.gson.Gson
-import com.tickaroo.tikxml.TikXml
-import com.tickaroo.tikxml.retrofit.TikXmlConverterFactory
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.models.advisories.Advisory
@@ -26,7 +23,6 @@ import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Path
-import retrofit2.http.Url
 import java.util.*
 
 import javax.inject.Inject
@@ -37,7 +33,7 @@ import com.google.gson.GsonBuilder
 
 
 @Singleton
-class DataDownloaderImpl @Inject constructor(): DataDownloader {
+class DataProviderImpl @Inject constructor(): DataProvider {
     private val mMesonetService = Retrofit.Builder()
             .baseUrl("http://www.mesonet.org")
             .addConverterFactory(MesonetModelConverterFactory())
@@ -46,7 +42,7 @@ class DataDownloaderImpl @Inject constructor(): DataDownloader {
             .addConverterFactory(RadarHistoryConverterFactory())
             .addConverterFactory(BitmapConverterFactory())
             .addConverterFactory(GsonConverterFactory.create(GsonBuilder().registerTypeAdapter(MesonetSiteList.MesonetSite::class.java, MesonetSiteJsonDeserializer()).create()))
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.createWithScheduler(Schedulers.io()))
             .build()
             .create(MesonetService::class.java)
 

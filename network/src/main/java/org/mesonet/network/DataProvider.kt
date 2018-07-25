@@ -10,7 +10,7 @@ import org.mesonet.models.site.MesonetSiteList
 import org.mesonet.models.site.forecast.Forecast
 import org.mesonet.models.site.mesonetdata.MesonetData
 
-interface DataDownloader
+interface DataProvider
 {
     fun GetMesonetSites(): Observable<MesonetSiteList>
     fun GetMesonetData(inStid: String): Observable<MesonetData>

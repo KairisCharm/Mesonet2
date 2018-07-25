@@ -45,13 +45,8 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
     internal open fun Update(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
         mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>
         {
-            override fun onComplete() {
-
-            }
-
-            override fun onSubscribe(d: Disposable) {
-
-            }
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
 
             override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
                 SetMesonetViews(inRemoteViews)
@@ -62,7 +57,6 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
             override fun onError(e: Throwable) {
                 e.printStackTrace()
             }
-
         })
     }
 
@@ -93,13 +87,8 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
     internal fun SetMesonetViews(inRemoteViews: RemoteViews) {
         mMesonetUIController.GetDisplayFieldsSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>{
-            override fun onComplete() {
-
-            }
-
-            override fun onSubscribe(d: Disposable) {
-
-            }
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {}
 
             override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
                 inRemoteViews.setTextViewText(R.id.widget_place, mMesonetSiteDataController.CurrentStationName())
@@ -113,7 +102,6 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
             override fun onError(e: Throwable) {
                 e.printStackTrace()
             }
-
         })
     }
 
@@ -125,5 +113,11 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
     internal open fun GetWidgetClickIntent(inContext: Context): Intent {
         return Intent(inContext, WidgetProvider::class.java)
+    }
+
+
+    override fun onDeleted(context: Context?, appWidgetIds: IntArray?) {
+        mMesonetSiteDataController.Dispose()
+        super.onDeleted(context, appWidgetIds)
     }
 }
