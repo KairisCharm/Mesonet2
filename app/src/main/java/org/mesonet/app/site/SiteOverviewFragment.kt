@@ -83,6 +83,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                 mBinding?.forecastViewPager?.currentItem = currentSelected + 1
         }
 
+        mBinding?.forecastViewPager?.offscreenPageLimit = 2
         mBinding?.forecastViewPager?.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
             override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {
                 CalculateScrollButtonVisibility()
