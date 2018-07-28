@@ -165,6 +165,9 @@ constructor(internal var mLocationProvider: LocationProvider,
     }
 
     override fun CurrentSelection(): String {
+        if(!mCurrentSelectionSubject.hasValue())
+            return ""
+
         return mCurrentSelectionSubject.value
     }
 
@@ -320,13 +323,16 @@ constructor(internal var mLocationProvider: LocationProvider,
     override fun ToggleFavorite(inContext: Context, inStid: String): Observable<Boolean>
     {
         return Observable.create{
-            if (IsFavorite(inStid)) {
-                RemoveFavorite(inContext, inStid)
-            } else {
-                AddFavorite(inContext, inStid)
+            if(mCurrentSelectionSubject.hasValue()) {
+                if (IsFavorite(inStid)) {
+                    RemoveFavorite(inContext, inStid)
+                } else {
+                    AddFavorite(inContext, inStid)
+                }
+
+                it.onNext(IsFavorite(inStid))
             }
 
-            it.onNext(IsFavorite(inStid))
             it.onComplete()
         }
     }
