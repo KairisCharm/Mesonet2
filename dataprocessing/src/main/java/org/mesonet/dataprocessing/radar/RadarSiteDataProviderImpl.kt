@@ -96,8 +96,11 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator, in
                 mSiteSubject.onNext(t)
 
                 var radarId = "KTLX"
-                if(mPreferences.SelectedRadarSubject(inContext).hasValue())
+                if(mPreferences.SelectedRadarSubject(inContext).hasValue() && t.containsKey(mPreferences.SelectedRadarSubject(inContext).value))
                     radarId = mPreferences.SelectedRadarSubject(inContext).value
+                else
+                    mPreferences.SetSelectedRadar(inContext, radarId)
+
 
                 if(t.containsKey(radarId)) {
                     mSelectedSiteNameSubject.onNext(radarId)

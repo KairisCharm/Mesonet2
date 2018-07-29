@@ -30,7 +30,10 @@ class ForecastLayoutController constructor(private var mContext: Context, privat
 
         forecastData.mForecastData = mForecastData
 
-        forecastData.mBackgroundColor = mContext.resources.getColor(colorResource, mContext.theme)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            forecastData.mBackgroundColor = mContext.resources.getColor(colorResource, mContext.theme)
+        else
+            forecastData.mBackgroundColor = mContext.resources.getColor(colorResource)
 
         it.onNext(forecastData)
         it.onComplete()

@@ -3,6 +3,7 @@ package org.mesonet.app.filterlist
 
 import android.content.Context
 import android.databinding.DataBindingUtil
+import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -81,8 +82,14 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
             false
         }
 
-        closeDrawable.setTint(resources.getColor(R.color.lightTextColor, activity?.theme))
-        mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor, activity?.theme))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            closeDrawable.setTint(resources.getColor(R.color.lightTextColor, activity?.theme))
+            mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor, activity?.theme))
+        }
+        else {
+            closeDrawable.setTint(resources.getColor(R.color.lightTextColor))
+            mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor))
+        }
 
         mTextChangedListener = object : TextWatcher {
             override fun beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
