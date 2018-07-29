@@ -15,6 +15,7 @@ import org.mesonet.core.PerFragment
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.SelectSiteListener
 import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
+import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.radar.RadarDetails
 import org.mesonet.models.radar.RadarDetailCreator
 
@@ -29,13 +30,14 @@ import java.io.*
 
 @PerFragment
 class RadarSiteDataProviderImpl @Inject
-constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : RadarSiteDataProvider {
+constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator, internal var mPreferences: Preferences) : RadarSiteDataProvider {
     private var mSelectedSiteNameSubject: BehaviorSubject<String> = BehaviorSubject.create()
     private var mSelectedSiteDetailSubject: BehaviorSubject<RadarDetails> = BehaviorSubject.create()
 
     private var mSiteSubject: BehaviorSubject<Map<String, RadarDetails>> = BehaviorSubject.create()
 
     private var mSiteDisposable: Disposable? = null
+
 
     init {
         mSelectedSiteNameSubject.observeOn(Schedulers.computation()).subscribe(object: Observer<String>{
@@ -92,13 +94,15 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : 
 
             override fun onNext(t: Map<String, RadarDetails>) {
                 mSiteSubject.onNext(t)
-                var initRadar = "KTLX"
 
-                if (!t.containsKey(initRadar))
-                    initRadar = t.keys.first()
+                var radarId = "KTLX"
+                if(mPreferences.SelectedRadarSubject(inContext).hasValue())
+                    radarId = mPreferences.SelectedRadarSubject(inContext).value
 
-                mSelectedSiteNameSubject.onNext(initRadar)
-                mSelectedSiteDetailSubject.onNext(t[initRadar] ?: t.values.first())
+                if(t.containsKey(radarId)) {
+                    mSelectedSiteNameSubject.onNext(radarId)
+                    mSelectedSiteDetailSubject.onNext(t[radarId] ?: t.values.first())
+                }
             }
         })
     }
@@ -123,6 +127,9 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : 
 
 
     override fun CurrentSelection(): String {
+        if(!mSelectedSiteNameSubject.hasValue())
+            return ""
+
         return mSelectedSiteNameSubject.value
     }
 
@@ -134,7 +141,7 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : 
             val resultMap = mSiteSubject.value.mapValues {
                 object : BasicListData {
                     override fun GetName(): String {
-                        return it.value.GetName()?: ""
+                        return it.key + " - " + it.value.GetName()
                     }
 
                     override fun IsFavorite(): Boolean {
@@ -161,6 +168,7 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator) : 
 
     override fun SetResult(inContext: Context, inResult: String) {
         mSelectedSiteNameSubject.onNext(inResult)
+        mPreferences.SetSelectedRadar(inContext, inResult)
     }
 
 

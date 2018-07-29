@@ -30,7 +30,6 @@ import org.mesonet.dataprocessing.advisories.AdvisoryDataProvider
 import android.content.res.Configuration
 import android.support.v4.widget.DrawerLayout
 import android.view.Gravity
-import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -42,7 +41,6 @@ import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.advisories.Advisory
-import java.util.concurrent.TimeUnit
 
 
 @PerActivity
@@ -57,6 +55,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     private var mBinding: MainActivityBinding? = null
 
     private var mActionBarDrawerToggle: ActionBarDrawerToggle? = null
+
+    private var mLoadedFragmentId = R.id.mesonetOption
 
 
     @Inject
@@ -136,6 +136,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             R.id.advisoriesOption -> fragment = AdvisoriesFragment()
         }
 
+        mLoadedFragmentId = inSelectedTab
+
         if (fragment != null) {
             val fragmentTransaction = supportFragmentManager.beginTransaction()
             fragmentTransaction.replace(R.id.fragmentLayout, fragment)
@@ -200,6 +202,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 R.id.advisoriesOption -> resultFragment = AdvisoriesFragment()
             }
 
+            mLoadedFragmentId = inItem.itemId
+
             if (resultFragment != null) {
                 val fragmentTransaction = supportFragmentManager.beginTransaction()
                 fragmentTransaction.replace(R.id.fragmentLayout, resultFragment)
@@ -228,12 +232,27 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
 
-        var selectedTab: Int = R.id.mesonetOption
+        mBinding?.bottomNav?.selectedItemId = mLoadedFragmentId
 
-        if (mBinding != null)
-            selectedTab = mBinding?.bottomNav?.selectedItemId?: 0
+        mAdvisoryDisposable?.dispose()
+        mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Advisory.AdvisoryList>{
+            override fun onComplete() {}
 
-        LoadBinding(selectedTab)
+            override fun onSubscribe(d: Disposable) {
+                mAdvisoryDisposable = d
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+
+            override fun onNext(t: Advisory.AdvisoryList) {
+                if (t.isNotEmpty())
+                    mBinding?.bottomNav?.menu?.getItem(3)?.icon = resources.getDrawable(R.drawable.advisory_badge, theme)
+                else
+                    mBinding?.bottomNav?.menu?.getItem(3)?.setIcon(R.drawable.advisories_image)
+            }
+        })
     }
 
 

@@ -55,8 +55,9 @@ class UserSettings @Inject constructor() : Preferences {
 
 
     override fun UnitPreferencesSubject(inContext: Context): BehaviorSubject<Preferences.UnitPreference> {
-        if(!mUnitPreferenceSubject.hasValue())
-            mUnitPreferenceSubject.onNext(Preferences.UnitPreference.valueOf(GetStringPreference(inContext, kUnitPreference, Preferences.UnitPreference.kImperial.name)))
+        val prefence = Preferences.UnitPreference.valueOf(GetStringPreference(inContext, kUnitPreference, Preferences.UnitPreference.kImperial.name))
+        if(!mUnitPreferenceSubject.hasValue() || mUnitPreferenceSubject.value != prefence)
+            mUnitPreferenceSubject.onNext(prefence)
 
         return mUnitPreferenceSubject
     }
@@ -78,8 +79,9 @@ class UserSettings @Inject constructor() : Preferences {
     }
 
     override fun SelectedStidSubject(inContext: Context): BehaviorSubject<String> {
-        if(!mStidSubject.hasValue())
-            mStidSubject.onNext(GetStringPreference(inContext, UserSettings.kSelectedStid, ""))
+        val preference = GetStringPreference(inContext, UserSettings.kSelectedStid, "")
+        if(!mStidSubject.hasValue() || mStidSubject.value != preference)
+            mStidSubject.onNext(preference)
 
         return mStidSubject
     }
@@ -100,8 +102,9 @@ class UserSettings @Inject constructor() : Preferences {
     }
 
     override fun SelectedRadarSubject(inContext: Context): BehaviorSubject<String> {
-        if(!mRadarSubject.hasValue())
-            mStidSubject.onNext(GetStringPreference(inContext, UserSettings.kSelectedRadar, ""))
+        val preference = GetStringPreference(inContext, UserSettings.kSelectedRadar, "")
+        if(!mRadarSubject.hasValue() || mRadarSubject.value != preference)
+            mRadarSubject.onNext(preference)
 
         return mRadarSubject
     }

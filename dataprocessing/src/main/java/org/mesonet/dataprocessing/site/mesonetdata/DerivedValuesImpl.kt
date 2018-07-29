@@ -13,7 +13,7 @@ constructor(): DerivedValues {
 
 
     internal fun GetHeatIndex(inTemp: Number?, inHumidity: Number?): Number? {
-        if (inTemp == null || inHumidity == null)
+        if (inTemp == null || inHumidity == null || inTemp.toDouble() < -900.0 || inHumidity.toDouble() < -900.0)
             return null
 
         val fahrenheit = mUnitConverter.CelsiusToFahrenheit(inTemp)
@@ -31,7 +31,7 @@ constructor(): DerivedValues {
 
 
     internal fun GetWindChill(inTemp: Number?, inWindSpeed: Number?): Number? {
-        if (inTemp == null || inWindSpeed == null)
+        if (inTemp == null || inWindSpeed == null || inTemp.toDouble() < -900.0 || inWindSpeed.toDouble() < -900.0)
             return null
 
         val fahrenheit = mUnitConverter.CelsiusToFahrenheit(inTemp)

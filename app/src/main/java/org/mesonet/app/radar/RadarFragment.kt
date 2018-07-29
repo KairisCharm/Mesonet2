@@ -8,10 +8,7 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewAnimationUtils
-import android.view.ViewGroup
+import android.view.*
 import android.widget.SeekBar
 import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.geometry.LatLng
@@ -73,6 +70,9 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
         val options = MapboxMapOptions()
         options.styleUrl("mapbox://styles/okmesonet/cjic5xvsd02xl2sp7sh1eljuj")
+        options.textureMode(true)
+        options.logoGravity(Gravity.TOP or Gravity.START)
+        options.attributionGravity(Gravity.TOP or Gravity.START)
 
         mMapFragment = SupportMapFragment.newInstance(options)
 
