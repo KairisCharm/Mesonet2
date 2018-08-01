@@ -30,6 +30,7 @@ constructor(private var mDataController: MesonetDataController,
     {
         if(!mUISubject.hasValue())
         {
+            var valueDisposable: Disposable? = null
             mPreferences.UnitPreferencesSubject(inContext).observeOn(Schedulers.computation()).subscribe(object: Observer<Preferences.UnitPreference>{
                 override fun onComplete() {}
 
@@ -38,6 +39,7 @@ constructor(private var mDataController: MesonetDataController,
                 }
 
                 override fun onNext(unitPreference: Preferences.UnitPreference) {
+                    valueDisposable?.dispose()
                     mDataController.GetDataSubject(inContext).observeOn(Schedulers.computation()).map {
                         val displayFields = MesonetDisplayFieldsImpl()
                         val formattedString = "Observed at %s"
@@ -61,7 +63,7 @@ constructor(private var mDataController: MesonetDataController,
                         if (temp == null)
                             displayFields.mAirTempString = "-"
                         else
-                            displayFields.mAirTempString = String.format(Locale.getDefault(), "%.0f", temp) + "°"
+                            displayFields.mAirTempString = String.format(Locale.getDefault(), if(unitPreference == Preferences.UnitPreference.kImperial) "%.0f" else "%.1f", temp) + "°"
 
                         val apparentTemp = mDataController.ProcessApparentTemp(unitPreference)
 
@@ -69,13 +71,22 @@ constructor(private var mDataController: MesonetDataController,
                             displayFields.mApparentTempString = "-"
                         else {
                             var unit = ""
+                            var format = ""
 
                             when (unitPreference) {
-                                Preferences.UnitPreference.kMetric -> unit = "C"
-                                Preferences.UnitPreference.kImperial -> unit = "F"
+                                Preferences.UnitPreference.kMetric ->
+                                {
+                                    unit = "C"
+                                    format = "%.1f"
+                                }
+                                Preferences.UnitPreference.kImperial ->
+                                {
+                                    unit = "F"
+                                    format = "%.0f"
+                                }
                             }
 
-                            displayFields.mApparentTempString = String.format(Locale.getDefault(), "%.0f", apparentTemp) + "°" + unit
+                            displayFields.mApparentTempString = String.format(Locale.getDefault(), format, apparentTemp) + "°" + unit
                         }
 
                         val dewPoint = mDataController.ProcessDewpoint(unitPreference)
@@ -84,13 +95,22 @@ constructor(private var mDataController: MesonetDataController,
                             displayFields.mDewPointString = "-"
                         else {
                             var unit = ""
+                            var format = ""
 
                             when (unitPreference) {
-                                Preferences.UnitPreference.kMetric -> unit = "C"
-                                Preferences.UnitPreference.kImperial -> unit = "F"
+                                Preferences.UnitPreference.kMetric ->
+                                {
+                                    unit = "C"
+                                    format = "%.1f"
+                                }
+                                Preferences.UnitPreference.kImperial ->
+                                {
+                                    unit = "F"
+                                    format = "%.0f"
+                                }
                             }
 
-                            displayFields.mDewPointString = String.format(Locale.getDefault(), "%.0f", dewPoint) + "°" + unit
+                            displayFields.mDewPointString = String.format(Locale.getDefault(), format, dewPoint) + "°" + unit
                         }
 
                         val windSpd = mDataController.ProcessWindSpd(unitPreference)
@@ -171,7 +191,10 @@ constructor(private var mDataController: MesonetDataController,
                         displayFields as MesonetUIController.MesonetDisplayFields
                     }.subscribe(object : Observer<MesonetUIController.MesonetDisplayFields> {
                         override fun onComplete() {}
-                        override fun onSubscribe(d: Disposable) {}
+                        override fun onSubscribe(d: Disposable)
+                        {
+                            valueDisposable = d
+                        }
                         override fun onError(e: Throwable) {
                             e.printStackTrace()
                         }

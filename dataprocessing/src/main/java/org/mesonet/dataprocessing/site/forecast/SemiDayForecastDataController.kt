@@ -114,15 +114,23 @@ class SemiDayForecastDataController(private var mContext: Context, private var m
                         tempUnits = DefaultUnits.TempUnits.kFahrenheit
 
                     var unit = ""
+                    var format = ""
 
                     when (tempUnits) {
-                        DefaultUnits.TempUnits.kCelsius -> unit = "C"
-                        DefaultUnits.TempUnits.kFahrenheit -> unit = "F"
+                        DefaultUnits.TempUnits.kCelsius ->
+                        {
+                            unit = "C"
+                            format = "%.1f"
+                        }
+                        DefaultUnits.TempUnits.kFahrenheit -> {
+                            unit = "F"
+                            format = "%.0f"
+                        }
                     }
 
-                    var value = mUnitConverter?.GetTempInPreferredUnits(inForecast.GetTemp(), inForecast, tempUnits)?.toInt()
+                    var value = mUnitConverter?.GetTempInPreferredUnits(inForecast.GetTemp(), inForecast, tempUnits)
 
-                    result.mHighOrLowTemp += " " + String.format(Locale.getDefault(), "%d", value) + "°" + unit
+                    result.mHighOrLowTemp += " " + String.format(Locale.getDefault(), format, value?.toFloat()) + "°" + unit
 
                     if (inForecast.GetWindMin() == null)
                         result.mWindDescription = "Calm\n"

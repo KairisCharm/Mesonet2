@@ -79,7 +79,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
         mRadarImageSource = ImageSource(kRasterImageName, LatLngQuad(LatLng(0.0, 0.0),
                                                                      LatLng(0.0, 0.0),
                                                                      LatLng(0.0, 0.0),
-                                                                     LatLng(0.0, 0.0)), R.drawable.ic_close_white_36dp)
+                                                                     LatLng(0.0, 0.0)), R.drawable.blank_drawable)
 
 
 
@@ -163,6 +163,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             }
 
             override fun onNext(radarId: String) {
+                mRadarImageSource?.setImage(R.drawable.blank_drawable)
                 mRadarImageDataProvider.GetSiteDetailSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<RadarDetails> {
                     override fun onComplete() {}
 
@@ -179,7 +180,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                     override fun onNext(radarDetails: RadarDetails) {
                         SetSnackbarText(radarId, radarDetails.GetName(), "")
                         mSnackbar?.show()
-                        mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
                         mMapFragment?.getMapAsync { map ->
                             map.uiSettings.isRotateGesturesEnabled = false
                             map.uiSettings.isTiltGesturesEnabled = false
