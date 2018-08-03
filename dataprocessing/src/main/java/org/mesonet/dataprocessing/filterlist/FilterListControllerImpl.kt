@@ -1,21 +1,19 @@
 package org.mesonet.dataprocessing.filterlist
 
-import android.app.Activity
-import android.content.Context
 import android.location.Location
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.LocationProvider
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.HashMap
 
-@PerActivity
+@PerContext
 class FilterListControllerImpl @Inject constructor(): FilterListController {
     private var mSortByNearest = false
 

@@ -3,8 +3,6 @@ package org.mesonet.cache
 import android.content.Context
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
-import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
 import javax.inject.Inject
@@ -13,13 +11,12 @@ import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmModel
 import org.mesonet.cache.site.mesonetdata.MesonetRealmModule
-import javax.inject.Singleton
 import io.realm.RealmResults
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import java.util.concurrent.Executors
 
 
-@PerActivity
+@PerContext
 class CacherImpl @Inject
 constructor(): Cacher {
 private var mRealm: Realm? = null

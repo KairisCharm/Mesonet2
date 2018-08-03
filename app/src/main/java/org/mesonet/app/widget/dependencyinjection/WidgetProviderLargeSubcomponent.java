@@ -1,12 +1,12 @@
 package org.mesonet.app.widget.dependencyinjection;
 
 import org.mesonet.app.widget.WidgetProviderLarge;
-import org.mesonet.core.PerActivity;
+import org.mesonet.core.PerContext;
 
 import dagger.Subcomponent;
 import dagger.android.AndroidInjector;
 
-@PerActivity
+@PerContext
 @Subcomponent(modules = WidgetProviderLargeModule.class)
 public interface WidgetProviderLargeSubcomponent extends AndroidInjector<WidgetProviderLarge>
 {

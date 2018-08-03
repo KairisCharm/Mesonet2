@@ -5,7 +5,6 @@ import android.content.Context;
 import android.support.v4.app.Fragment;
 
 import org.mesonet.androidsystem.DeviceLocation;
-import org.mesonet.androidsystem.UserSettings;
 import org.mesonet.app.MainActivity;
 import org.mesonet.app.advisories.AdvisoriesFragment;
 import org.mesonet.app.advisories.dependencyinjection.AdvisoriesFragmentSubcomponent;
@@ -23,8 +22,6 @@ import org.mesonet.cache.Cacher;
 import org.mesonet.cache.CacherImpl;
 import org.mesonet.cache.site.SiteCache;
 import org.mesonet.cache.site.SiteCacheImpl;
-import org.mesonet.dataprocessing.radar.RadarDataController;
-import org.mesonet.dataprocessing.radar.RadarImageDataProvider;
 import org.mesonet.dataprocessing.site.MesonetSiteDataController;
 import org.mesonet.dataprocessing.site.MesonetSiteDataControllerImpl;
 import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController;
@@ -33,16 +30,11 @@ import org.mesonet.dataprocessing.site.mesonetdata.MesonetDataController;
 import org.mesonet.dataprocessing.site.mesonetdata.MesonetDataControllerImpl;
 import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController;
 import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIControllerImpl;
-import org.mesonet.dataprocessing.userdata.Preferences;
-import org.mesonet.core.PerActivity;
+import org.mesonet.core.PerContext;
 import org.mesonet.dataprocessing.LocationProvider;
-
-import javax.inject.Singleton;
 
 import dagger.Binds;
 import dagger.Module;
-import dagger.Provides;
-import dagger.android.AndroidInjectionModule;
 import dagger.android.AndroidInjector;
 import dagger.android.support.AndroidSupportInjectionModule;
 import dagger.android.support.FragmentKey;
@@ -85,42 +77,42 @@ public abstract class MainActivityModule
     AdvisoriesFragmentInjectorFactory(AdvisoriesFragmentSubcomponent.Builder inBuilder);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract Activity Activity(MainActivity inMainActivity);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract Context Context(MainActivity inContext);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract BaseActivity BaseActivity(MainActivity inMainActivity);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract MesonetSiteDataController MesonetSiteDataController(MesonetSiteDataControllerImpl inProvider);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract MesonetDataController MesonetDataController(MesonetDataControllerImpl inProvider);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract MesonetUIController MesonetUIController(MesonetUIControllerImpl inProvider);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract FiveDayForecastDataController FiveDataForecastDataController(FiveDayForecastDataControllerImpl inProvider);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract SiteCache SiteCache(SiteCacheImpl inCache);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract Cacher Cacher(CacherImpl inCache);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract LocationProvider LocationProvider(DeviceLocation inDeviceLocation);
 }

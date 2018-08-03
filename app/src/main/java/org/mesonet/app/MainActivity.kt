@@ -35,7 +35,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import org.mesonet.app.contact.ContactActivity
 import org.mesonet.app.usersettings.UserSettingsActivity
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.LocationProvider
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController
@@ -43,7 +43,7 @@ import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.advisories.Advisory
 
 
-@PerActivity
+@PerContext
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener {
     companion object {
         val kUserSettingsRequestCode = 1

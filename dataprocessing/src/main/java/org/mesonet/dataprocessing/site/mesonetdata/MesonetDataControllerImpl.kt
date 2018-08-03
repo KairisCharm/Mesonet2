@@ -7,7 +7,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.core.DefaultUnits
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.formulas.UnitConverter
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.userdata.Preferences
@@ -17,10 +17,9 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 import javax.inject.Inject
-import javax.inject.Singleton
 
 
-@PerActivity
+@PerContext
 class MesonetDataControllerImpl @Inject constructor(private var mSiteDataController: MesonetSiteDataController,
                                                 private var mDerivedValues: DerivedValues,
                                                 private var mUnitConverter: UnitConverter,

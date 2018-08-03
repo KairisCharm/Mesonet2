@@ -1,15 +1,14 @@
 package org.mesonet.app.dependencyinjection;
 
 import org.mesonet.app.MainActivity;
-import org.mesonet.app.baseclasses.BaseActivity;
-import org.mesonet.core.PerActivity;
+import org.mesonet.core.PerContext;
 
 import dagger.Subcomponent;
 import dagger.android.AndroidInjector;
 
 
 
-@PerActivity
+@PerContext
 @Subcomponent(modules = {MainActivityModule.class})
 public interface MainActivitySubcomponent extends AndroidInjector<MainActivity> {
 

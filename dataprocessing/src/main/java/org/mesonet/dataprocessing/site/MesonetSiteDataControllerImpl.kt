@@ -10,7 +10,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.cache.site.SiteCache
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.LocationProvider
 import org.mesonet.dataprocessing.userdata.Preferences
@@ -28,7 +28,7 @@ import kotlin.collections.HashMap
 import android.content.Context
 
 
-@PerActivity
+@PerContext
 class MesonetSiteDataControllerImpl @Inject
 constructor(internal var mLocationProvider: LocationProvider,
             internal var mCache: SiteCache,

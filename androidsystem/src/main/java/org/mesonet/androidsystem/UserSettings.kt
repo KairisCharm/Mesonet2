@@ -1,6 +1,5 @@
 package org.mesonet.androidsystem
 
-import android.app.Application
 import android.content.Context
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
@@ -8,13 +7,13 @@ import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.userdata.Preferences
 
 import javax.inject.Inject
 
 
-@PerActivity
+@PerContext
 class UserSettings @Inject constructor() : Preferences {
     val mUnitPreferenceSubject: BehaviorSubject<Preferences.UnitPreference> = BehaviorSubject.create()
 

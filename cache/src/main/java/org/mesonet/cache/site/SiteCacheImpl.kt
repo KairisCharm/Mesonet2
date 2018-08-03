@@ -7,15 +7,13 @@ import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.cache.Cacher
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import org.mesonet.models.site.MesonetSiteList
 
 import javax.inject.Inject
-import javax.inject.Singleton
 
 
-
-@PerActivity
+@PerContext
 class SiteCacheImpl @Inject
 constructor(): SiteCache {
     @Inject

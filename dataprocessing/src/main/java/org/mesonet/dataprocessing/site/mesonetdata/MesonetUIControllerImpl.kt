@@ -5,7 +5,7 @@ import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.userdata.Preferences
 
 import java.text.SimpleDateFormat
@@ -15,7 +15,7 @@ import java.util.TimeZone
 import javax.inject.Inject
 
 
-@PerActivity
+@PerContext
 class MesonetUIControllerImpl @Inject
 constructor(private var mDataController: MesonetDataController,
             private var mPreferences: Preferences): MesonetUIController

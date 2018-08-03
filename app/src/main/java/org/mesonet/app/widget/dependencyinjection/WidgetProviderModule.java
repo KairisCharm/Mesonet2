@@ -4,13 +4,11 @@ import android.content.Context;
 
 import org.mesonet.app.Application;
 import org.mesonet.app.widget.EmptyLocationProvider;
-import org.mesonet.app.widget.WidgetProvider;
-import org.mesonet.app.widget.WidgetProviderLarge;
 import org.mesonet.cache.Cacher;
 import org.mesonet.cache.CacherImpl;
 import org.mesonet.cache.site.SiteCache;
 import org.mesonet.cache.site.SiteCacheImpl;
-import org.mesonet.core.PerActivity;
+import org.mesonet.core.PerContext;
 import org.mesonet.dataprocessing.LocationProvider;
 import org.mesonet.dataprocessing.site.MesonetSiteDataController;
 import org.mesonet.dataprocessing.site.MesonetSiteDataControllerImpl;
@@ -21,37 +19,36 @@ import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIControllerImpl;
 
 import dagger.Binds;
 import dagger.Module;
-import dagger.Provides;
 import dagger.android.support.AndroidSupportInjectionModule;
 
 @Module(includes = AndroidSupportInjectionModule.class)
 public abstract class WidgetProviderModule
 {
     @Binds
-    @PerActivity
+    @PerContext
     abstract LocationProvider LocationProvider(EmptyLocationProvider inEmptyLocationProvider);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract Context Context(Application inContext);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract MesonetSiteDataController MesonetSiteDataController(MesonetSiteDataControllerImpl inProvider);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract MesonetDataController MesonetDataController(MesonetDataControllerImpl inProvider);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract MesonetUIController MesonetUIController(MesonetUIControllerImpl inProvider);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract SiteCache SiteCache(SiteCacheImpl inCache);
 
     @Binds
-    @PerActivity
+    @PerContext
     abstract Cacher Cacher(CacherImpl inCache);
 }

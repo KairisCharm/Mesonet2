@@ -3,14 +3,14 @@ package org.mesonet.dataprocessing.advisories
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.schedulers.Schedulers
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import org.mesonet.models.advisories.Advisory
 import org.mesonet.models.advisories.AdvisoryModel
 import org.mesonet.network.DataProvider
 import javax.inject.Inject
 
 
-@PerActivity
+@PerContext
 class AdvisoryDisplayListBuilderImpl @Inject constructor(): AdvisoryDisplayListBuilder {
     @Inject
     lateinit var mDataProvider: DataProvider

@@ -3,29 +3,19 @@ package org.mesonet.dataprocessing.radar
 import android.app.Activity
 import android.content.Context
 import android.location.Location
-import android.util.Xml
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import org.mesonet.core.PerActivity
 import org.mesonet.core.PerFragment
 import org.mesonet.dataprocessing.BasicListData
-import org.mesonet.dataprocessing.SelectSiteListener
-import org.mesonet.dataprocessing.filterlist.FilterListDataProvider
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.radar.RadarDetails
 import org.mesonet.models.radar.RadarDetailCreator
 
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserException
-
-import java.util.HashMap
-
 import javax.inject.Inject
-import java.io.*
 
 
 @PerFragment

@@ -12,13 +12,13 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import org.mesonet.app.MainActivity
 import org.mesonet.app.R
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController
 import javax.inject.Inject
 
 
-@PerActivity
+@PerContext
 open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
     @Inject
     lateinit var mMesonetSiteDataController: MesonetSiteDataController

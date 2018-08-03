@@ -20,13 +20,12 @@ import io.reactivex.ObservableEmitter
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 
 import javax.inject.Inject
-import javax.inject.Singleton
 
 
-@PerActivity
+@PerContext
 class DeviceLocation @Inject
 constructor(var mContext: Context) : LocationProvider
 {

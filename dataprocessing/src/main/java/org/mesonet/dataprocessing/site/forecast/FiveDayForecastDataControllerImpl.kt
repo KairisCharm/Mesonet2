@@ -6,7 +6,7 @@ import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import org.mesonet.core.PerActivity
+import org.mesonet.core.PerContext
 
 import org.mesonet.dataprocessing.formulas.UnitConverter
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 
-@PerActivity
+@PerContext
 class FiveDayForecastDataControllerImpl @Inject constructor(private var mMesonetSiteDataController: MesonetSiteDataController,
                                                             private var mPreferences: Preferences,
                                                             private var mUnitConverter: UnitConverter,
