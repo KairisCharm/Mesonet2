@@ -74,7 +74,7 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
                         Process24HrRain(data, unitPreference),
                         ProcessHumidity(data),
                         ProcessPressure(data, site.GetElev()
-                                ?: "", unitPreference)) as MesonetDataController.ProcessedMesonetData
+                                ?: "", unitPreference))
 
             mLastProcessedData?: ProcessedMesonetDataImpl("", Date(), 0.0, 0.0, 0.0,0.0,DefaultUnits.CompassDirections.N, 0.0, 0.0,0, 0.0)
         }

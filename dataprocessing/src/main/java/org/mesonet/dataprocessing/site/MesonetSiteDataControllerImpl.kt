@@ -240,8 +240,8 @@ constructor(internal var mLocationProvider: LocationProvider,
 
             if(result != null)
                 mCurrentSelectionSubject.onNext(ProcessedMesonetSiteImpl(result.key,
-                                                              mFavorites.hasValue() && mFavorites.value?.contains(result?.key) == true,
-                                                                        mDataProvider.GetMeteogramImageUrl(result?.key?.toUpperCase()),
+                                                              mFavorites.hasValue() && mFavorites.value?.contains(result.key) == true,
+                                                                        mDataProvider.GetMeteogramImageUrl(result.key.toUpperCase()),
                                                                         result.value.GetLat(),
                                                                         result.value.GetElev(),
                                                                         result.value.GetStnm(),
@@ -268,8 +268,8 @@ constructor(internal var mLocationProvider: LocationProvider,
             if(site != null) {
                 val siteLocation = Location("none")
 
-                siteLocation.latitude = java.lang.Double.parseDouble(site.GetLat())
-                siteLocation.longitude = java.lang.Double.parseDouble(site.GetLon())
+                siteLocation.latitude = java.lang.Double.parseDouble(site.GetLat()?: "0.0")
+                siteLocation.longitude = java.lang.Double.parseDouble(site.GetLon()?: "0.0")
 
                 val distance = siteLocation.distanceTo(inLocation)
 
@@ -327,7 +327,7 @@ constructor(internal var mLocationProvider: LocationProvider,
             var result: MutableList<String> = ArrayList()
 
             if(mFavorites.hasValue())
-                result = ArrayList(mFavorites.value)
+                result = ArrayList(mFavorites.value?: ArrayList())
 
             result.add(inStid)
 
@@ -338,7 +338,7 @@ constructor(internal var mLocationProvider: LocationProvider,
     internal fun RemoveFavorite(inStid: String) {
         if(mFavorites.hasValue() && mFavorites.value?.contains(inStid) == true)
         {
-            var result = ArrayList(mFavorites.value)
+            var result = ArrayList(mFavorites.value?: ArrayList())
 
             result.remove(inStid)
 

@@ -14,7 +14,6 @@ import javax.inject.Inject
 import android.content.Intent
 import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
 
 
 class UserSettingsActivity: BaseActivity()
@@ -24,9 +23,9 @@ class UserSettingsActivity: BaseActivity()
 
     lateinit var mBinding: UserSettingsActivityBinding
 
-    public override fun onCreate(inSavedInstanceState: Bundle?)
+    public override fun onCreate(savedInstanceState: Bundle?)
     {
-        super.onCreate(inSavedInstanceState)
+        super.onCreate(savedInstanceState)
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.user_settings_activity)
 

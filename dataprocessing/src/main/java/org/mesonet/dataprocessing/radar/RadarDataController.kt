@@ -138,7 +138,7 @@ constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
                     val buffer = HashMap<String, Bitmap>()
 
                     if (mRadarImageDataSubject.hasValue()) {
-                        resultList = ArrayList(mRadarImageDataSubject.value)
+                        resultList = ArrayList(mRadarImageDataSubject.value?: ArrayList())
 
                         for (i in resultList.indices) {
                             val image = mRadarImageDataSubject.value?.first { it.GetName() == resultList[i].GetName() && it.GetImage() != mEmptyImage }?.GetImage()

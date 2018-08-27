@@ -22,7 +22,6 @@ class RadarHistoryConverterFactory: Converter.Factory()
             if(converter != null) {
                 try {
                     return (converter as Converter<ResponseBody, RadarHistoryModel>)
-                            ?: retrofit.nextResponseBodyConverter<RadarHistoryModel>(this, type, annotations)
                 }
                 catch (e: ClassCastException)
                 {

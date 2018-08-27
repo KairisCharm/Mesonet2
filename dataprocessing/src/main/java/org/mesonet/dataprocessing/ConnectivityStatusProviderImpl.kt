@@ -24,7 +24,7 @@ class ConnectivityStatusProviderImpl @Inject constructor(): ConnectivityManager.
     }
 
     override fun OnResume(inContext: Context) {
-        mConnectivityStatusSubject.onNext(mConnectivityManager?.activeNetwork != null && mConnectivityManager?.activeNetworkInfo?.isConnectedOrConnecting == true)
+        mConnectivityStatusSubject.onNext(mConnectivityManager?.activeNetwork != null && mConnectivityManager?.activeNetworkInfo?.isConnected == true)
         mConnectivityManager?.registerNetworkCallback(mNetworkRequest, this)
     }
 

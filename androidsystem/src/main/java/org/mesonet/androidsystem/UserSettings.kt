@@ -44,7 +44,7 @@ class UserSettings @Inject constructor() : Preferences {
         {
             val preferences = inContext.getSharedPreferences(kMesonetSettings, Context.MODE_PRIVATE)
 
-            return preferences.getString(inName, inDefault)
+            return preferences.getString(inName, inDefault)?: ""
         }
     }
 
