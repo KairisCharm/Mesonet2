@@ -30,6 +30,8 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
     @Inject
     lateinit var mConnectivityStatusProvider: ConnectivityStatusProvider
 
+    private var mMesonetDownloadDone = false
+
     override fun onReceive(inContext: Context, inIntent: Intent) {
         AndroidInjection.inject(this, inContext)
 
@@ -51,6 +53,7 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
 
     internal open fun Update(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
+        mMesonetDownloadDone = false
         mMesonetUIController.OnResume(inContext)
         mMesonetSiteDataController.OnResume(inContext)
         mConnectivityStatusProvider.OnResume(inContext)
@@ -73,12 +76,8 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
                 UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
 
-                mMesonetUIController.OnPause()
-                mMesonetUIController.OnDestroy()
-                mConnectivityStatusProvider.OnPause()
-                mConnectivityStatusProvider.OnDestroy()
-                mMesonetSiteDataController.OnPause()
-                mMesonetSiteDataController.OnDestroy()
+                mMesonetDownloadDone = true
+                CheckIfDoneWithObservables()
             }
 
             override fun onError(e: Throwable) {
@@ -107,6 +106,20 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
     }
 
 
+    internal open fun CheckIfDoneWithObservables()
+    {
+        if(mMesonetDownloadDone)
+        {
+            mMesonetUIController.OnPause()
+            mMesonetUIController.OnDestroy()
+            mConnectivityStatusProvider.OnPause()
+            mConnectivityStatusProvider.OnDestroy()
+            mMesonetSiteDataController.OnPause()
+            mMesonetSiteDataController.OnDestroy()
+        }
+    }
+
+
     internal open fun GetLayoutId(): Int {
         return R.layout.widget_small
     }
@@ -123,8 +136,12 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
 
     override fun onDeleted(context: Context?, appWidgetIds: IntArray?) {
+        mMesonetSiteDataController.OnPause()
         mMesonetSiteDataController.OnDestroy()
+        mMesonetUIController.OnPause()
         mMesonetUIController.OnDestroy()
+        mConnectivityStatusProvider.OnPause()
+        mConnectivityStatusProvider.OnDestroy()
         super.onDeleted(context, appWidgetIds)
     }
 }

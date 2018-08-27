@@ -376,13 +376,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
 
     override fun onActivityResult(requestCode: Int, resultCode: Int,
-                                  data: Intent)
+                                  data: Intent?)
     {
         if(requestCode == mPermissions.LocationRequestCode())
         {
             mLocationProvider.RegisterGpsResult(resultCode)
         }
-        else if (requestCode == kUserSettingsRequestCode)
+        else if (requestCode == kUserSettingsRequestCode && data != null)
         {
             mPreferences.SetUnitPreference(this, Preferences.UnitPreference.valueOf(data.getStringExtra(kUserSettingsResultName))).subscribe(object: SingleObserver<Int>{
                 override fun onSuccess(t: Int) {}

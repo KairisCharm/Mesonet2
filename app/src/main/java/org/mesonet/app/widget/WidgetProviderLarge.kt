@@ -20,6 +20,9 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
     @Inject
     lateinit var mFiveDayForecastDataController: FiveDayForecastDataController
 
+    private var mForecast1DownloadDone = false
+    private var mForecast2DownloadDone = false
+
 
     override fun GetLayoutId(): Int {
         return R.layout.widget_large
@@ -50,8 +53,8 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
                     disposable?.dispose()
                     disposable = null
 
-                    mFiveDayForecastDataController.OnPause()
-                    mFiveDayForecastDataController.OnDestroy()
+                    mForecast1DownloadDone = true
+                    CheckIfDoneWithObservables()
                 }
 
                 override fun onError(e: Throwable) {
@@ -107,6 +110,9 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
 
                     disposable?.dispose()
                     disposable = null
+
+                    mForecast2DownloadDone = true
+                    CheckIfDoneWithObservables()
                 }
 
                 override fun onError(e: Throwable) {
@@ -142,7 +148,19 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
     }
 
 
+    override fun CheckIfDoneWithObservables()
+    {
+        if(mForecast1DownloadDone && mForecast2DownloadDone) {
+            super.CheckIfDoneWithObservables()
+            mFiveDayForecastDataController.OnPause()
+            mFiveDayForecastDataController.OnDestroy()
+        }
+    }
+
+
     override fun Update(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
+        mForecast1DownloadDone = false
+        mForecast2DownloadDone = false
         super.Update(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
 
         mFiveDayForecastDataController.OnCreate(inContext)
