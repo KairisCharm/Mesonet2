@@ -158,7 +158,7 @@ constructor(internal var mLocationProvider: LocationProvider,
                     }
                 }.retryWhen { mConnectivityStatusProvider.ConnectivityStatusObservable() }.subscribeOn(Schedulers.computation())
 
-                mDownloadObservable.subscribe(object : Observer<Map<String, MesonetSiteList.MesonetSite>> {
+                mDownloadObservable.observeOn(Schedulers.computation()).subscribe(object : Observer<Map<String, MesonetSiteList.MesonetSite>> {
                     var disposable: Disposable? = null
                     override fun onComplete() {}
                     override fun onSubscribe(d: Disposable)

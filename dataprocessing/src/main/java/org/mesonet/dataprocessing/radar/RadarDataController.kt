@@ -150,6 +150,8 @@ constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
 
                     val needsToDownload = relevantList.filterNot { frame -> resultList.map { it.GetName() }.contains(MakeId(historyConnectivityPair.first.GetRadar(), frame)) }.distinct()
 
+                    buffer.filter{ buf -> relevantList.find { rel -> MakeId(historyConnectivityPair.first.GetRadar(), rel) == buf.key } == null }.forEach{ it -> it.value.recycle() }
+
                     val downloadObservables = HashMap<String, Observable<Bitmap>>()
 
                     for (i in needsToDownload.indices) {

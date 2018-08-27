@@ -91,7 +91,7 @@ class AdvisoryDataProviderImpl @Inject constructor(internal var mDataProvider: D
                 mDataProvider.GetAdvisoriesList().retryWhen { mTickObservable }.retryWhen { mConnectivityStatusObservable }
             }.retryWhen { mTickObservable }.retryWhen { mConnectivityStatusObservable }.subscribeOn(Schedulers.computation())
 
-            mUpdateObservable.subscribe(object : Observer<Advisory.AdvisoryList> {
+            mUpdateObservable.observeOn(Schedulers.computation()).subscribe(object : Observer<Advisory.AdvisoryList> {
                 override fun onComplete() {}
 
                 override fun onSubscribe(d: Disposable) {

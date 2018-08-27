@@ -62,7 +62,7 @@ class FiveDayForecastDataControllerImpl @Inject constructor(private var mMesonet
             })
         }
 
-        mMesonetSiteDataController.GetCurrentSelectionObservable().subscribe(object: Observer<MesonetSiteDataController.ProcessedMesonetSite>{
+        mMesonetSiteDataController.GetCurrentSelectionObservable().observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetSiteDataController.ProcessedMesonetSite>{
             override fun onComplete() {}
             override fun onSubscribe(d: Disposable)
             {
@@ -247,7 +247,7 @@ class FiveDayForecastDataControllerImpl @Inject constructor(private var mMesonet
                 data
             }.retryWhen { mSiteObservable }.retryWhen { mConnectivityObservable }.retryWhen { mTickObservable }?.subscribeOn(Schedulers.computation())
 
-            mUpdateObservable?.subscribeOn(Schedulers.computation())?.subscribe(this)
+            mUpdateObservable?.observeOn(Schedulers.computation())?.subscribe(this)
         }
     }
 

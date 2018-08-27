@@ -55,7 +55,7 @@ constructor(private var mDataController: MesonetDataController,
             })
         }
 
-        mMesonetSiteDataController.GetCurrentSelectionObservable().subscribe(object: Observer<MesonetSiteDataController.ProcessedMesonetSite>{
+        mMesonetSiteDataController.GetCurrentSelectionObservable().observeOn(Schedulers.computation()).subscribe(object: Observer<MesonetSiteDataController.ProcessedMesonetSite>{
             override fun onComplete() {}
             override fun onSubscribe(d: Disposable)
             {

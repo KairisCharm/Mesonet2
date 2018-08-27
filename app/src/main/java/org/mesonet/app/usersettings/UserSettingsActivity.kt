@@ -29,7 +29,7 @@ class UserSettingsActivity: BaseActivity()
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.user_settings_activity)
 
-        mPreferences.UnitPreferencesObservable(this).subscribe (object: Observer<Preferences.UnitPreference>
+        mPreferences.UnitPreferencesObservable(this).observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<Preferences.UnitPreference>
         {
             var disposable: Disposable? = null
             override fun onComplete() {}

@@ -103,7 +103,7 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
                     }.retryWhen { mSiteDataController.GetCurrentSelectionObservable() }.retryWhen { mConnectivityObservable }.retryWhen { mTickObservable }.subscribeOn(Schedulers.computation())
                 }
 
-                mUpdateObservable?.subscribe(object : Observer<MesonetData> {
+                mUpdateObservable?.observeOn(Schedulers.computation())?.subscribe(object : Observer<MesonetData> {
                     override fun onComplete() {}
                     override fun onSubscribe(d: Disposable) {
                         mUpdateDisposable?.dispose()
