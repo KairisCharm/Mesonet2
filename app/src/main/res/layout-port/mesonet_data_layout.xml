@@ -4,6 +4,7 @@
     xmlns:card_view="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
+        <import type="android.view.View"/>
         <variable
             name="displayFields"
             type="org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController.MesonetDisplayFields"/>
@@ -27,7 +28,8 @@
             tools:layout_weight="7"
             android:orientation="vertical"
             android:paddingStart="16dp"
-            android:paddingEnd="16dp">
+            android:paddingEnd="16dp"
+            android:visibility="gone">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -91,13 +93,14 @@
                             android:layout_weight="1"
                             android:autoSizeTextType="uniform"
                             app:autoSizeTextType="uniform"
-                            android:text="@string/current_feelsLike"
+                            android:text="@string/currentFeelsLike"
                             android:textColor="@color/lightTextColor"
                             android:textAllCaps="true"
-                            android:textStyle="bold"/>
+                            android:textStyle="bold"
+                            android:visibility="@{(currentFeelsLike.getText() == null || currentFeelsLike.getText().toString().isEmpty()) ? View.INVISIBLE : View.VISIBLE}"/>
 
                         <TextView
-                            android:id="@+id/current_feelsLike"
+                            android:id="@+id/currentFeelsLike"
                             android:layout_width="match_parent"
                             android:layout_height="0dp"
                             android:layout_weight="2"
@@ -140,11 +143,12 @@
                         app:autoSizeMaxTextSize="48sp"
                         android:textAllCaps="true"
                         android:textStyle="bold"
-                        android:text="@string/current_dewpoint"
-                        android:textColor="@color/lightTextColor" />
+                        android:text="@string/currentDewpoint"
+                        android:textColor="@color/lightTextColor"
+                        android:visibility="@{(currentDewpoint.getText() == null || currentDewpoint.getText().toString().isEmpty()) ? View.INVISIBLE : View.VISIBLE}"/>
 
                     <TextView
-                        android:id="@+id/current_dewpoint"
+                        android:id="@+id/currentDewpoint"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
                         android:layout_weight="6"
@@ -169,11 +173,12 @@
                         app:autoSizeTextType="uniform"
                         android:textStyle="bold"
                         android:textAllCaps="true"
-                        android:text="@string/current_wind"
-                        android:textColor="@color/lightTextColor"/>
+                        android:text="@string/currentWind"
+                        android:textColor="@color/lightTextColor"
+                        android:visibility="@{(currentWind.getText() == null || currentWind.getText().toString().isEmpty()) ? View.INVISIBLE : View.VISIBLE}"/>
 
                     <TextView
-                        android:id="@+id/current_wind"
+                        android:id="@+id/currentWind"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
                         android:layout_weight="6"
@@ -194,15 +199,16 @@
                         android:layout_weight="5"
                         android:autoSizeMaxTextSize="48sp"
                         app:autoSizeMaxTextSize="48sp"
-                        android:text="@string/current_24hrRain"
+                        android:text="@string/current24HrRain"
                         android:textColor="@color/lightTextColor"
                         android:textAllCaps="true"
                         android:textStyle="bold"
                         android:autoSizeTextType="uniform"
-                        app:autoSizeTextType="uniform"/>
+                        app:autoSizeTextType="uniform"
+                        android:visibility="@{(current24HrRain.getText() == null || current24HrRain.getText().toString().isEmpty()) ? View.INVISIBLE : View.VISIBLE}"/>
 
                     <TextView
-                        android:id="@+id/current_24hrRain"
+                        android:id="@+id/current24HrRain"
                         android:layout_width="match_parent"
                         android:layout_height="0dp"
                         android:layout_weight="6"

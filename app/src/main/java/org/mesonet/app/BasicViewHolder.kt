@@ -20,7 +20,7 @@ class BasicViewHolder(inParent: ViewGroup, private var mSelectedListener: Select
         GetBinding()?.text = inData?.second?.GetName()
         GetBinding()?.root?.setOnClickListener {
             it.isEnabled = false
-            mSelectedListener.SetResult(mContext,inData?.first?: "")
+            mSelectedListener.SetResult(inData?.first?: "")
             it.isEnabled = true
         }
     }

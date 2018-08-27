@@ -1,6 +1,7 @@
 package org.mesonet.network
 
 import android.graphics.Bitmap
+import android.util.Log
 import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.models.advisories.Advisory
@@ -47,6 +48,7 @@ class DataProviderImpl @Inject constructor(): DataProvider {
             .create(MesonetService::class.java)
 
     override fun GetMesonetSites(): Observable<MesonetSiteList> {
+        Log.e("Network", "GetMesonetSites")
         return mMesonetService.GetMesonetSites()
                 .map { it as MesonetSiteList }
                 .subscribeOn(Schedulers.io())
@@ -54,12 +56,16 @@ class DataProviderImpl @Inject constructor(): DataProvider {
 
 
     override fun GetMesonetData(inStid: String): Observable<MesonetData> {
+        Log.e("Network", "GetMesonetData-$inStid")
         return mMesonetService.GetMesonetData(inStid).subscribeOn(Schedulers.computation())
     }
 
 
-    override fun GetForecast(inStid: String): Observable<List<Forecast>> {
-        return mMesonetService.GetForecast(inStid).subscribeOn(Schedulers.io())
+    override fun GetForecast(inStid: String): Observable<Pair<List<Forecast>, String>> {
+        Log.e("Network", "GetForecast-$inStid")
+        return mMesonetService.GetForecast(inStid).map { data ->
+            Pair(data, inStid)
+        }.subscribeOn(Schedulers.io())
     }
 
 
@@ -69,6 +75,7 @@ class DataProviderImpl @Inject constructor(): DataProvider {
 
 
     override fun GetMaps(): Observable<MapsList> {
+        Log.e("Network", "GetMaps")
         return mMesonetService.GetMaps()
                 .map { it as MapsList }
                 .subscribeOn(Schedulers.io())
@@ -76,6 +83,7 @@ class DataProviderImpl @Inject constructor(): DataProvider {
 
 
     override fun GetRadarHistory(inSiteId: String): Observable<RadarHistory> {
+        Log.e("Network", "GetRadarHistory-$inSiteId")
         return mMesonetService.GetRadarHistory(inSiteId).map { it as RadarHistory }.subscribeOn(Schedulers.io())
     }
 
@@ -83,12 +91,14 @@ class DataProviderImpl @Inject constructor(): DataProvider {
     override fun GetRadarImage(inSiteId: String,
                       inImageId: String): Observable<Bitmap>
     {
+        Log.e("Network", "GetRadarImage-$inSiteId-$inImageId")
         return mMesonetService.GetRadarImage(inSiteId, inImageId)
     }
 
 
     override fun GetAdvisoriesList(): Observable<Advisory.AdvisoryList>
     {
+        Log.e("Network", "GetAdvisoriesList")
         return mMesonetService.GetAdvisoriesList().subscribeOn(Schedulers.io())
     }
 

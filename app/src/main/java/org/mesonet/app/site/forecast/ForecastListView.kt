@@ -14,82 +14,41 @@ import org.mesonet.dataprocessing.site.forecast.ForecastData
 import org.mesonet.dataprocessing.site.forecast.SemiDayForecastDataController
 
 class ForecastListView(inActivity: Activity) : LinearLayout(inActivity) {
-	private var mBinding: ForecastListViewBinding? = null
+    private var mBinding: ForecastListViewBinding? = null
 
-	private var mDisposable: Disposable? = null
+    private var mDisposable: Disposable? = null
 
-	init {
-		mBinding = DataBindingUtil.inflate(LayoutInflater.from(inActivity), R.layout.forecast_list_view, this, true)
+    private var mActivity: Activity = inActivity
 
-		val totalForecastsCount = resources.getInteger(R.integer.forecastsPerPage)
-
-		for (i in 0 until totalForecastsCount) {
-			val forecastLayout = ForecastLayout(inActivity)
-			mBinding?.layout?.addView(forecastLayout)
-			forecastLayout.layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
-		}
-	}
+    init {
+        mBinding = DataBindingUtil.inflate(LayoutInflater.from(inActivity), R.layout.forecast_list_view, this, true)
+    }
 
 
-	internal fun SetSemiDayForecast(inForecastIndex: Int, inController: SemiDayForecastDataController) {
-		if (mBinding != null) {
-			if (inForecastIndex < mBinding?.layout?.childCount?: 0) {
-				inController.GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<ForecastData>
-				{
-					override fun onComplete() {}
-					override fun onSubscribe(d: Disposable) {
-						mDisposable = d
-					}
+    internal fun SetSemiDayForecast(inForecastIndex: Int, inController: SemiDayForecastDataController) {
+        if (mBinding != null) {
+            val totalForecastsCount = resources.getInteger(R.integer.forecastsPerPage)
 
-					override fun onNext(t: ForecastData) {
-						(mBinding?.layout?.getChildAt(inForecastIndex) as ForecastLayout).SetData(t)
-					}
+            while (mBinding?.layout?.childCount?: Int.MAX_VALUE <= inForecastIndex % totalForecastsCount) {
 
-					override fun onError(e: Throwable) {
-						e.printStackTrace()
-						onNext(object: ForecastData{
-							override fun IsLoading(): Boolean {
-								return false
-							}
+                val forecastLayout = ForecastLayout(mActivity, inForecastIndex)
+                mBinding?.layout?.addView(forecastLayout)
+                forecastLayout.layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
+            }
 
-							override fun GetTime(): String {
-								return ""
-							}
+            val child = mBinding?.layout?.getChildAt(inForecastIndex % totalForecastsCount)
 
-							override fun GetIconUrl(): String {
-								return ""
-							}
-
-							override fun GetStatus(): String {
-								return ""
-							}
-
-							override fun GetHighOrLowTemp(): String {
-								return ""
-							}
-
-							override fun GetWindDescription(): String {
-								return ""
-							}
-
-							override fun compareTo(other: ForecastData): Int {
-								return 1
-							}
-						})
-					}
-				})
-			}
-		}
-	}
+            (child as? ForecastLayout)?.SetController(inController)
+        }
+    }
 
 
-	fun Dispose()
-	{
-		mDisposable?.dispose()
-		for(i in 0..(mBinding?.layout?.childCount?: 0 - 1))
-		{
-			if(mBinding?.layout?.getChildAt(i) is ForecastLayout)
-				(mBinding?.layout?.getChildAt(i) as ForecastLayout).Dispose()
-		}
-	}
+    fun Dispose() {
+        mDisposable?.dispose()
+        mDisposable = null
+        for (i in 0..(mBinding?.layout?.childCount ?: 0-1)) {
+            if (mBinding?.layout?.getChildAt(i) is ForecastLayout)
+                (mBinding?.layout?.getChildAt(i) as ForecastLayout).Dispose()
+        }
+    }
 }

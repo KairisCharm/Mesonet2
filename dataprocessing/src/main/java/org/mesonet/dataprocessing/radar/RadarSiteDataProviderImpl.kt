@@ -3,13 +3,12 @@ package org.mesonet.dataprocessing.radar
 import android.app.Activity
 import android.content.Context
 import android.location.Location
-import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
+import io.reactivex.*
 import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.Observables
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import org.mesonet.core.PerFragment
+import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.radar.RadarDetails
@@ -18,11 +17,11 @@ import org.mesonet.models.radar.RadarDetailCreator
 import javax.inject.Inject
 
 
-@PerFragment
+@PerContext
 class RadarSiteDataProviderImpl @Inject
 constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator, internal var mPreferences: Preferences) : RadarSiteDataProvider {
-    private var mSelectedSiteNameSubject: BehaviorSubject<String> = BehaviorSubject.create()
-    private var mSelectedSiteDetailSubject: BehaviorSubject<RadarDetails> = BehaviorSubject.create()
+
+    private var mSelectedSiteInfoSubject: BehaviorSubject<Map.Entry<String, RadarDetails>> = BehaviorSubject.create()
 
     private var mSiteSubject: BehaviorSubject<Map<String, RadarDetails>> = BehaviorSubject.create()
 
@@ -30,100 +29,64 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator, in
 
 
     init {
-        mSelectedSiteNameSubject.observeOn(Schedulers.computation()).subscribe(object: Observer<String>{
-            override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {
-                mSiteDisposable = d
-            }
+        Observables.combineLatest(Observable.create(ObservableOnSubscribe<String> {
+                        it.onNext(inContext.resources.openRawResource(inContext.resources.getIdentifier("radar_list", "raw", inContext.packageName)).bufferedReader().use { it.readText() })
+                        it.onComplete()
+                    }).subscribeOn(Schedulers.io()),
+                mPreferences.SelectedRadarObservable(inContext))
+        {
+            siteString, selectedSite ->
+            val sites = mRadarDetailCreator.ParseRadarJson(siteString)
 
-            override fun onNext(t: String) {
-                if (mSiteSubject.hasValue() && mSiteSubject.value.containsKey(t))
-                    mSelectedSiteDetailSubject.onNext(mSiteSubject.value[t]
-                            ?: object : RadarDetails {
-                                override fun GetLatitude(): Float? {
-                                    return null
-                                }
+            Pair(sites, selectedSite)
+        }.subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(object: Observer<Pair<Map<String, RadarDetails>, String>>{
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {}
 
-                                override fun GetLongitude(): Float? {
-                                    return null
-                                }
+                override fun onNext(t: Pair<Map<String, RadarDetails>, String>) {
+                    var selectedSite = t.second
 
-                                override fun GetSouthWestCorner(): RadarDetails.Corner? {
-                                    return null
-                                }
+                    if(selectedSite.isBlank())
+                        selectedSite = "KTLX"
 
-                                override fun GetNorthEastCorner(): RadarDetails.Corner? {
-                                    return null
-                                }
+                    if(t.first.containsKey(selectedSite) && (!mSelectedSiteInfoSubject.hasValue() || mSelectedSiteInfoSubject.value?.key != selectedSite)) {
+                        mSelectedSiteInfoSubject.onNext(t.first.entries.first { it.key == selectedSite })
+                    }
 
-                                override fun GetName(): String? {
-                                    return null
-                                }
-                            })
-            }
+                    mSiteSubject.onNext(t.first)
+                }
 
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-                onNext("KTLX")
-            }
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
 
-        })
-
-        Observable.create(ObservableOnSubscribe<String> {
-            it.onNext(inContext.resources.openRawResource(inContext.resources.getIdentifier("radar_list", "raw", inContext.packageName)).bufferedReader().use { it.readText() })
-            it.onComplete()
-        }).subscribeOn(Schedulers.io()).observeOn(Schedulers.computation()).map {
-            mRadarDetailCreator.ParseRadarJson(it)
-        }.subscribe(object: Observer<Map<String, RadarDetails>> {
+        mSelectedSiteInfoSubject.flatMap {
+            mPreferences.SetSelectedRadar(inContext, it.key).toObservable()
+        }.subscribe(object: Observer<Int>{
             override fun onComplete() {}
             override fun onSubscribe(d: Disposable) {}
-
+            override fun onNext(t: Int) {}
             override fun onError(e: Throwable) {
                 e.printStackTrace()
             }
 
-            override fun onNext(t: Map<String, RadarDetails>) {
-                mSiteSubject.onNext(t)
-
-                var radarId = "KTLX"
-                if(mPreferences.SelectedRadarSubject(inContext).hasValue() && t.containsKey(mPreferences.SelectedRadarSubject(inContext).value))
-                    radarId = mPreferences.SelectedRadarSubject(inContext).value
-                else
-                    mPreferences.SetSelectedRadar(inContext, radarId)
-
-
-                if(t.containsKey(radarId)) {
-                    mSelectedSiteNameSubject.onNext(radarId)
-                    mSelectedSiteDetailSubject.onNext(t[radarId] ?: t.values.first())
-                }
-            }
         })
     }
 
 
 
-    override fun GetSelectedSiteNameSubject(): BehaviorSubject<String>
+    override fun GetSelectedSiteInfoObservable(): Observable<Map.Entry<String, RadarDetails>>
     {
-        return mSelectedSiteNameSubject
-    }
-
-
-    override fun GetSelectedSiteDetailSubject(): BehaviorSubject<RadarDetails>
-    {
-        return mSelectedSiteDetailSubject
-    }
-
-
-    fun GetDataSubject(): BehaviorSubject<Map<String, RadarDetails>> {
-        return mSiteSubject
+        return mSelectedSiteInfoSubject
     }
 
 
     override fun CurrentSelection(): String {
-        if(!mSelectedSiteNameSubject.hasValue())
+        if(!mSelectedSiteInfoSubject.hasValue())
             return ""
 
-        return mSelectedSiteNameSubject.value
+        return mSelectedSiteInfoSubject.value?.key?: ""
     }
 
 
@@ -131,10 +94,10 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator, in
     {
         return Observable.create (
             ObservableOnSubscribe<Pair<Map<String, BasicListData>, String>> {
-            val resultMap = mSiteSubject.value.mapValues {
+            val resultMap: Map<String, BasicListData> = mSiteSubject.value?.mapValues {
                 object : BasicListData {
                     override fun GetName(): String {
-                        return it.key + " - " + it.value.GetName()
+                        return "${it.key} - ${it.value.GetName()}"
                     }
 
                     override fun IsFavorite(): Boolean {
@@ -151,25 +114,24 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator, in
                     }
 
                 }
-            }
+            }?: HashMap()
 
-            it.onNext(Pair(resultMap, mSelectedSiteNameSubject.value))
-            it.onComplete()
+            it.onNext(Pair(resultMap, mSelectedSiteInfoSubject.value?.key?: ""))
         }).subscribeOn(Schedulers.computation())
     }
 
 
-    override fun SetResult(inContext: Context, inResult: String) {
-        mSelectedSiteNameSubject.onNext(inResult)
-        mPreferences.SetSelectedRadar(inContext, inResult)
+    override fun SetResult(inResult: String) {
+        if(mSiteSubject.hasValue() && mSiteSubject.value?.containsKey(inResult) == true)
+            mSelectedSiteInfoSubject.onNext(mSiteSubject.value?.entries?.first{ it.key == inResult }!!)
     }
 
 
     override fun Dispose()
     {
         mSiteDisposable?.dispose()
-        mSelectedSiteNameSubject.onComplete()
-        mSelectedSiteDetailSubject.onComplete()
+        mSiteDisposable = null
+        mSelectedSiteInfoSubject.onComplete()
         mSiteSubject.onComplete()
     }
 }

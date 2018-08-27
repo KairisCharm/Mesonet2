@@ -1,8 +1,8 @@
 package org.mesonet.dataprocessing.filterlist
 
 import android.location.Location
+import io.reactivex.*
 import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
@@ -10,12 +10,13 @@ import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.BasicListData
 import org.mesonet.dataprocessing.LocationProvider
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.collections.HashMap
 
 @PerContext
 class FilterListControllerImpl @Inject constructor(): FilterListController {
-    private var mSortByNearest = false
+    private var mSortByNearest = AtomicBoolean(false)
 
 
     @Inject
@@ -82,32 +83,14 @@ class FilterListControllerImpl @Inject constructor(): FilterListController {
     }
 
 
-    override fun TryGetLocationAndFillListObservable(inSearchText: String?, inListData: Map<String, BasicListData>?): Observable<MutableList<Pair<String, BasicListData>>> {
-        return Observable.create (ObservableOnSubscribe<MutableList<Pair<String, BasicListData>>>{observer ->
-            if (mSortByNearest) {
-                mDeviceLocation.GetLocation().observeOn(Schedulers.computation()).subscribe(object: Observer<LocationProvider.LocationResult>
-                {
-                    override fun onComplete() {}
-                    override fun onSubscribe(d: Disposable) {}
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-                        onNext(object: LocationProvider.LocationResult{
-                            override fun LocationResult(): Location? {
-                                return null
-                            }
-                        })
-                    }
+    override fun TryGetLocationAndFillListObservable(inSearchText: String?, inListData: Map<String, BasicListData>?): Single<MutableList<Pair<String, BasicListData>>> {
+        if(mSortByNearest.get())
+            return mDeviceLocation.GetLocation().map {
+                GenerateList(inSearchText, inListData, it.LocationResult())
+            }.subscribeOn(Schedulers.computation())
 
-                    override fun onNext(t: LocationProvider.LocationResult) {
-                        observer.onNext(GenerateList(inSearchText, inListData, t.LocationResult()))
-                        observer.onComplete()
-                    }
-                })
-            } else {
-                observer.onNext(GenerateList(inSearchText, inListData, null))
-                observer.onComplete()
-            }
-
+        return Single.create (SingleOnSubscribe<MutableList<Pair<String, BasicListData>>>{ observer ->
+            observer.onSuccess(GenerateList(inSearchText, inListData, null))
         }).subscribeOn(Schedulers.computation())
     }
 
@@ -117,14 +100,14 @@ class FilterListControllerImpl @Inject constructor(): FilterListController {
     }
 
 
-    override fun SortByNearest(inSortText: String?, inListData: Map<String, BasicListData>?): Observable<MutableList<Pair<String, BasicListData>>> {
-        mSortByNearest = true
+    override fun SortByNearest(inSortText: String?, inListData: Map<String, BasicListData>?): Single<MutableList<Pair<String, BasicListData>>> {
+        mSortByNearest.set(true)
         return TryGetLocationAndFillListObservable(inSortText, inListData)
     }
 
 
-    override fun SortByName(inSortText: String?, inListData: Map<String, BasicListData>?): Observable<MutableList<Pair<String, BasicListData>>> {
-        mSortByNearest = false
+    override fun SortByName(inSortText: String?, inListData: Map<String, BasicListData>?): Single<MutableList<Pair<String, BasicListData>>> {
+        mSortByNearest.set(false)
         return TryGetLocationAndFillListObservable(inSortText, inListData)
     }
 

@@ -1,26 +1,29 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
-import android.content.Context
-import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.Observable
+import io.reactivex.ObservableSource
 import org.mesonet.core.DefaultUnits
-import org.mesonet.dataprocessing.userdata.Preferences
-import org.mesonet.models.site.mesonetdata.MesonetData
+import org.mesonet.dataprocessing.LifecycleListener
+import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import java.util.*
 
-interface MesonetDataController
+interface MesonetDataController: LifecycleListener
 {
-    fun GetDataSubject(inContext: Context): BehaviorSubject<MesonetData>
-    fun GetStationName(): String
-    fun StationIsFavorite(): Boolean
-    fun ProcessTime(): Date?
-    fun ProcessTemp(inUnitPreference: Preferences.UnitPreference): Double?
-    fun ProcessApparentTemp(inUnitPreference: Preferences.UnitPreference): Double?
-    fun ProcessDewpoint(inUnitPreference: Preferences.UnitPreference): Double?
-    fun ProcessWindSpd(inUnitPreference: Preferences.UnitPreference): Double?
-    fun ProcessWindDirection(): DefaultUnits.CompassDirections?
-    fun Process24HrRain(inUnitPreference: Preferences.UnitPreference): Double?
-    fun ProcessHumidity(): Int?
-    fun ProcessMaxWind(inUnitPreference: Preferences.UnitPreference): Double?
-    fun ProcessPressure(inUnitPreference: Preferences.UnitPreference): Double?
-    fun Dispose()
+    fun GetDataObservable(): Observable<ProcessedMesonetData>
+    fun GetCurrentSiteObservable(): Observable<MesonetSiteDataController.ProcessedMesonetSite>
+    fun GetConnectivityStateObservable(): Observable<Boolean>
+
+    interface ProcessedMesonetData{
+        fun GetStationName(): String
+        fun GetTime(): Date?
+        fun GetTemp(): Double?
+        fun GetApparentTemp(): Double?
+        fun GetDewpoint(): Double?
+        fun GetWindSpeed(): Double?
+        fun GetWindDirection(): DefaultUnits.CompassDirections?
+        fun GetMaxWind(): Double?
+        fun Get24HrRain(): Double?
+        fun GetHumidity(): Int?
+        fun GetPressure(): Double?
+    }
 }

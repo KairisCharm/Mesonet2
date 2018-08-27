@@ -6,10 +6,12 @@ import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.Observables
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.core.PerFragment
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 import javax.inject.Inject
 
@@ -18,11 +20,13 @@ import javax.inject.Inject
 @PerFragment
 class MapboxMapControllerImpl @Inject constructor(): MapboxMapController
 {
-    private var mPlayPauseSubject: BehaviorSubject<Boolean> = BehaviorSubject.create()
     private var mSelectedImageIndexSubject: BehaviorSubject<Int> = BehaviorSubject.create()
 
-    private var mPlayPauseStateDisposable: Disposable? = null
     private var mPlayPauseTimerDisposable: Disposable? = null
+
+    private var mCameraSubject: BehaviorSubject<CameraPosition> = BehaviorSubject.create()
+
+    private var mPlaySubject: BehaviorSubject<Boolean> = BehaviorSubject.create()
 
     private var mFrameCount = 0
 
@@ -30,79 +34,65 @@ class MapboxMapControllerImpl @Inject constructor(): MapboxMapController
 
 
     init {
+        mPlaySubject.onNext(false)
         mTransparencySubject.onNext(0.7f)
         mSelectedImageIndexSubject.onNext(0)
-        mPlayPauseSubject.onNext(false)
 
-        mPlayPauseSubject.observeOn(Schedulers.computation()).subscribe(object: Observer<Boolean>
+        Observables.combineLatest(Observable.interval(0, 1, TimeUnit.SECONDS),
+                mPlaySubject)
         {
+            tick, play ->
+
+            Pair(tick, play)
+        }.observeOn(Schedulers.computation()).subscribe (object: Observer<Pair<Long, Boolean>>{
             override fun onComplete() {}
             override fun onSubscribe(d: Disposable) {
-                mPlayPauseStateDisposable = d
+                mPlayPauseTimerDisposable = d
             }
 
-            override fun onNext(t: Boolean) {
-                mPlayPauseTimerDisposable?.dispose()
-
-                if(t)
+            override fun onNext(t: Pair<Long, Boolean>) {
+                synchronized(mSelectedImageIndexSubject)
                 {
-                    Observable.interval(0, 1, TimeUnit.SECONDS).observeOn(Schedulers.computation()).subscribe (object: Observer<Long>{
-                        override fun onComplete() {}
-                        override fun onSubscribe(d: Disposable) {
-                            mPlayPauseTimerDisposable = d
+                    if(t.second) {
+                        var selectIndex = 0
+
+                        if (mSelectedImageIndexSubject.hasValue())
+                            selectIndex = mSelectedImageIndexSubject.value ?: 0
+
+                        selectIndex--
+
+                        if (selectIndex < 0) {
+                            selectIndex = mFrameCount - 1
                         }
 
-                        override fun onNext(t: Long) {
-                            synchronized(mSelectedImageIndexSubject)
-                            {
-                                var selectIndex = 0
+                        if (selectIndex >= mFrameCount)
+                            selectIndex = 0
 
-                                if (mSelectedImageIndexSubject.hasValue())
-                                    selectIndex = mSelectedImageIndexSubject.value
-
-                                selectIndex--
-
-                                if (selectIndex < 0) {
-                                    selectIndex = mFrameCount - 1
-                                }
-
-                                if (selectIndex >= mFrameCount)
-                                    selectIndex = 0
-
-                                mSelectedImageIndexSubject.onNext(selectIndex)
-                            }
-                        }
-
-                        override fun onError(e: Throwable) {
-                            e.printStackTrace()
-                            onNext(false)
-                        }
-
-                    })
-                }
-                else
-                {
-                    mSelectedImageIndexSubject.onNext(0)
+                        mSelectedImageIndexSubject.onNext(selectIndex)
+                    }
                 }
             }
 
             override fun onError(e: Throwable) {
                 e.printStackTrace()
-                onNext(false)
+                mPlaySubject.onNext(false)
             }
+
         })
     }
 
 
-    override fun GetCameraPositionObservable(inLat: Double, inLon: Double, inZoom: Double): Observable<CameraPosition>
+    override fun SetCameraPosition(inLat: Double, inLon: Double, inZoom: Double) {
+        mCameraSubject.onNext(CameraPosition.Builder()
+                .target(LatLng(inLat, inLon))
+                .zoom(inZoom)
+                .build())
+    }
+
+
+    override fun GetCameraPositionObservable(): Observable<CameraPosition>
     {
-        return Observable.create (ObservableOnSubscribe<CameraPosition>{
-            it.onNext(CameraPosition.Builder()
-                    .target(LatLng(inLat, inLon))
-                    .zoom(inZoom)
-                    .build())
-            it.onComplete()
-        }).subscribeOn(Schedulers.computation())
+        return mCameraSubject
     }
 
 
@@ -122,13 +112,13 @@ class MapboxMapControllerImpl @Inject constructor(): MapboxMapController
 
     override fun GetPlayPauseStateObservable(): Observable<Boolean>
     {
-        return mPlayPauseSubject
+        return mPlaySubject
     }
 
 
     override fun TogglePlay()
     {
-        mPlayPauseSubject.onNext(!mPlayPauseSubject.value)
+        mPlaySubject.onNext(mPlaySubject.value != true)
     }
 
 
@@ -141,9 +131,10 @@ class MapboxMapControllerImpl @Inject constructor(): MapboxMapController
 
     override fun Dispose()
     {
-        mPlayPauseStateDisposable?.dispose()
-        mPlayPauseSubject.onComplete()
+        mPlayPauseTimerDisposable?.dispose()
+        mPlayPauseTimerDisposable = null
         mSelectedImageIndexSubject.onComplete()
         mTransparencySubject.onComplete()
+        mCameraSubject.onComplete()
     }
 }

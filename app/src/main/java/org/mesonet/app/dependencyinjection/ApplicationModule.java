@@ -123,9 +123,6 @@ abstract class ApplicationModule
     abstract MapsDataProvider MapsDataProvider(MapsDataProviderImpl inMapsDataProvider);
 
     @Binds
-    abstract RadarSiteDataProvider RadarSiteDataProvider(RadarSiteDataProviderImpl inRadarSiteDataProvider);
-
-    @Binds
     abstract MapboxMapController MapboxMapController(MapboxMapControllerImpl inMapboxMapController);
 
     @Binds

@@ -5,10 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import io.reactivex.Observable
-import io.reactivex.ObservableEmitter
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
+import io.reactivex.*
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
@@ -24,11 +21,11 @@ constructor(): Permissions {
         return 0
     }
 
-    private val mPermissionsObservers = HashMap<String, MutableList<ObservableEmitter<Boolean>>>()
+    private val mPermissionsObservers = HashMap<String, MutableList<SingleEmitter<Boolean>>>()
 
 
-    override fun RequestPermission(inContext: Context?, inPermission: String): Observable<Boolean> {
-        return Observable.create(ObservableOnSubscribe<Boolean> {
+    override fun RequestPermission(inContext: Context?, inPermission: String): Single<Boolean> {
+        return Single.create(SingleOnSubscribe<Boolean> {
             synchronized(Permissions@this)
             {
                 if (!mPermissionsObservers.containsKey(inPermission))
@@ -39,9 +36,8 @@ constructor(): Permissions {
 
                 if(inContext == null)
                 {
-                    it.onNext(false)
-                    it.onComplete()
-                    return@ObservableOnSubscribe
+                    it.onSuccess(false)
+                    return@SingleOnSubscribe
                 }
                 if (ContextCompat.checkSelfPermission(inContext, inPermission) != PackageManager.PERMISSION_GRANTED) {
                     if (inContext is Activity) {
@@ -49,12 +45,10 @@ constructor(): Permissions {
                                 arrayOf(inPermission),
                                 0)
                     } else {
-                        it.onNext(false)
-                        it.onComplete()
+                        it.onSuccess(false)
                     }
                 } else {
-                    it.onNext(true)
-                    it.onComplete()
+                    it.onSuccess(true)
                 }
             }
         }).subscribeOn(Schedulers.computation())
@@ -62,7 +56,7 @@ constructor(): Permissions {
 
 
     override fun ProcessPermissionResponse(inPermissions: Array<String>, inGrantResults: IntArray) {
-        Observable.create(ObservableOnSubscribe<Void> {
+        Single.create(SingleOnSubscribe<Int> {
             for (i in inPermissions.indices) {
                 if (mPermissionsObservers.containsKey(inPermissions[i])) {
                     val permissionListeners = mPermissionsObservers[inPermissions[i]]
@@ -70,19 +64,17 @@ constructor(): Permissions {
                     val j = 0
                     if (permissionListeners != null) {
                         while (j < permissionListeners.size) {
-                            permissionListeners[j].onNext(inGrantResults[i] == PackageManager.PERMISSION_GRANTED)
-                            permissionListeners[j].onComplete()
+                            permissionListeners[j].onSuccess(inGrantResults[i] == PackageManager.PERMISSION_GRANTED)
                             permissionListeners.removeAt(j)
                         }
                     }
                 }
             }
 
-            it.onComplete()
-        }).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Void>{
-            override fun onComplete() {}
+            it.onSuccess(0)
+        }).subscribeOn(Schedulers.computation()).subscribe(object: SingleObserver<Int>{
+            override fun onSuccess(t: Int) {}
             override fun onSubscribe(d: Disposable) {}
-            override fun onNext(t: Void) {}
             override fun onError(e: Throwable) {
                 e.printStackTrace()
             }

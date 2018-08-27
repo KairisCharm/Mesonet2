@@ -9,6 +9,8 @@ import org.mesonet.cache.CacherImpl;
 import org.mesonet.cache.site.SiteCache;
 import org.mesonet.cache.site.SiteCacheImpl;
 import org.mesonet.core.PerContext;
+import org.mesonet.dataprocessing.ConnectivityStatusProvider;
+import org.mesonet.dataprocessing.ConnectivityStatusProviderImpl;
 import org.mesonet.dataprocessing.LocationProvider;
 import org.mesonet.dataprocessing.site.MesonetSiteDataController;
 import org.mesonet.dataprocessing.site.MesonetSiteDataControllerImpl;
@@ -57,4 +59,9 @@ public abstract class WidgetProviderLargeModule
     @Binds
     @PerContext
     abstract Cacher Cacher(CacherImpl inCache);
+
+
+    @Binds
+    @PerContext
+    abstract ConnectivityStatusProvider ConnectivityStatusProvider(ConnectivityStatusProviderImpl inStatusProvider);
 }

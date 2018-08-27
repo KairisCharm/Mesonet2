@@ -3,10 +3,11 @@ package org.mesonet.dataprocessing
 import android.content.Context
 import android.location.Location
 import io.reactivex.Observable
+import io.reactivex.Single
 
 interface LocationProvider
 {
-    fun GetLocation(): Observable<LocationResult>
+    fun GetLocation(): Single<LocationResult>
     fun RegisterGpsResult(inResultCode: Int)
 
 

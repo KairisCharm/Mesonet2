@@ -1,8 +1,8 @@
 package org.mesonet.cache
 
 import android.content.Context
-import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
+import io.reactivex.*
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
 import javax.inject.Inject
@@ -34,8 +34,9 @@ private var mRealm: Realm? = null
     }
 
 
-    override fun <T: RealmModel> SaveToCache(inContext: Context, inClass: Class<T>, inList: List<T>): Observable<Void> {
-        return Observable.create(ObservableOnSubscribe<Void>{
+    override fun <T: RealmModel> SaveToCache(inContext: Context, inClass: Class<T>, inList: List<T>): Single<Int>
+    {
+        return Single.create(SingleOnSubscribe<Int>{
             synchronized(this@CacherImpl) {
                 if(mRealm == null)
                     Init(inContext)
@@ -44,29 +45,27 @@ private var mRealm: Realm? = null
                     inRealm.copyToRealm(inList)
                 }
 
-                it.onComplete()
+                it.onSuccess(0)
             }
         }).subscribeOn(mRealmScheduler)
     }
 
 
-    override fun <T : RealmModel> FindAll(inContext: Context, inClass: Class<T>): Observable<RealmResults<T>> {
-        return Observable.create(ObservableOnSubscribe<RealmResults<T>> {
+    override fun <T : RealmModel> FindAll(inContext: Context, inClass: Class<T>): Single<RealmResults<T>> {
+        return Single.create(SingleOnSubscribe<RealmResults<T>> {
             synchronized(this@CacherImpl) {
                 if(mRealm == null)
                     Init(inContext)
                 try {
                     val result = mRealm?.where(inClass)?.findAll()
                     if(result != null)
-                        it.onNext(result)
+                        it.onSuccess(result)
                 }
                 catch (e: Exception)
                 {
                     it.onError(e)
                 }
             }
-
-            it.onComplete()
         }).subscribeOn(mRealmScheduler)
     }
 }

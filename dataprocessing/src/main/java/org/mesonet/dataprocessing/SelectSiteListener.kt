@@ -4,5 +4,5 @@ import android.content.Context
 
 
 interface SelectSiteListener {
-    fun SetResult(inContext: Context, inResult: String)
+    fun SetResult(inResult: String)
 }

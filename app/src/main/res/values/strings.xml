@@ -1,13 +1,13 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" tools:override="true">Mesonet</string>
 
-    <string name="current_feelsLike">Feels Like</string>
-    <string name="current_dewpoint">Dewpoint</string>
-    <string name="current_wind">Wind</string>
-    <string name="current_24hrRain">24-hr Rainfall</string>
-    <string name="current_humidity">Humidity</string>
-    <string name="current_windGusts">Wind Gusts</string>
-    <string name="current_pressure">Pressure</string>
+    <string name="currentFeelsLike">Feels Like</string>
+    <string name="currentDewpoint">Dewpoint</string>
+    <string name="currentWind">Wind</string>
+    <string name="current24HrRain">24-hr Rainfall</string>
+    <string name="currentHumidity">Humidity</string>
+    <string name="currentWindGusts">Wind Gusts</string>
+    <string name="currentPressure">Pressure</string>
     <string name="MetricUnits">Metric Units</string>
     <string name="ImperialUnits">Imperial Units</string>
     <string name="UserSettings">User settings</string>

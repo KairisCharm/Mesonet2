@@ -18,6 +18,7 @@ class PlayPauseButton(mContext: Context, inAttrs: AttributeSet) : FloatingAction
 
     var mPlayPauseDisposable: Disposable? = null
     internal fun SetPlayPauseState(inPlayPauseState: Observable<Boolean>) {
+        mPlayPauseDisposable?.dispose()
         inPlayPauseState.observeOn(AndroidSchedulers.mainThread())?.subscribe(this)
     }
 

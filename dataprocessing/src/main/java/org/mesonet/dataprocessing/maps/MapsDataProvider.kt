@@ -1,15 +1,18 @@
 package org.mesonet.dataprocessing.maps
 
 import io.reactivex.Observable
+import org.mesonet.dataprocessing.LifecycleListener
+import org.mesonet.dataprocessing.PageStateInfo
 import java.io.Serializable
 
-interface MapsDataProvider {
+interface MapsDataProvider: LifecycleListener {
     companion object {
         val kAbbreviatedDisplayLimit = 4
         val kGenericSectionHeaderText = "Other"
     }
 
     fun GetMapsListObservable(): Observable<MutableList<MapAbbreviatedGroupDisplayData>>
+    fun GetPageStateObservable(): Observable<PageStateInfo>
 
     interface MapAbbreviatedGroupDisplayData
     {

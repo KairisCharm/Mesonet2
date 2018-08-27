@@ -48,8 +48,4 @@ abstract class RadarFragmentModule
     @PerFragment
     abstract SelectSiteListener OnSelectedListener(RadarSiteDataProvider inSiteDataController);
 
-
-    @Binds
-    @PerFragment
-    abstract RadarImageDataProvider RadarImageDataProvider(RadarDataController inRadarDataController);
 }

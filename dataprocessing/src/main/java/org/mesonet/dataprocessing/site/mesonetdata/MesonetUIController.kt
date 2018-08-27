@@ -1,11 +1,14 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
-import android.content.Context
-import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.Observable
+import org.mesonet.dataprocessing.LifecycleListener
+import org.mesonet.dataprocessing.PageStateInfo
 
-interface MesonetUIController
+
+interface MesonetUIController: LifecycleListener
 {
-    fun GetDisplayFieldsSubject(inContext: Context): BehaviorSubject<MesonetDisplayFields>
+    fun GetDisplayFieldsObservable(): Observable<MesonetDisplayFields>
+    fun GetPageStateObservable(): Observable<PageStateInfo>
 
     interface MesonetDisplayFields
     {
@@ -21,4 +24,6 @@ interface MesonetUIController
         fun GetTimeString(): String
         fun IsFavorite(): Boolean
     }
+
+
 }

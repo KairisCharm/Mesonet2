@@ -9,7 +9,8 @@ interface MapboxMapController
     fun GetPlayPauseStateObservable(): Observable<Boolean>
     fun TogglePlay()
     fun GetTransparencySubject(): BehaviorSubject<Float>
-    fun GetCameraPositionObservable(inLat: Double, inLon: Double, inZoom: Double): Observable<CameraPosition>
+    fun SetCameraPosition(inLat: Double, inLon: Double, inZoom: Double)
+    fun GetCameraPositionObservable(): Observable<CameraPosition>
     fun SetFrameCount(inFrameCount: Int)
     fun GetActiveImageIndexObservable(): Observable<Int>
     fun Dispose()

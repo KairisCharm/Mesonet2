@@ -8,17 +8,19 @@
         <org.mesonet.app.baseclasses.RecyclerView
             android:id="@+id/advisoriesRecyclerView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:visibility="gone"/>
 
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="56dp"
             android:layout_height="56dp"
             android:indeterminateTint="@color/lightTextColor"
-            android:layout_centerInParent="true"/>
+            android:layout_centerInParent="true"
+            android:visibility="gone"/>
 
         <TextView
-            android:id="@+id/emptyListText"
+            android:id="@+id/errorText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"

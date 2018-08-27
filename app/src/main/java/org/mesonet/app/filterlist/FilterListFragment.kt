@@ -1,9 +1,7 @@
 package org.mesonet.app.filterlist
 
 
-import android.content.Context
 import android.databinding.DataBindingUtil
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -13,6 +11,7 @@ import android.view.ViewGroup
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
+import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 
@@ -66,30 +65,17 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
         mBinding.siteSelectionToolbar.inflateMenu(R.menu.search_list_menu)
 
         mBinding.siteSelectionToolbar.menu.findItem(R.id.nearestLocation).setOnMenuItemClickListener {
-            mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Pair<Map<String, BasicListData>, String>>
-            {
-                override fun onComplete() {}
-                override fun onSubscribe(d: Disposable) {}
-                override fun onNext(t: Pair<Map<String, BasicListData>, String>) {
-                    mFilterListController.SortByNearest(mBinding.searchText.text.toString(), t.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
-                }
+            mDisposable?.dispose()
+            mDisposable = null
+            mFilterListData.AsBasicListData().flatMap {t ->
+                mFilterListController.SortByNearest(mBinding.searchText.text.toString(), t.first).toObservable()
+            }.observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
 
-                override fun onError(e: Throwable) {
-                    e.printStackTrace()
-                }
-
-            })
             false
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            closeDrawable.setTint(resources.getColor(R.color.lightTextColor, activity?.theme))
-            mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor, activity?.theme))
-        }
-        else {
-            closeDrawable.setTint(resources.getColor(R.color.lightTextColor))
-            mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor))
-        }
+        closeDrawable.setTint(resources.getColor(R.color.lightTextColor, activity?.theme))
+        mBinding.searchText.setTextColor(resources.getColor(R.color.lightTextColor, activity?.theme))
 
         mTextChangedListener = object : TextWatcher {
             override fun beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
@@ -97,42 +83,27 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
             }
 
             override fun onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
-                mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Pair<Map<String, BasicListData>, String>>
-                {
-                    override fun onComplete() {}
-                    override fun onSubscribe(d: Disposable) {}
-
-                    override fun onNext(t: Pair<Map<String, BasicListData>, String>) {
-                        mFilterListController.SortByName(mBinding.searchText.text.toString(), t.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
-                    }
-
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-                    }
-
-                })
+                mDisposable?.dispose()
+                mDisposable = null
+                mFilterListData.AsBasicListData().flatMap {
+                    mFilterListController.SortByName(mBinding.searchText.text.toString(), it.first).toObservable()
+                }.observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
             }
 
             override fun afterTextChanged(editable: Editable) {
             }
         }
 
-        mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Pair<Map<String, BasicListData>, String>>
-        {
-            override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {}
-            override fun onNext(t: Pair<Map<String, BasicListData>, String>) {
-                if (t.first.containsKey(mFilterListData.CurrentSelection()))
-                    mBinding.searchText.setText(t.first[mFilterListData.CurrentSelection()]?.GetName())
-                mBinding.searchText.addTextChangedListener(mTextChangedListener)
+        mDisposable?.dispose()
+        mDisposable = null
+        mFilterListData.AsBasicListData().observeOn(AndroidSchedulers.mainThread()).flatMap {
+            if (it.first.containsKey(mFilterListData.CurrentSelection()))
+                mBinding.searchText.setText(it.first[mFilterListData.CurrentSelection()]?.GetName())
+            mBinding.searchText.addTextChangedListener(mTextChangedListener)
 
-                mFilterListController.TryGetLocationAndFillListObservable(mBinding.searchText.text.toString(), t.first).observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
-            }
+            mFilterListController.TryGetLocationAndFillListObservable(mBinding.searchText.text.toString(), it.first).toObservable()
 
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-        })
+        }.observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
 
         return mBinding.root
     }
@@ -142,14 +113,16 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
     override fun onDestroyView() {
         mBinding.searchText.removeTextChangedListener(mTextChangedListener)
         mTextChangedListener = null
+        mDisposable?.dispose()
+        mDisposable = null
         super.onDestroyView()
     }
 
 
-    override fun SetResult(inContext: Context, inResult: String) {
+    override fun SetResult(inResult: String) {
         Observable.create(ObservableOnSubscribe<Void> {
             Close()
-            mSelectedListener.SetResult(inContext, inResult)
+            mSelectedListener.SetResult(inResult)
             it.onComplete()
         }).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void> {
             override fun onComplete() {}
@@ -169,7 +142,6 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
     }
 
 
-    override fun onComplete() {}
     override fun onSubscribe(d: Disposable)
     {
         mDisposable = d
@@ -182,6 +154,8 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
     override fun onNext(t: MutableList<Pair<String, BasicListData>>) {
         mBinding.searchList.SetItems(t)
     }
+
+    override fun onComplete() {}
 
 
     interface FilterListCloser {

@@ -1,11 +1,17 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
 import android.content.Context
+import android.util.Log
+import io.reactivex.Observable
 import io.reactivex.Observer
+import io.reactivex.rxkotlin.Observables
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.core.PerContext
+import org.mesonet.dataprocessing.ConnectivityStatusProvider
+import org.mesonet.dataprocessing.PageStateInfo
+import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.userdata.Preferences
 
 import java.text.SimpleDateFormat
@@ -18,211 +24,373 @@ import javax.inject.Inject
 @PerContext
 class MesonetUIControllerImpl @Inject
 constructor(private var mDataController: MesonetDataController,
-            private var mPreferences: Preferences): MesonetUIController
+            private var mPreferences: Preferences,
+            private var mMesonetSiteDataController: MesonetSiteDataController,
+            private var mConnectivityStatusProvider: ConnectivityStatusProvider): MesonetUIController
 {
-    private var mUISubject: BehaviorSubject<MesonetUIController.MesonetDisplayFields> = BehaviorSubject.create()
+    private lateinit var mUIObservable: Observable<MesonetUIController.MesonetDisplayFields>
+    private var mPageStateSubject: BehaviorSubject<PageStateInfo> = BehaviorSubject.create()
 
     private var mUnitPreferenceDisposable: Disposable? = null
+    private var mConnectivityDisposable: Disposable? = null
+    private var mCurrentSelectionDisposable: Disposable? = null
+
+    private var mLastSiteProcessed = ""
+    private var mLastSiteSelected = ""
+
+    private var mCreated = false
 
 
-
-    override fun GetDisplayFieldsSubject(inContext: Context): BehaviorSubject<MesonetUIController.MesonetDisplayFields>
+    override fun OnCreate(inContext: Context)
     {
-        if(!mUISubject.hasValue())
-        {
-            var valueDisposable: Disposable? = null
-            mPreferences.UnitPreferencesSubject(inContext).observeOn(Schedulers.computation()).subscribe(object: Observer<Preferences.UnitPreference>{
-                override fun onComplete() {}
-
-                override fun onSubscribe(d: Disposable) {
-                    mUnitPreferenceDisposable = d
+        if(!mPageStateSubject.hasValue()) {
+            mPageStateSubject.onNext(object : PageStateInfo {
+                override fun GetPageState(): PageStateInfo.PageState {
+                    return PageStateInfo.PageState.kLoading
                 }
 
-                override fun onNext(unitPreference: Preferences.UnitPreference) {
-                    valueDisposable?.dispose()
-                    mDataController.GetDataSubject(inContext).observeOn(Schedulers.computation()).map {
-                        val displayFields = MesonetDisplayFieldsImpl()
-                        val formattedString = "Observed at %s"
-
-                        displayFields.mStationName = mDataController.GetStationName()
-                        displayFields.mIsFavorite = mDataController.StationIsFavorite()
-
-                        val time = mDataController.ProcessTime()
-
-                        if (time == null)
-                            displayFields.mTimeString = String.format(formattedString, "-:-")
-                        else {
-                            val dateFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                            dateFormat.timeZone = TimeZone.getTimeZone("America/Chicago")
-
-                            displayFields.mTimeString = String.format(formattedString, dateFormat.format(time))
-                        }
-
-                        val temp = mDataController.ProcessTemp(unitPreference)
-
-                        if (temp == null)
-                            displayFields.mAirTempString = "-"
-                        else
-                            displayFields.mAirTempString = String.format(Locale.getDefault(), if(unitPreference == Preferences.UnitPreference.kImperial) "%.0f" else "%.1f", temp) + "°"
-
-                        val apparentTemp = mDataController.ProcessApparentTemp(unitPreference)
-
-                        if (apparentTemp == null)
-                            displayFields.mApparentTempString = "-"
-                        else {
-                            var unit = ""
-                            var format = ""
-
-                            when (unitPreference) {
-                                Preferences.UnitPreference.kMetric ->
-                                {
-                                    unit = "C"
-                                    format = "%.1f"
-                                }
-                                Preferences.UnitPreference.kImperial ->
-                                {
-                                    unit = "F"
-                                    format = "%.0f"
-                                }
-                            }
-
-                            displayFields.mApparentTempString = String.format(Locale.getDefault(), format, apparentTemp) + "°" + unit
-                        }
-
-                        val dewPoint = mDataController.ProcessDewpoint(unitPreference)
-
-                        if (dewPoint == null)
-                            displayFields.mDewPointString = "-"
-                        else {
-                            var unit = ""
-                            var format = ""
-
-                            when (unitPreference) {
-                                Preferences.UnitPreference.kMetric ->
-                                {
-                                    unit = "C"
-                                    format = "%.1f"
-                                }
-                                Preferences.UnitPreference.kImperial ->
-                                {
-                                    unit = "F"
-                                    format = "%.0f"
-                                }
-                            }
-
-                            displayFields.mDewPointString = String.format(Locale.getDefault(), format, dewPoint) + "°" + unit
-                        }
-
-                        val windSpd = mDataController.ProcessWindSpd(unitPreference)
-                        val direction = mDataController.ProcessWindDirection()
-
-                        if (windSpd == null || direction == null)
-                            displayFields.mWindString = "-"
-                        else {
-                            var unit = ""
-
-                            when (unitPreference) {
-                                Preferences.UnitPreference.kMetric -> unit = "mps"
-                                Preferences.UnitPreference.kImperial -> unit = "mph"
-                            }
-
-                            displayFields.mWindString = direction.name + " at " + String.format(Locale.getDefault(), "%.0f", windSpd) + " " + unit
-                        }
-
-                        val rain24h = mDataController.Process24HrRain(unitPreference)
-
-                        if (rain24h == null)
-                            displayFields.m24HrRainfallString = "-"
-                        else {
-                            var unit = ""
-
-                            when (unitPreference) {
-                                Preferences.UnitPreference.kMetric -> unit = "mm"
-                                Preferences.UnitPreference.kImperial -> unit = "in"
-                            }
-
-                            displayFields.m24HrRainfallString = String.format(Locale.getDefault(), "%.2f", rain24h) + " " + unit
-                        }
-
-                        val humidity = mDataController.ProcessHumidity()
-
-                        if (humidity == null)
-                            displayFields.mHumidityString = "-"
-                        else
-                            displayFields.mHumidityString = humidity.toString() + "%"
-
-                        val windGusts = mDataController.ProcessMaxWind(unitPreference)
-
-                        if (windGusts == null)
-                            displayFields.mWindGustsString = "-"
-                        else {
-                            var unit = ""
-
-                            when (unitPreference) {
-                                Preferences.UnitPreference.kMetric -> unit = "mps"
-                                Preferences.UnitPreference.kImperial -> unit = "mph"
-                            }
-
-                            displayFields.mWindGustsString = String.format(Locale.getDefault(), "%.0f", windGusts) + " " + unit
-                        }
-
-                        val pressure = mDataController.ProcessPressure(unitPreference)
-
-                        if (pressure == null)
-                            displayFields.mPressureString = "-"
-                        else {
-                            var unit = ""
-                            var format = ""
-
-                            when (unitPreference) {
-                                Preferences.UnitPreference.kMetric -> {
-                                    unit = "mb"
-                                    format = "%.1f"
-                                }
-                                Preferences.UnitPreference.kImperial -> {
-                                    unit = "inHg"
-                                    format = "%.2f"
-                                }
-                            }
-
-                            displayFields.mPressureString = String.format(Locale.getDefault(), format, pressure) + " " + unit
-                        }
-
-                        displayFields as MesonetUIController.MesonetDisplayFields
-                    }.subscribe(object : Observer<MesonetUIController.MesonetDisplayFields> {
-                        override fun onComplete() {}
-                        override fun onSubscribe(d: Disposable)
-                        {
-                            valueDisposable = d
-                        }
-                        override fun onError(e: Throwable) {
-                            e.printStackTrace()
-                        }
-
-                        override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
-                            mUISubject.onNext(t)
-                        }
-                    })
+                override fun GetErrorMessage(): String? {
+                    return null
                 }
-
-                override fun onError(e: Throwable) {
-                    e.printStackTrace()
-                    onNext(Preferences.UnitPreference.kImperial)
-                }
-
             })
         }
-        return mUISubject
+
+        mMesonetSiteDataController.GetCurrentSelectionObservable().subscribe(object: Observer<MesonetSiteDataController.ProcessedMesonetSite>{
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable)
+            {
+                mCurrentSelectionDisposable = d
+            }
+
+            override fun onNext(t: MesonetSiteDataController.ProcessedMesonetSite) {
+                mLastSiteSelected = t.GetStid()
+
+                if(mLastSiteSelected == mLastSiteProcessed) {
+                    mPageStateSubject.onNext(object : PageStateInfo {
+                        override fun GetPageState(): PageStateInfo.PageState {
+                            return PageStateInfo.PageState.kData
+                        }
+
+                        override fun GetErrorMessage(): String? {
+                            return ""
+                        }
+
+                    })
+                }
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+
+        })
+
+
+        mConnectivityStatusProvider.ConnectivityStatusObservable().observeOn(Schedulers.computation()).subscribe(object: Observer<Boolean>{
+            override fun onComplete() {}
+
+            override fun onSubscribe(d: Disposable)
+            {
+                mConnectivityDisposable = d
+            }
+
+            override fun onNext(t: Boolean) {
+                mPageStateSubject.onNext(
+                    if(mLastSiteSelected == mLastSiteProcessed && mLastSiteSelected.isNotBlank()) {
+                        object : PageStateInfo {
+                            override fun GetPageState(): PageStateInfo.PageState {
+                                return PageStateInfo.PageState.kData
+                            }
+
+                            override fun GetErrorMessage(): String? {
+                                return ""
+                            }
+
+                        }
+                    }
+                    else if(t)
+                    {
+                        object: PageStateInfo {
+                            override fun GetPageState(): PageStateInfo.PageState {
+                                return PageStateInfo.PageState.kLoading
+                            }
+
+                            override fun GetErrorMessage(): String? {
+                                return ""
+                            }
+                        }
+                    }
+                    else
+                    {
+                        object : PageStateInfo {
+                            override fun GetPageState(): PageStateInfo.PageState {
+                                return PageStateInfo.PageState.kError
+                            }
+
+                            override fun GetErrorMessage(): String? {
+                                return "No Connection"
+                            }
+
+                        }
+                    })
+
+                mConnectivityDisposable?.dispose()
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+
+        })
+
+
+        mDataController.OnCreate(inContext)
+
+        synchronized(this)
+        {
+            if (!mCreated) {
+
+                mCreated = true
+            }
+        }
     }
 
 
-    fun Dispose()
+    override fun GetPageStateObservable(): Observable<PageStateInfo> {
+        return mPageStateSubject
+    }
+
+
+    override fun GetDisplayFieldsObservable(): Observable<MesonetUIController.MesonetDisplayFields>
     {
-        mUnitPreferenceDisposable?.dispose()
-        mDataController.Dispose()
-        mUISubject.onComplete()
+        return mUIObservable
     }
 
+
+    override fun OnResume(inContext: Context) {
+        mDataController.OnResume(inContext)
+
+        mUIObservable = Observables.combineLatest(mDataController.GetDataObservable().distinctUntilChanged(),
+                mDataController.GetCurrentSiteObservable().distinctUntilChanged { site -> site.GetStid() },
+                mPreferences.UnitPreferencesObservable(inContext).distinctUntilChanged(),
+                mConnectivityStatusProvider.ConnectivityStatusObservable()) { data, site, unitPreference, connectivityStatus ->
+            val displayFields = MesonetDisplayFieldsImpl()
+            val formattedString = "Observed at %s"
+
+            displayFields.mStationName = site.GetName() ?: ""
+            displayFields.mIsFavorite = site.IsFavorite()
+
+            val time = data.GetTime()
+
+            if (time == null)
+                displayFields.mTimeString = String.format(formattedString, "-:-")
+            else {
+                val dateFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+                dateFormat.timeZone = TimeZone.getTimeZone("America/Chicago")
+
+                displayFields.mTimeString = String.format(formattedString, dateFormat.format(time))
+            }
+
+            val temp = data.GetTemp()
+
+            if (temp == null)
+                displayFields.mAirTempString = "-"
+            else
+                displayFields.mAirTempString = String.format(Locale.getDefault(), if (unitPreference == Preferences.UnitPreference.kImperial) "%.0f" else "%.1f", temp) + "°"
+
+            val apparentTemp = data.GetApparentTemp()
+
+            if (apparentTemp == null)
+                displayFields.mApparentTempString = "-"
+            else {
+                var unit = ""
+                var format = ""
+
+                when (unitPreference) {
+                    Preferences.UnitPreference.kMetric -> {
+                        unit = "C"
+                        format = "%.1f"
+                    }
+                    Preferences.UnitPreference.kImperial -> {
+                        unit = "F"
+                        format = "%.0f"
+                    }
+                    null -> {
+                        unit = "F"
+                        format = "%.0f"
+                    }
+                }
+
+                displayFields.mApparentTempString = String.format(Locale.getDefault(), format, apparentTemp) + "°" + unit
+            }
+
+            val dewPoint = data.GetDewpoint()
+
+            if (dewPoint == null)
+                displayFields.mDewPointString = "-"
+            else {
+                var unit = ""
+                var format = ""
+
+                when (unitPreference) {
+                    null -> {
+                        unit = "F"
+                        format = "%.0f"
+                    }
+                    Preferences.UnitPreference.kMetric -> {
+                        unit = "C"
+                        format = "%.1f"
+                    }
+                    Preferences.UnitPreference.kImperial -> {
+                        unit = "F"
+                        format = "%.0f"
+                    }
+                }
+
+                displayFields.mDewPointString = String.format(Locale.getDefault(), format, dewPoint) + "°" + unit
+            }
+
+            val windSpd = data.GetWindSpeed()
+            val direction = data.GetWindDirection()
+
+            if (windSpd == null || direction == null)
+                displayFields.mWindString = "-"
+            else {
+                var unit = ""
+
+                when (unitPreference) {
+                    Preferences.UnitPreference.kMetric -> unit = "mps"
+                    Preferences.UnitPreference.kImperial -> unit = "mph"
+                    null -> unit = "mph"
+                }
+
+                displayFields.mWindString = direction.name + " at " + String.format(Locale.getDefault(), "%.0f", windSpd) + " " + unit
+            }
+
+            val rain24h = data.Get24HrRain()
+
+            if (rain24h == null)
+                displayFields.m24HrRainfallString = "-"
+            else {
+                var unit = ""
+
+                when (unitPreference) {
+                    Preferences.UnitPreference.kMetric -> unit = "mm"
+                    Preferences.UnitPreference.kImperial -> unit = "in"
+                    null -> unit = "in"
+                }
+
+                displayFields.m24HrRainfallString = String.format(Locale.getDefault(), "%.2f", rain24h) + " " + unit
+            }
+
+            val humidity = data.GetHumidity()
+
+            if (humidity == null)
+                displayFields.mHumidityString = "-"
+            else
+                displayFields.mHumidityString = humidity.toString() + "%"
+
+            val windGusts = data.GetMaxWind()
+
+            if (windGusts == null)
+                displayFields.mWindGustsString = "-"
+            else {
+                var unit = ""
+
+                when (unitPreference) {
+                    Preferences.UnitPreference.kMetric -> unit = "mps"
+                    Preferences.UnitPreference.kImperial -> unit = "mph"
+                    null -> unit = "mph"
+                }
+
+                displayFields.mWindGustsString = String.format(Locale.getDefault(), "%.0f", windGusts) + " " + unit
+            }
+
+            val pressure = data.GetPressure()
+
+            if (pressure == null)
+                displayFields.mPressureString = "-"
+            else {
+                var unit = ""
+                var format = ""
+
+                when (unitPreference) {
+                    Preferences.UnitPreference.kMetric -> {
+                        unit = "mb"
+                        format = "%.1f"
+                    }
+                    Preferences.UnitPreference.kImperial -> {
+                        unit = "inHg"
+                        format = "%.2f"
+                    }
+                    null -> {
+                        unit = "inHg"
+                        format = "%.2f"
+                    }
+                }
+
+                displayFields.mPressureString = String.format(Locale.getDefault(), format, pressure) + " " + unit
+            }
+
+            if(site.GetName() == data.GetStationName()) {
+                mPageStateSubject.onNext(object : PageStateInfo {
+                    override fun GetPageState(): PageStateInfo.PageState {
+                        return PageStateInfo.PageState.kData
+                    }
+
+                    override fun GetErrorMessage(): String? {
+                        return null
+                    }
+
+                })
+            }
+            else if(connectivityStatus)
+            {
+                mPageStateSubject.onNext(object : PageStateInfo {
+                    override fun GetPageState(): PageStateInfo.PageState {
+                        return PageStateInfo.PageState.kLoading
+                    }
+
+                    override fun GetErrorMessage(): String? {
+                        return ""
+                    }
+
+                })
+            }
+            else
+            {
+                mPageStateSubject.onNext(object : PageStateInfo {
+                    override fun GetPageState(): PageStateInfo.PageState {
+                        return PageStateInfo.PageState.kError
+                    }
+
+                    override fun GetErrorMessage(): String? {
+                        return "No Connection"
+                    }
+
+                })
+            }
+
+            mLastSiteProcessed = site.GetStid()
+
+            displayFields as MesonetUIController.MesonetDisplayFields
+        }.subscribeOn(Schedulers.computation())
+    }
+
+    override fun OnPause() {
+        mDataController.OnPause()
+    }
+
+    override fun OnDestroy() {
+        mUnitPreferenceDisposable?.dispose()
+        mUnitPreferenceDisposable = null
+        mCurrentSelectionDisposable?.dispose()
+        mCurrentSelectionDisposable = null
+        mConnectivityDisposable?.dispose()
+        mConnectivityDisposable = null
+        mDataController.OnDestroy()
+        mCreated = false
+    }
 
 
     private class MesonetDisplayFieldsImpl(internal var mStationName: String = "",

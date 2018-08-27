@@ -15,7 +15,7 @@ class SiteListConverterImpl @Inject
 constructor(): SiteListConverter {
 
 
-    override fun SitesToRealmModels(inSiteModels: MesonetSiteList): List<SiteRealmModel> {
+    override fun SitesToRealmModels(inSiteModels: Map<String, MesonetSiteList.MesonetSite>): List<SiteRealmModel> {
         val result = ArrayList<SiteRealmModel>()
 
         val keySet = ArrayList(inSiteModels.keys)

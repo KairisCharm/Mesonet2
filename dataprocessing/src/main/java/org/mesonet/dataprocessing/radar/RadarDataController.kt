@@ -1,160 +1,60 @@
 package org.mesonet.dataprocessing.radar
 
+import android.content.Context
 import android.graphics.Bitmap
+import android.util.Log
 import io.reactivex.Observable
+import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.Observables
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import org.mesonet.core.PerFragment
+import org.mesonet.core.PerContext
+import org.mesonet.dataprocessing.ConnectivityStatusProvider
+import org.mesonet.dataprocessing.PageStateInfo
 import org.mesonet.models.radar.RadarDetails
 import org.mesonet.models.radar.RadarHistory
 import org.mesonet.network.DataProvider
+import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 import javax.inject.Inject
+import kotlin.collections.ArrayList
 
 
-@PerFragment
+@PerContext
 class RadarDataController @Inject
 constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
-            internal var mDataProvider: DataProvider) : RadarImageDataProvider {
-    private val mAnimation: ArrayList<ImageSubject> = ArrayList()
-
+            internal var mDataProvider: DataProvider,
+            internal var mConnectivityStatusProvider: ConnectivityStatusProvider) : RadarImageDataProvider {
 
     private var mUpdateDisposable: Disposable? = null
-    private val mRadarImageDataSubject: BehaviorSubject<List<ImageSubject>> = BehaviorSubject.create()
-    private var mRadarImageDataObservable: Observable<List<ImageSubject>>
-    private var mSelectedRadarDisposable: Disposable? = null
+    private var mConnectivityDisposable: Disposable? = null
+
+    private val mRadarImageDataSubject: BehaviorSubject<ArrayList<ImageInfoImpl>> = BehaviorSubject.create()
+    private val mPageStateSubject: BehaviorSubject<PageStateInfo> = BehaviorSubject.create()
+    private val mConnecectivityObservable = mConnectivityStatusProvider.ConnectivityStatusObservable()
+    private lateinit var mTickObservable: Observable<Long>
+    private lateinit var mSiteObservable: Observable<Map.Entry<String, RadarDetails>>
+
+    private var mLastSiteSelected = ""
+    private var mLastSiteLoaded = ""
+
+    private var mEmptyImage = Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8)
 
 
-    init {
-        mRadarImageDataObservable = mRadarImageDataSubject.doOnSubscribe {
-            if (mUpdateDisposable == null || mUpdateDisposable?.isDisposed != true) {
 
-                Observable.interval(0, 1, TimeUnit.MINUTES).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Long>{
-                    override fun onComplete() {}
-
-                    override fun onSubscribe(d: Disposable) {
-                        mUpdateDisposable = d
-                    }
-
-                    override fun onNext(t: Long) {
-                        if (mRadarImageDataSubject.hasObservers()) {
-                            GetSiteNameSubject().observeOn(Schedulers.computation()).subscribe(object : Observer<String> {
-                                override fun onComplete() {}
-                                override fun onSubscribe(d: Disposable) {
-                                    mSelectedRadarDisposable = d
-                                }
-
-                                override fun onNext(radarId: String) {
-                                    mDataProvider.GetRadarHistory(radarId).observeOn(Schedulers.computation()).subscribe(object : Observer<RadarHistory> {
-                                        override fun onComplete() {}
-                                        override fun onSubscribe(d: Disposable) {}
-
-                                        override fun onNext(t: RadarHistory) {
-                                            val relevantList = t.GetFrames().subList(0, 6)
-
-                                            val newIds = relevantList.map { frame -> MakeId(t.GetRadar(), frame) }.toTypedArray()
-                                            val oldIds = mAnimation.map { it.GetName() }.toTypedArray()
-
-                                            if (!newIds.contentEquals(oldIds)) {
-                                                mAnimation.filter { !newIds.contains(it.GetName()) }.forEach {
-                                                    if (it.GetSubject().hasValue())
-                                                        it.GetSubject().value.recycle()
-                                                }
-
-                                                val oldValuesBuf: ArrayList<ImageSubject> = ArrayList()
-
-                                                var countHandled = 0
-
-                                                for (i in relevantList.indices) {
-                                                    if (i >= mAnimation.size) {
-                                                        mAnimation.add(ImageSubjectImpl())
-                                                    }
-
-                                                    if (i >= oldIds.size || newIds[i] != oldIds[i]) {
-                                                        if (i < oldIds.size && newIds.toList().subList(i + 1, newIds.size).contains(oldIds[i]))
-                                                            oldValuesBuf.add(mAnimation[i])
-                                                        else if (mAnimation[i].GetSubject().hasValue())
-                                                            mAnimation[i].GetSubject().value.recycle()
-
-                                                        var oldValue = mAnimation.subList(i, mAnimation.size).find { it.GetName() == newIds[i] }
-
-                                                        if (oldValue == null)
-                                                            oldValue = oldValuesBuf.find { it.GetName() == newIds[i] }
-
-                                                        if (oldValue != null) {
-                                                            (mAnimation[i] as ImageSubjectImpl).mName = oldValue.GetName()
-                                                            (mAnimation[i] as ImageSubjectImpl).mSubject.onNext(oldValue.GetSubject().value)
-
-                                                            continue
-                                                        }
-                                                    }
-
-                                                    (mAnimation[i] as ImageSubjectImpl).mName = newIds[i]
-
-                                                    mDataProvider.GetRadarImage(radarId, relevantList[i].GetFrameId()).observeOn(Schedulers.computation()).subscribe(object : Observer<Bitmap> {
-                                                        override fun onComplete() {
-                                                            if (countHandled == relevantList.size)
-                                                                mRadarImageDataSubject.onNext(mAnimation)
-                                                        }
-
-                                                        override fun onSubscribe(d: Disposable) {}
-
-                                                        override fun onError(e: Throwable) {
-                                                            e.printStackTrace()
-                                                        }
-
-                                                        override fun onNext(t: Bitmap) {
-                                                            (mAnimation[i] as ImageSubjectImpl).mName = newIds[i]
-                                                            (mAnimation[i] as ImageSubjectImpl).mTimestring = relevantList[i].GetTimestring()
-                                                            (mAnimation[i] as ImageSubjectImpl).mSubject.onNext(t)
-
-                                                            countHandled++
-                                                        }
-                                                    })
-                                                }
-                                            }
-                                        }
-
-                                        override fun onError(e: Throwable) {
-                                            e.printStackTrace()
-                                        }
-                                    })
-                                }
-
-                                override fun onError(e: Throwable) {
-                                    e.printStackTrace()
-                                    onNext("KTLX")
-                                }
-
-                            })
-                        } else
-                            mUpdateDisposable?.dispose()
-                    }
-
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-                    }
-                })
-            }
-        }
+    override fun GetSiteInfoObservable(): Observable<Map.Entry<String, RadarDetails>>
+    {
+        return mSiteDataProvider.GetSelectedSiteInfoObservable()
     }
 
 
-    override fun GetSiteNameSubject(): BehaviorSubject<String> {
-        return mSiteDataProvider.GetSelectedSiteNameSubject()
-    }
-
-
-    override fun GetSiteDetailSubject(): BehaviorSubject<RadarDetails> {
-        return mSiteDataProvider.GetSelectedSiteDetailSubject()
-    }
-
-
-    override fun GetRadarAnimationObservable(): Observable<List<ImageSubject>> {
-        return mRadarImageDataObservable
+    override fun GetRadarAnimationObservable(): Observable<List<ImageInfo>> {
+        return mRadarImageDataSubject.map{ it as List<ImageInfo> }
     }
 
 
@@ -163,21 +63,233 @@ constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
     }
 
 
-    override fun Dispose()
-    {
-        mSiteDataProvider.Dispose()
-        mUpdateDisposable?.dispose()
-        mSelectedRadarDisposable?.dispose()
-        mRadarImageDataSubject.onComplete()
+    override fun OnCreate(inContext: Context) {}
 
-        for(frame in mAnimation)
-            frame.GetSubject().onComplete()
+
+    override fun OnResume(inContext: Context)
+    {
+        if(mUpdateDisposable?.isDisposed != false) {
+            mTickObservable = Observable.interval(0, 1, TimeUnit.MINUTES).distinctUntilChanged{tick -> tick}
+            mSiteObservable = GetSiteInfoObservable().retryWhen { mTickObservable }.retryWhen { mConnecectivityObservable }
+            Observables.combineLatest(
+                Observables.combineLatest(mTickObservable, mConnecectivityObservable, mSiteObservable)
+                { _, connectivity, site ->
+                    mLastSiteSelected = site.key
+
+                    if(mLastSiteSelected != mLastSiteLoaded)
+                    {
+                        if(connectivity) {
+                            Log.e("PageState Sent", "Loading 2")
+                            mPageStateSubject.onNext(object : PageStateInfo {
+                                override fun GetPageState(): PageStateInfo.PageState {
+                                    return PageStateInfo.PageState.kLoading
+                                }
+
+                                override fun GetErrorMessage(): String? {
+                                    return ""
+                                }
+
+                            })
+                        }
+                        else
+                        {
+                            Log.e("PageState Sent", "Error 2")
+                            mPageStateSubject.onNext(object: PageStateInfo{
+                                override fun GetPageState(): PageStateInfo.PageState {
+                                    return PageStateInfo.PageState.kError
+                                }
+
+                                override fun GetErrorMessage(): String? {
+                                    return "No Connection"
+                                }
+
+                            })
+                        }
+                    }
+                    else if(!connectivity)
+                    {
+                        mPageStateSubject.onNext(object: PageStateInfo{
+                            override fun GetPageState(): PageStateInfo.PageState {
+                                return PageStateInfo.PageState.kData
+                            }
+
+                            override fun GetErrorMessage(): String? {
+                                return ""
+                            }
+
+                        })
+                    }
+
+                    site
+                }.flatMap {
+                    site ->
+                    mDataProvider.GetRadarHistory(site.key).retryWhen { mTickObservable }.retryWhen { mSiteObservable }.retryWhen { mConnecectivityObservable }
+                },
+                mConnecectivityObservable)
+            { history, connectivity ->
+                Pair(history, connectivity)
+            }.flatMap {
+                historyConnectivityPair ->
+
+                if(historyConnectivityPair.second) {
+                    val relevantList = historyConnectivityPair.first.GetFrames().subList(0, 6)
+
+                    var resultList = ArrayList<ImageInfoImpl>()
+                    val buffer = HashMap<String, Bitmap>()
+
+                    if (mRadarImageDataSubject.hasValue()) {
+                        resultList = ArrayList(mRadarImageDataSubject.value)
+
+                        for (i in resultList.indices) {
+                            val image = mRadarImageDataSubject.value?.first { it.GetName() == resultList[i].GetName() && it.GetImage() != mEmptyImage }?.GetImage()
+
+                            if (image != null)
+                                buffer[resultList[i].GetName()] = image
+                        }
+                    }
+
+                    val needsToDownload = relevantList.filterNot { frame -> resultList.map { it.GetName() }.contains(MakeId(historyConnectivityPair.first.GetRadar(), frame)) }.distinct()
+
+                    val downloadObservables = HashMap<String, Observable<Bitmap>>()
+
+                    for (i in needsToDownload.indices) {
+                        downloadObservables[MakeId(historyConnectivityPair.first.GetRadar(), needsToDownload[i])] = mDataProvider.GetRadarImage(historyConnectivityPair.first.GetRadar(), needsToDownload[i].GetFrameId())
+                    }
+
+                    val observableList = ArrayList<Observable<ImageInfoImpl>>()
+
+                    for (i in relevantList.indices) {
+                        if (downloadObservables.containsKey(MakeId(historyConnectivityPair.first.GetRadar(), relevantList[i]))) {
+                            val observable = downloadObservables[MakeId(historyConnectivityPair.first.GetRadar(), relevantList[i])]
+
+                            if (observable != null)
+                                observableList.add(observable.map { image -> ImageInfoImpl(MakeId(historyConnectivityPair.first.GetRadar(), relevantList[i]), relevantList[i].GetTimestring(), image) })
+                            else
+                                observableList.add(Observable.create {
+                                    it.onNext(ImageInfoImpl(MakeId(historyConnectivityPair.first.GetRadar(), relevantList[i]), relevantList[i].GetTimestring(), buffer[MakeId(historyConnectivityPair.first.GetRadar(), relevantList[i])]
+                                            ?: mEmptyImage))
+                                    it.onComplete()
+                                })
+                        } else {
+                            observableList.add(Observable.create {
+                                it.onNext(ImageInfoImpl(MakeId(historyConnectivityPair.first.GetRadar(), relevantList[i]), relevantList[i].GetTimestring(), buffer[MakeId(historyConnectivityPair.first.GetRadar(), relevantList[i])]
+                                        ?: mEmptyImage))
+                                it.onComplete()
+                            })
+                        }
+                    }
+
+                    assert(observableList.size == 6)
+
+                    Observables.combineLatest(observableList[0],
+                            observableList[1],
+                            observableList[2],
+                            observableList[3],
+                            observableList[4],
+                            observableList[5])
+                    { imageInfo0, imageInfo1, imageInfo2, imageInfo3, imageInfo4, imageinfo5 ->
+
+                        mLastSiteLoaded = mLastSiteSelected
+
+                        Pair<PageStateInfo, ArrayList<ImageInfoImpl>>(object: PageStateInfo{
+                            override fun GetPageState(): PageStateInfo.PageState {
+                                return PageStateInfo.PageState.kData
+                            }
+
+                            override fun GetErrorMessage(): String? {
+                                return ""
+                            }
+                        }, ArrayList(Arrays.asList(imageInfo0, imageInfo1, imageInfo2, imageInfo3, imageInfo4, imageinfo5)))
+                    }
+                }
+                else {
+                    if (mLastSiteLoaded == mLastSiteSelected && mLastSiteLoaded.isNotBlank()) {
+                        Observable.create {
+                            it.onNext(Pair<PageStateInfo, ArrayList<ImageInfoImpl>>(object: PageStateInfo{
+                                override fun GetPageState(): PageStateInfo.PageState {
+                                    return PageStateInfo.PageState.kData
+                                }
+
+                                override fun GetErrorMessage(): String? {
+                                    return ""
+                                }
+                            }, mRadarImageDataSubject.value?: ArrayList()))
+                        }
+
+                    } else
+                    {
+                        Observable.create {
+                            it.onNext(Pair<PageStateInfo, ArrayList<ImageInfoImpl>>(object: PageStateInfo {
+                                override fun GetPageState(): PageStateInfo.PageState {
+                                    return PageStateInfo.PageState.kError
+                                }
+
+                                override fun GetErrorMessage(): String? {
+                                    return "No Connection"
+
+                                }
+                            }, ArrayList()))
+                        }
+                    }
+                }
+            }.retryWhen { mTickObservable }.retryWhen { mSiteObservable }.retryWhen { mConnecectivityObservable }.subscribeOn(Schedulers.computation()).observeOn(Schedulers.computation()).subscribe(object: Observer<Pair<PageStateInfo, ArrayList<ImageInfoImpl>>>{
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable)
+                {
+                    mUpdateDisposable?.dispose()
+                    mUpdateDisposable = d
+                }
+
+                override fun onNext(t: Pair<PageStateInfo, ArrayList<ImageInfoImpl>>) {
+                    if(t.first.GetPageState() == PageStateInfo.PageState.kData)
+                        mRadarImageDataSubject.onNext(t.second)
+
+                    Log.e("PageState Sent", t.first.GetPageState().name)
+                    mPageStateSubject.onNext(t.first)
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
+        }
     }
 
 
-    inner class ImageSubjectImpl(var mName: String = "",
-                                 var mTimestring: String = "",
-                                 var mSubject: BehaviorSubject<Bitmap> = BehaviorSubject.create()) : ImageSubject
+
+    override fun OnPause()
+    {
+        mUpdateDisposable?.dispose()
+        mUpdateDisposable = null
+        mConnectivityDisposable?.dispose()
+        mConnectivityDisposable = null
+    }
+
+
+    override fun OnDestroy()
+    {
+        mSiteDataProvider.Dispose()
+
+        if(mRadarImageDataSubject.hasValue()) {
+            for (frame in mRadarImageDataSubject.value?: ArrayList())
+                frame.GetImage().recycle()
+        }
+
+        mRadarImageDataSubject.onComplete()
+        mPageStateSubject.onComplete()
+
+        mEmptyImage.recycle()
+    }
+
+
+    override fun GetPageStateObservable(): Observable<PageStateInfo> {
+        return mPageStateSubject
+    }
+
+
+    inner class ImageInfoImpl(var mName: String = "",
+                              var mTimestring: String = "",
+                              var mImage: Bitmap = mEmptyImage) : ImageInfo
     {
         override fun GetName(): String {
             return mName
@@ -187,16 +299,16 @@ constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
             return mTimestring
         }
 
-        override fun GetSubject(): BehaviorSubject<Bitmap> {
-            return mSubject
+        override fun GetImage(): Bitmap {
+            return mImage
         }
     }
 
 
-    interface ImageSubject
+    interface ImageInfo
     {
         fun GetName(): String
         fun GetTimestring(): String
-        fun GetSubject(): BehaviorSubject<Bitmap>
+        fun GetImage(): Bitmap
     }
 }

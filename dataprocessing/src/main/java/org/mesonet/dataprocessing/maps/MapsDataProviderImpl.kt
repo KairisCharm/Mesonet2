@@ -1,10 +1,15 @@
 package org.mesonet.dataprocessing.maps
 
+import android.content.Context
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
+import org.mesonet.core.PerContext
+import org.mesonet.dataprocessing.ConnectivityStatusProvider
+import org.mesonet.dataprocessing.PageStateInfo
 import org.mesonet.dataprocessing.maps.MapsDataProvider.Companion.kAbbreviatedDisplayLimit
 import org.mesonet.dataprocessing.maps.MapsDataProvider.Companion.kGenericSectionHeaderText
 import org.mesonet.models.maps.MapsList
@@ -16,43 +21,131 @@ import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 
 
-class MapsDataProviderImpl @Inject constructor(internal var mDataProvider: DataProvider): MapsDataProvider
+@PerContext
+class MapsDataProviderImpl @Inject constructor(internal var mDataProvider: DataProvider,
+                                               internal var mConnectivityStatusProvider: ConnectivityStatusProvider): MapsDataProvider
 {
     private var mLastUpdate = 0L
 
+    private var mMapsSubject: BehaviorSubject<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>> = BehaviorSubject.create()
+    private var mPageStateSubject: BehaviorSubject<PageStateInfo> = BehaviorSubject.create()
 
-    private var mMapsList: MapsList? = null
+    private val mConnectivityObservable = mConnectivityStatusProvider.ConnectivityStatusObservable()
 
+    override fun OnCreate(inContext: Context) {}
 
-    var mMapsListObservable = Observable.create(ObservableOnSubscribe<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>> {subscriber ->
-        if(mMapsList != null) {
-            subscriber.onNext(LoadMapsList(mMapsList))
-            subscriber.onComplete()
-        }
+    override fun OnResume(inContext: Context) {
 
-        if(mLastUpdate == 0L || (mLastUpdate - Date().time) > 300000) {
-            (mDataProvider.GetMaps().observeOn(Schedulers.computation()).map {
-                mLastUpdate = Date().time
-                mMapsList = it
-                val result = LoadMapsList(mMapsList)
-                subscriber.onNext(result)
-                subscriber.onComplete()
-                result
-            }).subscribe(object: Observer<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>> {
+        if(!mMapsSubject.hasValue() || mLastUpdate == 0L || (mLastUpdate - Date().time) > 600000) {
+            mConnectivityObservable.observeOn(Schedulers.computation()).subscribe(object : Observer<Boolean> {
+                var disposable: Disposable? = null
                 override fun onComplete() {}
-                override fun onSubscribe(d: Disposable) {}
-                override fun onNext(t: MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>) {}
+
+                override fun onSubscribe(d: Disposable) {
+                    disposable = d
+                }
+
+                override fun onNext(t: Boolean) {
+                    if(mMapsSubject.hasValue())
+                    {
+                        mPageStateSubject.onNext(object: PageStateInfo{
+                            override fun GetPageState(): PageStateInfo.PageState {
+                                return PageStateInfo.PageState.kData
+                            }
+
+                            override fun GetErrorMessage(): String? {
+                                return ""
+                            }
+
+                        })
+                    }
+                    else if(t)
+                    {
+                        mPageStateSubject.onNext(object: PageStateInfo{
+                            override fun GetPageState(): PageStateInfo.PageState {
+                                return PageStateInfo.PageState.kLoading
+                            }
+
+                            override fun GetErrorMessage(): String? {
+                                return ""
+                            }
+
+                        })
+                    }
+                    else
+                    {
+                        mPageStateSubject.onNext(object: PageStateInfo{
+                            override fun GetPageState(): PageStateInfo.PageState {
+                                return PageStateInfo.PageState.kError
+                            }
+
+                            override fun GetErrorMessage(): String? {
+                                return "No Connection"
+                            }
+
+                        })
+                    }
+                    disposable?.dispose()
+                }
+
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
                 }
             })
         }
-    }).subscribeOn(Schedulers.computation())
+
+        if(mLastUpdate == 0L || (mLastUpdate - Date().time) > 600000)
+        {
+            mDataProvider.GetMaps().retryWhen { mConnectivityObservable }.observeOn(Schedulers.computation()).subscribe(object: Observer<MapsList>{
+                var disposable: Disposable? = null
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable)
+                {
+                    disposable = d
+                }
+
+                override fun onNext(t: MapsList) {
+                    mLastUpdate = Date().time
+                    mMapsSubject.onNext(LoadMapsList(t))
+
+                    mPageStateSubject.onNext(object: PageStateInfo{
+                        override fun GetPageState(): PageStateInfo.PageState {
+                            return PageStateInfo.PageState.kData
+                        }
+
+                        override fun GetErrorMessage(): String? {
+                            return ""
+                        }
+
+                    })
+
+                    disposable?.dispose()
+                    disposable = null
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
+        }
+    }
+
+    override fun OnPause() {}
+    override fun OnDestroy() {
+        mMapsSubject.onComplete()
+    }
+
 
 
     override fun GetMapsListObservable(): Observable<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>>
     {
-        return mMapsListObservable
+        return mMapsSubject
+    }
+
+
+    override fun GetPageStateObservable(): Observable<PageStateInfo>
+    {
+        return mPageStateSubject
     }
 
 

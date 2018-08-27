@@ -1,9 +1,8 @@
 package org.mesonet.cache.site
 
 import android.content.Context
-import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
+import android.util.Log
+import io.reactivex.*
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import org.mesonet.cache.Cacher
@@ -23,46 +22,43 @@ constructor(): SiteCache {
     internal lateinit var mConverter: SiteListConverter
 
 
-    override fun SaveSites(inContext: Context, inMesonetSites: MesonetSiteList): Observable<Void> {
-        return Observable.create(ObservableOnSubscribe<Void> {
-            mCacher.SaveToCache(inContext, SiteRealmModel::class.java, mConverter.SitesToRealmModels(inMesonetSites)).subscribe(object: Observer<Void> {
-                override fun onComplete() {}
-                override fun onSubscribe(d: Disposable) {}
-                override fun onNext(t: Void) {}
-                override fun onError(e: Throwable) {
-                    e.printStackTrace()
-                }
-            })
+    override fun SaveSites(inContext: Context, inMesonetSites: Map<String, MesonetSiteList.MesonetSite>) {
+        Single.create(SingleOnSubscribe<List<SiteRealmModel>> {
+            it.onSuccess(mConverter.SitesToRealmModels(inMesonetSites))
+        }).subscribeOn(Schedulers.computation()).flatMap { mCacher.SaveToCache(inContext, SiteRealmModel::class.java, it) }.subscribe(object: SingleObserver<Int>{
+            override fun onSuccess(t: Int) {}
+            override fun onSubscribe(d: Disposable) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
 
-            it.onComplete()
-        }).subscribeOn(Schedulers.computation())
+        })
     }
 
 
-    override fun GetSites(inContext: Context): Observable<MesonetSiteList> {
+    override fun GetSites(inContext: Context): Single<MesonetSiteList> {
         return mCacher.FindAll(inContext, SiteRealmModel::class.java).map{
             mConverter.SitesFromRealmModels(it)
         }
     }
 
 
-    override fun SaveFavorites(inContext: Context, inFavorites: List<String>): Observable<Void> {
-        return Observable.create(ObservableOnSubscribe<Void> {
-            mCacher.SaveToCache(inContext, FavoriteSiteRealmModel::class.java, mConverter.FavoritesToRealmModels(inFavorites)).subscribe(object: Observer<Void> {
-                override fun onComplete() {}
-                override fun onSubscribe(d: Disposable) {}
-                override fun onNext(t: Void) {}
-                override fun onError(e: Throwable) {
-                    e.printStackTrace()
-                }
-            })
-
-            it.onComplete()
-        }).subscribeOn(Schedulers.computation())
+    override fun SaveFavorites(inContext: Context, inFavorites: List<String>){
+        Single.create(SingleOnSubscribe<List<FavoriteSiteRealmModel>> {
+            it.onSuccess(mConverter.FavoritesToRealmModels(inFavorites))
+        }).flatMap {
+            mCacher.SaveToCache(inContext, FavoriteSiteRealmModel::class.java, it)
+        }.subscribeOn(Schedulers.computation()).subscribe(object: SingleObserver<Int> {
+            override fun onSubscribe(d: Disposable) {}
+            override fun onSuccess(t: Int) {}
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
     }
 
 
-    override fun GetFavorites(inContext: Context): Observable<MutableList<String>> {
+    override fun GetFavorites(inContext: Context): Single<MutableList<String>> {
         return mCacher.FindAll(inContext, FavoriteSiteRealmModel::class.java).map {
             mConverter.FavoriteFromRealmModels(it)
         }

@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
+import android.util.Log
 import android.view.*
 import android.widget.SeekBar
 import com.mapbox.mapboxsdk.camera.CameraPosition
@@ -16,7 +17,6 @@ import com.mapbox.mapboxsdk.geometry.LatLngQuad
 import com.mapbox.mapboxsdk.maps.MapboxMapOptions
 import com.mapbox.mapboxsdk.maps.SupportMapFragment
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory
-import com.mapbox.mapboxsdk.style.layers.PropertyValue
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
 import com.mapbox.mapboxsdk.style.sources.ImageSource
 import io.reactivex.Observable
@@ -24,16 +24,18 @@ import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
+import io.reactivex.rxkotlin.Observables
+import io.reactivex.subjects.BehaviorSubject
 
 import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.RadarFragmentBinding
 import org.mesonet.app.filterlist.FilterListFragment
+import org.mesonet.dataprocessing.PageStateInfo
 import org.mesonet.dataprocessing.radar.MapboxMapController
 import org.mesonet.dataprocessing.radar.RadarDataController
 import org.mesonet.dataprocessing.radar.RadarImageDataProvider
 import org.mesonet.models.radar.RadarDetails
-import java.util.concurrent.TimeUnit
 
 import javax.inject.Inject
 
@@ -48,12 +50,14 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
     @Inject
     internal lateinit var mMapController: MapboxMapController
 
-    private var mRadarImageDisposable: Disposable? = null
     private var mTransparencyDisposable: Disposable? = null
     private var mSelectedRadarDisposable: Disposable? = null
-    private var mSelectedRadarDetailDisposable: Disposable? = null
     private var mActiveImageDisposable: Disposable? = null
+    private var mImageListDisposable: Disposable? = null
+    private var mCameraUpdateDisposable: Disposable? = null
+    private var mPageStateDisposable: Disposable? = null
 
+    private var mEmtpyImage = Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8)
 
     private var mBinding: RadarFragmentBinding? = null
 
@@ -63,6 +67,37 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
     private var mRadarLayer: RasterLayer? = null
     private var mRadarImageSource: ImageSource? = null
+
+    private var mLastRadarUpdated = ""
+
+    private var mHoldPlay = false
+    private var mState = PageStateInfo.PageState.kLoading
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+
+        mMapController.GetCameraPositionObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<CameraPosition>
+        {
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable)
+            {
+                mCameraUpdateDisposable = d
+            }
+
+            override fun onNext(t: CameraPosition) {
+                mMapFragment?.getMapAsync { map ->
+                    map.cameraPosition = t
+                }
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+            }
+        })
+
+    }
 
 
     override fun onCreateView(inInflater: LayoutInflater, inContainer: ViewGroup?, inSavedInstanceState: Bundle?): View {
@@ -104,21 +139,24 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
         }
 
         mBinding?.transparencySeekBar?.max = 255
-        mBinding?.transparencySeekBar?.progress = Math.round(mMapController.GetTransparencySubject().value * 255.0f)
-        mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<Float> {
+
+        mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Float>{
+            var disposable: Disposable? = null
             override fun onComplete() {}
 
             override fun onSubscribe(d: Disposable) {
-                mTransparencyDisposable = d
+                disposable = d
+            }
+
+            override fun onNext(t: Float) {
+                mBinding?.transparencySeekBar?.progress = Math.round(t * 255.0f)
+                disposable?.dispose()
             }
 
             override fun onError(e: Throwable) {
                 e.printStackTrace()
             }
 
-            override fun onNext(t: Float) {
-                mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(t))
-            }
         })
 
         mBinding?.transparencySeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -147,156 +185,190 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
     override fun onResume() {
         super.onResume()
 
-        mRadarImageDataProvider.GetSiteNameSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<String>
-        {
-            override fun onComplete() {
-            }
+        val myContext = context
 
-            override fun onSubscribe(d: Disposable) {
-                mSelectedRadarDisposable = d
-            }
+        if(myContext != null)
+            mRadarImageDataProvider.OnResume(myContext)
 
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
+        if(mPageStateDisposable?.isDisposed != false) {
+            mRadarImageDataProvider.GetPageStateObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<PageStateInfo> {
+                override fun onComplete() {}
+                override fun onSubscribe(d: Disposable) {
+                    mPageStateDisposable = d
+                }
 
-                SetSnackbarText("Error", "", "")
-            }
+                override fun onNext(t: PageStateInfo) {
+                    mState = t.GetPageState()
+                    when (t.GetPageState()) {
+                        PageStateInfo.PageState.kLoading -> {
+                            Log.e("PageState Received", "Loading")
+                            mTransparencyDisposable?.dispose()
+                            mSelectedRadarDisposable?.dispose()
+                            mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
+                            mBinding?.playPauseButton?.hide()
+                            mSnackbar?.dismiss()
+                        }
+                        PageStateInfo.PageState.kError -> {
+                            Log.e("PageState Received", "Error")
+                            mTransparencyDisposable?.dispose()
+                            mSelectedRadarDisposable?.dispose()
+                            mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
+                            mBinding?.playPauseButton?.hide()
+                            val errorMessage = t.GetErrorMessage()
 
-            override fun onNext(radarId: String) {
-                mRadarImageSource?.setImage(R.drawable.blank_drawable)
-                mRadarImageDataProvider.GetSiteDetailSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<RadarDetails> {
-                    override fun onComplete() {}
-
-                    override fun onSubscribe(d: Disposable) {
-                        mSelectedRadarDetailDisposable = d
-                    }
-
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-
-                        SetSnackbarText("Error", "", "")
-                    }
-
-                    override fun onNext(radarDetails: RadarDetails) {
-                        SetSnackbarText(radarId, radarDetails.GetName(), "")
-                        mSnackbar?.show()
-                        mMapFragment?.getMapAsync { map ->
-                            map.uiSettings.isRotateGesturesEnabled = false
-                            map.uiSettings.isTiltGesturesEnabled = false
-                            val sourceId = mRadarImageSource?.id ?: ""
-                            val layerId = mRadarLayer?.id ?: ""
-                            if (sourceId.isNotEmpty() && map.getSource(sourceId) == null)
-                                map.addSource(mRadarImageSource ?: ImageSource(0))
-                            if (radarId.isNotEmpty() && map.getLayer(layerId) == null)
-                                map.addLayer(mRadarLayer ?: RasterLayer(0))
-                            mRadarImageSource?.setCoordinates(LatLngQuad(LatLng(radarDetails.GetNorthEastCorner()?.GetLatitude()?.toDouble()
-                                    ?: 0.0, radarDetails.GetSouthWestCorner()?.GetLongitude()?.toDouble()
-                                    ?: 0.0),
-                                    LatLng(radarDetails.GetNorthEastCorner()?.GetLatitude()?.toDouble()
-                                            ?: 0.0, radarDetails.GetNorthEastCorner()?.GetLongitude()?.toDouble()
-                                            ?: 0.0),
-                                    LatLng(radarDetails.GetSouthWestCorner()?.GetLatitude()?.toDouble()
-                                            ?: 0.0, radarDetails.GetNorthEastCorner()?.GetLongitude()?.toDouble()
-                                            ?: 0.0),
-                                    LatLng(radarDetails.GetSouthWestCorner()?.GetLatitude()?.toDouble()
-                                            ?: 0.0, radarDetails.GetSouthWestCorner()?.GetLongitude()?.toDouble()
-                                            ?: 0.0)))
-                            mMapController.GetCameraPositionObservable(radarDetails.GetLatitude()?.toDouble()
-                                    ?: 0.0, radarDetails.GetLongitude()?.toDouble()
-                                    ?: 0.0, 5.0).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<CameraPosition>
-                            {
+                            if (errorMessage != null) {
+                                mSnackbar?.setText(errorMessage)
+                                mSnackbar?.show()
+                            } else
+                                mSnackbar?.dismiss()
+                        }
+                        PageStateInfo.PageState.kData -> {
+                            Log.e("PageState Received", "Data")
+                            mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Float> {
                                 override fun onComplete() {}
-                                override fun onSubscribe(d: Disposable) {}
+                                override fun onSubscribe(d: Disposable) {
+                                    mTransparencyDisposable?.dispose()
+                                    mTransparencyDisposable = d
+                                }
 
-                                override fun onNext(t: CameraPosition) {
-                                    map.cameraPosition = t
+                                override fun onNext(t: Float) {
+                                    mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(t))
+                                }
+
+                                override fun onError(e: Throwable) {
+                                    onNext(0.0f)
+                                    e.printStackTrace()
+                                }
+                            })
+
+                            mRadarImageDataProvider.GetSiteInfoObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Map.Entry<String, RadarDetails>> {
+                                override fun onComplete() {}
+
+                                override fun onSubscribe(d: Disposable) {
+                                    mSelectedRadarDisposable?.dispose()
+                                    mSelectedRadarDisposable = d
                                 }
 
                                 override fun onError(e: Throwable) {
                                     e.printStackTrace()
+
+                                    SetSnackbarText("Error", "", "")
                                 }
 
+                                override fun onNext(radarInfo: Map.Entry<String, RadarDetails>) {
+                                    if (mLastRadarUpdated != radarInfo.key) {
+
+                                        mLastRadarUpdated = radarInfo.key
+
+                                        mHoldPlay = true
+
+                                        if(mState == PageStateInfo.PageState.kData) {
+                                            SetSnackbarText(radarInfo.key, radarInfo.value.GetName(), "")
+                                            mSnackbar?.show()
+                                        }
+
+                                        mMapFragment?.getMapAsync { map ->
+                                            map.uiSettings.isRotateGesturesEnabled = false
+                                            map.uiSettings.isTiltGesturesEnabled = false
+                                            val sourceId = mRadarImageSource?.id ?: ""
+                                            val layerId = mRadarLayer?.id ?: ""
+                                            if (sourceId.isNotEmpty() && map.getSource(sourceId) == null)
+                                                map.addSource(mRadarImageSource ?: ImageSource(0))
+                                            if (radarInfo.key.isNotEmpty() && map.getLayer(layerId) == null)
+                                                map.addLayer(mRadarLayer ?: RasterLayer(0))
+                                            mRadarImageSource?.setCoordinates(LatLngQuad(LatLng(radarInfo.value.GetNorthEastCorner()?.GetLatitude()?.toDouble()
+                                                    ?: 0.0, radarInfo.value.GetSouthWestCorner()?.GetLongitude()?.toDouble()
+                                                    ?: 0.0),
+                                                    LatLng(radarInfo.value.GetNorthEastCorner()?.GetLatitude()?.toDouble()
+                                                            ?: 0.0, radarInfo.value.GetNorthEastCorner()?.GetLongitude()?.toDouble()
+                                                            ?: 0.0),
+                                                    LatLng(radarInfo.value.GetSouthWestCorner()?.GetLatitude()?.toDouble()
+                                                            ?: 0.0, radarInfo.value.GetNorthEastCorner()?.GetLongitude()?.toDouble()
+                                                            ?: 0.0),
+                                                    LatLng(radarInfo.value.GetSouthWestCorner()?.GetLatitude()?.toDouble()
+                                                            ?: 0.0, radarInfo.value.GetSouthWestCorner()?.GetLongitude()?.toDouble()
+                                                            ?: 0.0)))
+                                            mMapController.SetCameraPosition(radarInfo.value.GetLatitude()?.toDouble()
+                                                    ?: 0.0, radarInfo.value.GetLongitude()?.toDouble()
+                                                    ?: 0.0, 5.0)
+                                        }
+                                    }
+                                }
                             })
 
-                            mRadarImageDataProvider.GetRadarAnimationObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<RadarDataController.ImageSubject>> {
+                            mRadarImageDataProvider.GetRadarAnimationObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<List<RadarDataController.ImageInfo>> {
                                 override fun onComplete() {}
-                                override fun onSubscribe(d: Disposable) {}
+                                override fun onSubscribe(d: Disposable) {
+                                    mImageListDisposable?.dispose()
+                                    mImageListDisposable = d
+                                }
 
-                                override fun onNext(imageList: List<RadarDataController.ImageSubject>) {
-                                    mMapController.SetFrameCount(imageList.size)
+                                override fun onNext(inImageList: List<RadarDataController.ImageInfo>) {
+                                    mHoldPlay = false
+                                    mMapController.SetFrameCount(inImageList.size)
 
-                                    mBinding?.playPauseButton?.visibility = View.VISIBLE
-                                    mActiveImageDisposable?.dispose()
-
-                                    mMapController.GetActiveImageIndexObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Int> {
-                                        override fun onComplete() {}
-                                        override fun onSubscribe(d: Disposable) {
-                                            mActiveImageDisposable = d
-                                        }
-
-                                        override fun onNext(index: Int) {
-                                            mRadarImageDisposable?.dispose()
-                                            mTransparencyDisposable?.dispose()
-                                            imageList[index].GetSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Bitmap> {
-                                                override fun onComplete() {}
-                                                override fun onSubscribe(d: Disposable) {
-                                                    mRadarImageDisposable = d
-                                                }
-
-                                                override fun onNext(t: Bitmap) {
-                                                    if (!t.isRecycled && mRadarImageDisposable?.isDisposed != true) {
-                                                        mRadarImageSource?.setImage(t)
-
-                                                        mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Float> {
-                                                            override fun onComplete() {}
-                                                            override fun onSubscribe(d: Disposable) {
-                                                                mTransparencyDisposable = d
-                                                            }
-
-                                                            override fun onNext(t: Float) {
-                                                                mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(t))
-                                                            }
-
-                                                            override fun onError(e: Throwable) {
-                                                                onNext(0.0f)
-                                                                e.printStackTrace()
-                                                            }
-
-                                                        })
-
-                                                        SetSnackbarText(radarId, radarDetails.GetName(), imageList[index].GetTimestring())
-                                                    }
-                                                }
-
-                                                override fun onError(e: Throwable) {
-                                                    SetSnackbarText(radarId, radarDetails.GetName(), "Error")
-                                                    e.printStackTrace()
-                                                }
-                                            })
-                                        }
-
-                                        override fun onError(e: Throwable) {
-                                            SetSnackbarText(radarId, radarDetails.GetName(), "Error")
-                                            e.printStackTrace()
-                                        }
-                                    })
+                                    mBinding?.playPauseButton?.show()
                                 }
 
                                 override fun onError(e: Throwable) {
-                                    SetSnackbarText(radarId, radarDetails.GetName(), "Error")
+                                    e.printStackTrace()
+                                    SetSnackbarText("Error", "", "")
+                                }
+                            })
+
+
+
+                            Observables.combineLatest(mMapController.GetActiveImageIndexObservable(),
+                                    mRadarImageDataProvider.GetSiteInfoObservable(),
+                                    mRadarImageDataProvider.GetRadarAnimationObservable())
+                            { activeImage, radarInfo, imageList ->
+
+                                Pair(imageList[activeImage], radarInfo)
+                            }.observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Pair<RadarDataController.ImageInfo, Map.Entry<String, RadarDetails>>> {
+                                override fun onComplete() {}
+                                override fun onSubscribe(d: Disposable) {
+                                    mActiveImageDisposable?.dispose()
+                                    mActiveImageDisposable = d
+                                }
+
+                                override fun onNext(pair: Pair<RadarDataController.ImageInfo, Map.Entry<String, RadarDetails>>) {
+                                    if (!pair.first.GetImage().isRecycled) {
+                                        if (!mHoldPlay)
+                                            mRadarImageSource?.setImage(pair.first.GetImage())
+                                        if(mState == PageStateInfo.PageState.kData)
+                                            SetSnackbarText(pair.second.key, pair.second.value.GetName(), if (mHoldPlay) "" else pair.first.GetTimestring())
+                                    }
+                                }
+
+                                override fun onError(e: Throwable) {
+                                    SetSnackbarText("Error", "", "")
                                     e.printStackTrace()
                                 }
                             })
                         }
                     }
-                })
-            }
-        })
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+
+            })
+        }
     }
 
 
     override fun onPause() {
-        mRadarImageDisposable?.dispose()
+        mRadarImageDataProvider.OnPause()
+
+        mPageStateDisposable?.dispose()
+
+        mActiveImageDisposable?.dispose()
+        mImageListDisposable?.dispose()
+
+        mPageStateDisposable = null
+        mActiveImageDisposable = null
+        mImageListDisposable = null
 
         super.onPause()
     }
@@ -308,12 +380,18 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
 
     override fun onDestroy() {
-        mRadarImageDataProvider.Dispose()
         mMapController.Dispose()
+
         mTransparencyDisposable?.dispose()
         mSelectedRadarDisposable?.dispose()
-        mSelectedRadarDetailDisposable?.dispose()
-        mActiveImageDisposable?.dispose()
+        mCameraUpdateDisposable?.dispose()
+
+        mTransparencyDisposable = null
+        mSelectedRadarDisposable = null
+        mCameraUpdateDisposable = null
+
+        mEmtpyImage.recycle()
+
         super.onDestroy()
     }
 

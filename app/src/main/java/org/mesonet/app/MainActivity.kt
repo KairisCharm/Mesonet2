@@ -31,14 +31,20 @@ import android.content.res.Configuration
 import android.support.v4.widget.DrawerLayout
 import android.view.Gravity
 import io.reactivex.Observer
+import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import org.mesonet.app.contact.ContactActivity
 import org.mesonet.app.usersettings.UserSettingsActivity
 import org.mesonet.core.PerContext
+import org.mesonet.dataprocessing.ConnectivityStatusProvider
 import org.mesonet.dataprocessing.LocationProvider
+import org.mesonet.dataprocessing.maps.MapsDataProvider
+import org.mesonet.dataprocessing.radar.RadarImageDataProvider
+import org.mesonet.dataprocessing.radar.RadarSiteDataProvider
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController
+import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController
 import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.advisories.Advisory
 
@@ -66,7 +72,22 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     internal lateinit var mMesonetSiteDataController: MesonetSiteDataController
 
     @Inject
+    internal lateinit var mMesonetUIController: MesonetUIController
+
+    @Inject
     internal lateinit var mFiveDayForecastDataController: FiveDayForecastDataController
+
+    @Inject
+    internal lateinit var mMapsController: MapsDataProvider
+
+    @Inject
+    internal lateinit var mRadarSiteDataProvider: RadarSiteDataProvider
+
+    @Inject
+    internal lateinit var mRadarImageDataProvider: RadarImageDataProvider
+
+    @Inject
+    internal lateinit var mConnectivityStatusProvider: ConnectivityStatusProvider
 
     @Inject
     lateinit var mLocationProvider: LocationProvider
@@ -78,9 +99,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
 
 
+
     public override fun onCreate(savedInstanceState: Bundle?) {
 
         super.onCreate(savedInstanceState)
+        mConnectivityStatusProvider.OnCreate(this)
+        mFiveDayForecastDataController.OnCreate(this)
+        mRadarImageDataProvider.OnCreate(this)
 
         var selectedTab = R.id.mesonetOption
 
@@ -88,35 +113,49 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             selectedTab = savedInstanceState.getInt(kSelectedTabId)
 
         LoadBinding(selectedTab)
+
+        mMesonetSiteDataController.OnCreate(this)
+
+        mMesonetUIController.OnCreate(this)
+
+        mAdvisoryDataProvider.OnCreate(this)
     }
 
 
     override fun onResume() {
         super.onResume()
+        mConnectivityStatusProvider.OnResume(this)
+        mAdvisoryDataProvider.OnResume(this)
 
-        mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Advisory.AdvisoryList>{
-            override fun onComplete() {}
+        if(mAdvisoryDisposable?.isDisposed != false) {
+            mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Advisory.AdvisoryList> {
+                override fun onComplete() {}
 
-            override fun onSubscribe(d: Disposable) {
-                mAdvisoryDisposable = d
-            }
+                override fun onSubscribe(d: Disposable) {
+                    mAdvisoryDisposable = d
+                }
 
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
 
-            override fun onNext(t: Advisory.AdvisoryList) {
-                if (t.isNotEmpty())
-                    mBinding?.bottomNav?.menu?.getItem(3)?.icon = resources.getDrawable(R.drawable.advisory_badge, theme)
-                else
-                    mBinding?.bottomNav?.menu?.getItem(3)?.setIcon(R.drawable.advisories_image)
-            }
-        })
+                override fun onNext(t: Advisory.AdvisoryList) {
+                    if (t.isNotEmpty())
+                        mBinding?.bottomNav?.menu?.getItem(3)?.icon = resources.getDrawable(R.drawable.advisory_badge, theme)
+                    else
+                        mBinding?.bottomNav?.menu?.getItem(3)?.setIcon(R.drawable.advisories_image)
+                }
+            })
+        }
     }
 
 
     override fun onPause() {
         mAdvisoryDisposable?.dispose()
+        mAdvisoryDisposable = null
+
+        mAdvisoryDataProvider.OnPause()
+        mConnectivityStatusProvider.OnPause()
 
         super.onPause()
     }
@@ -233,26 +272,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         super.onConfigurationChanged(newConfig)
 
         mBinding?.bottomNav?.selectedItemId = mLoadedFragmentId
-
-        mAdvisoryDisposable?.dispose()
-        mAdvisoryDataProvider.GetDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Advisory.AdvisoryList>{
-            override fun onComplete() {}
-
-            override fun onSubscribe(d: Disposable) {
-                mAdvisoryDisposable = d
-            }
-
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-
-            override fun onNext(t: Advisory.AdvisoryList) {
-                if (t.isNotEmpty())
-                    mBinding?.bottomNav?.menu?.getItem(3)?.icon = resources.getDrawable(R.drawable.advisory_badge, theme)
-                else
-                    mBinding?.bottomNav?.menu?.getItem(3)?.setIcon(R.drawable.advisories_image)
-            }
-        })
     }
 
 
@@ -303,9 +322,14 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
         mActionBarDrawerToggle = null
 
-        mMesonetSiteDataController.Dispose()
-        mFiveDayForecastDataController.Dispose()
-        mAdvisoryDataProvider.Dispose()
+        mMesonetSiteDataController.OnDestroy()
+        mMesonetUIController.OnDestroy()
+        mFiveDayForecastDataController.OnDestroy()
+        mMapsController.OnDestroy()
+        mAdvisoryDataProvider.OnDestroy()
+        mRadarSiteDataProvider.Dispose()
+        mRadarImageDataProvider.OnDestroy()
+        mConnectivityStatusProvider.OnDestroy()
         mPreferences.Dispose()
 
         super.onDestroy()
@@ -360,7 +384,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
         else if (requestCode == kUserSettingsRequestCode)
         {
-            mPreferences.SetUnitPreference(this, Preferences.UnitPreference.valueOf(data.getStringExtra(kUserSettingsResultName)))
+            mPreferences.SetUnitPreference(this, Preferences.UnitPreference.valueOf(data.getStringExtra(kUserSettingsResultName))).subscribe(object: SingleObserver<Int>{
+                override fun onSuccess(t: Int) {}
+                override fun onSubscribe(d: Disposable) {}
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
         }
     }
 

@@ -1,9 +1,12 @@
 package org.mesonet.androidsystem
 
 import android.content.Context
+import android.util.Log
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
+import io.reactivex.Single
+import io.reactivex.SingleOnSubscribe
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
@@ -20,8 +23,8 @@ class UserSettings @Inject constructor() : Preferences {
     val mStidSubject: BehaviorSubject<String> = BehaviorSubject.create()
     val mRadarSubject: BehaviorSubject<String> = BehaviorSubject.create()
 
-    internal fun SetPreference(inContext: Context, inName: String, inValue: String) {
-        Observable.create (ObservableOnSubscribe<Void>{
+    internal fun SetPreference(inContext: Context, inName: String, inValue: String): Single<Int> {
+        return Single.create (SingleOnSubscribe<Int>{
             synchronized(UserSettings@this)
             {
                 val preferences = inContext.getSharedPreferences(kMesonetSettings, Context.MODE_PRIVATE)
@@ -30,14 +33,7 @@ class UserSettings @Inject constructor() : Preferences {
                 editor.putString(inName, inValue)
                 editor.apply()
 
-                it.onComplete()
-            }
-        }).subscribe(object: Observer<Void> {
-            override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {}
-            override fun onNext(t: Void) {}
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
+                it.onSuccess(0)
             }
         })
     }
@@ -53,7 +49,7 @@ class UserSettings @Inject constructor() : Preferences {
     }
 
 
-    override fun UnitPreferencesSubject(inContext: Context): BehaviorSubject<Preferences.UnitPreference> {
+    override fun UnitPreferencesObservable(inContext: Context): Observable<Preferences.UnitPreference> {
         val prefence = Preferences.UnitPreference.valueOf(GetStringPreference(inContext, kUnitPreference, Preferences.UnitPreference.kImperial.name))
         if(!mUnitPreferenceSubject.hasValue() || mUnitPreferenceSubject.value != prefence)
             mUnitPreferenceSubject.onNext(prefence)
@@ -62,22 +58,13 @@ class UserSettings @Inject constructor() : Preferences {
     }
 
 
-    override fun SetUnitPreference(inContext: Context, inPreference: Preferences.UnitPreference) {
-        Observable.create(ObservableOnSubscribe<Void> {
-            SetPreference(inContext, UserSettings.kUnitPreference, inPreference.toString())
+    override fun SetUnitPreference(inContext: Context, inPreference: Preferences.UnitPreference): Single<Int> {
+        return SetPreference(inContext, UserSettings.kUnitPreference, inPreference.toString()).doOnSubscribe{it ->
             mUnitPreferenceSubject.onNext(inPreference)
-            it.onComplete()
-        }).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Void> {
-            override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {}
-            override fun onNext(t: Void) {}
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-        })
+        }.subscribeOn(Schedulers.computation())
     }
 
-    override fun SelectedStidSubject(inContext: Context): BehaviorSubject<String> {
+    override fun SelectedStidObservable(inContext: Context): Observable<String> {
         val preference = GetStringPreference(inContext, UserSettings.kSelectedStid, "")
         if(!mStidSubject.hasValue() || mStidSubject.value != preference)
             mStidSubject.onNext(preference)
@@ -85,22 +72,13 @@ class UserSettings @Inject constructor() : Preferences {
         return mStidSubject
     }
 
-    override fun SetSelectedStid(inContext: Context, inStid: String) {
-        Observable.create(ObservableOnSubscribe<Void>{
-            SetPreference(inContext, UserSettings.kSelectedStid, inStid)
+    override fun SetSelectedStid(inContext: Context, inStid: String): Single<Int> {
+        return SetPreference(inContext, UserSettings.kSelectedStid, inStid).doOnSubscribe {
             mStidSubject.onNext(inStid)
-            it.onComplete()
-        }).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Void> {
-            override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {}
-            override fun onNext(t: Void) {}
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-        })
+        }.subscribeOn(Schedulers.computation())
     }
 
-    override fun SelectedRadarSubject(inContext: Context): BehaviorSubject<String> {
+    override fun SelectedRadarObservable(inContext: Context): Observable<String> {
         val preference = GetStringPreference(inContext, UserSettings.kSelectedRadar, "")
         if(!mRadarSubject.hasValue() || mRadarSubject.value != preference)
             mRadarSubject.onNext(preference)
@@ -108,19 +86,10 @@ class UserSettings @Inject constructor() : Preferences {
         return mRadarSubject
     }
 
-    override fun SetSelectedRadar(inContext: Context, inRadarName: String) {
-        Observable.create(ObservableOnSubscribe<Void> {
-            SetPreference(inContext, UserSettings.kSelectedRadar, inRadarName)
+    override fun SetSelectedRadar(inContext: Context, inRadarName: String): Single<Int> {
+        return SetPreference(inContext, UserSettings.kSelectedRadar, inRadarName).doOnSubscribe{
             mRadarSubject.onNext(inRadarName)
-            it.onComplete()
-        }).subscribeOn(Schedulers.computation()).subscribe(object: Observer<Void> {
-            override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {}
-            override fun onNext(t: Void) {}
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-        })
+        }.subscribeOn(Schedulers.computation())
     }
 
     override fun Dispose() {

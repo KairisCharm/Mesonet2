@@ -12,16 +12,20 @@ import org.mesonet.app.baseclasses.BaseActivity;
 import org.mesonet.app.maps.MapListFragment;
 import org.mesonet.app.maps.dependencyinjection.MapListFragmentSubcomponent;
 import org.mesonet.app.radar.RadarFragment;
-import org.mesonet.app.radar.dependencyinjection.RadarDataControllerSubcomponent;
 import org.mesonet.app.radar.dependencyinjection.RadarFragmentSubcomponent;
-import org.mesonet.app.radar.dependencyinjection.RadarSiteDataProviderSubcomponent;
 import org.mesonet.app.site.dependencyinjection.SiteOverviewFragmentSubcomponent;
-import org.mesonet.app.site.mesonetdata.dependencyinjection.MesonetSiteDataControllerSubcomponent;
 import org.mesonet.app.site.SiteOverviewFragment;
 import org.mesonet.cache.Cacher;
 import org.mesonet.cache.CacherImpl;
 import org.mesonet.cache.site.SiteCache;
 import org.mesonet.cache.site.SiteCacheImpl;
+import org.mesonet.core.PerFragment;
+import org.mesonet.dataprocessing.ConnectivityStatusProvider;
+import org.mesonet.dataprocessing.ConnectivityStatusProviderImpl;
+import org.mesonet.dataprocessing.radar.RadarDataController;
+import org.mesonet.dataprocessing.radar.RadarImageDataProvider;
+import org.mesonet.dataprocessing.radar.RadarSiteDataProvider;
+import org.mesonet.dataprocessing.radar.RadarSiteDataProviderImpl;
 import org.mesonet.dataprocessing.site.MesonetSiteDataController;
 import org.mesonet.dataprocessing.site.MesonetSiteDataControllerImpl;
 import org.mesonet.dataprocessing.site.forecast.FiveDayForecastDataController;
@@ -44,11 +48,8 @@ import dagger.multibindings.IntoMap;
 
 @Module(includes = AndroidSupportInjectionModule.class,
         subcomponents = {SiteOverviewFragmentSubcomponent.class,
-        MesonetSiteDataControllerSubcomponent.class,
         MapListFragmentSubcomponent.class,
         RadarFragmentSubcomponent.class,
-        RadarSiteDataProviderSubcomponent.class,
-        RadarDataControllerSubcomponent.class,
         AdvisoriesFragmentSubcomponent.class})
 public abstract class MainActivityModule
 {
@@ -114,5 +115,17 @@ public abstract class MainActivityModule
 
     @Binds
     @PerContext
+    abstract RadarImageDataProvider RadarImageDataProvider(RadarDataController inRadarDataController);
+
+    @Binds
+    @PerContext
+    abstract RadarSiteDataProvider RadarSiteDataProvider(RadarSiteDataProviderImpl inSiteDataProvider);
+
+    @Binds
+    @PerContext
     abstract LocationProvider LocationProvider(DeviceLocation inDeviceLocation);
+
+    @Binds
+    @PerContext
+    abstract ConnectivityStatusProvider ConnectivityStatusProvider(ConnectivityStatusProviderImpl inStatusProvider);
 }

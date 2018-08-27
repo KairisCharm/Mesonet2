@@ -28,9 +28,13 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
 
     internal fun SetForecastViews(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
         if (mFiveDayForecastDataController.GetCount() > 1) {
-            mFiveDayForecastDataController.GetForecast(0).GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<ForecastData>{
+            mFiveDayForecastDataController.GetForecast(0).GetForecastDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<ForecastData>{
+                var disposable: Disposable? = null
                 override fun onComplete() {}
-                override fun onSubscribe(d: Disposable) {}
+                override fun onSubscribe(d: Disposable)
+                {
+                    disposable = d
+                }
                 override fun onNext(t: ForecastData) {
                     val iconUrl1 = t.GetIconUrl()
                     val highOrLow = t.GetHighOrLowTemp().split(" ")
@@ -42,15 +46,17 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
                         Picasso.with(inContext).load(iconUrl1).into(inRemoteViews, R.id.widget_forecast_image1, inAppWidgetIds)
 
                     UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
+
+                    disposable?.dispose()
+                    disposable = null
+
+                    mFiveDayForecastDataController.OnPause()
+                    mFiveDayForecastDataController.OnDestroy()
                 }
 
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
                     onNext(object: ForecastData{
-                        override fun IsLoading(): Boolean {
-                            return false
-                        }
-
                         override fun GetTime(): String {
                             return ""
                         }
@@ -80,9 +86,13 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
 
             })
 
-            mFiveDayForecastDataController.GetForecast(1).GetForecastDataSubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<ForecastData>{
+            mFiveDayForecastDataController.GetForecast(1).GetForecastDataObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<ForecastData>{
+                var disposable: Disposable? = null
                 override fun onComplete() {}
-                override fun onSubscribe(d: Disposable) {}
+                override fun onSubscribe(d: Disposable)
+                {
+                    disposable = d
+                }
                 override fun onNext(t: ForecastData) {
                     val iconUrl2 = t.GetIconUrl()
                     val highOrLow = t.GetHighOrLowTemp().split(" ")
@@ -94,15 +104,14 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
                         Picasso.with(inContext).load(iconUrl2).into(inRemoteViews, R.id.widget_forecast_image2, inAppWidgetIds)
 
                     UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
+
+                    disposable?.dispose()
+                    disposable = null
                 }
 
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
                     onNext(object: ForecastData{
-                        override fun IsLoading(): Boolean {
-                            return false
-                        }
-
                         override fun GetTime(): String {
                             return ""
                         }
@@ -136,6 +145,9 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
     override fun Update(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
         super.Update(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
 
+        mFiveDayForecastDataController.OnCreate(inContext)
+        mFiveDayForecastDataController.OnResume(inContext)
+
         mFiveDayForecastDataController.GetForecastDataSubject(inContext).observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<List<SemiDayForecastDataController>>
         {
             var disposable: Disposable? = null
@@ -148,6 +160,7 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
 
             override fun onNext(t: List<SemiDayForecastDataController>) {
                 disposable?.dispose()
+                disposable = null
                 SetForecastViews(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
             }
 
@@ -170,7 +183,8 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
 
 
     override fun onDeleted(context: Context?, appWidgetIds: IntArray?) {
-        mFiveDayForecastDataController.Dispose()
+        mFiveDayForecastDataController.OnDestroy()
+        mMesonetUIController.OnDestroy()
         super.onDeleted(context, appWidgetIds)
     }
 }

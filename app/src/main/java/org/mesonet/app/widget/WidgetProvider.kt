@@ -13,6 +13,7 @@ import io.reactivex.disposables.Disposable
 import org.mesonet.app.MainActivity
 import org.mesonet.app.R
 import org.mesonet.core.PerContext
+import org.mesonet.dataprocessing.ConnectivityStatusProvider
 import org.mesonet.dataprocessing.site.MesonetSiteDataController
 import org.mesonet.dataprocessing.site.mesonetdata.MesonetUIController
 import javax.inject.Inject
@@ -26,8 +27,15 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
     @Inject
     lateinit var mMesonetUIController: MesonetUIController
 
+    @Inject
+    lateinit var mConnectivityStatusProvider: ConnectivityStatusProvider
+
     override fun onReceive(inContext: Context, inIntent: Intent) {
         AndroidInjection.inject(this, inContext)
+
+        mMesonetSiteDataController.OnCreate(inContext)
+        mMesonetUIController.OnCreate(inContext)
+        mConnectivityStatusProvider.OnCreate(inContext)
 
         super.onReceive(inContext, inIntent)
     }
@@ -43,7 +51,10 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
 
     internal open fun Update(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
-        mMesonetUIController.GetDisplayFieldsSubject(inContext).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>
+        mMesonetUIController.OnResume(inContext)
+        mMesonetSiteDataController.OnResume(inContext)
+        mConnectivityStatusProvider.OnResume(inContext)
+        mMesonetUIController.GetDisplayFieldsObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MesonetUIController.MesonetDisplayFields>
         {
             var disposable: Disposable? = null
             override fun onComplete() {}
@@ -53,8 +64,21 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
             }
 
             override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
-                disposable?.dispose()
-                SetMesonetViews(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
+                inRemoteViews.setTextViewText(R.id.widget_place, t.GetStationName())
+                inRemoteViews.setTextViewText(R.id.widget_tair, t.GetAirTempString())
+
+                inRemoteViews.setTextViewText(R.id.widget_feelslike, t.GetApparentTempString())
+                inRemoteViews.setTextViewText(R.id.widget_wind, t.GetWindString())
+                inRemoteViews.setTextViewText(R.id.widget_time, t.GetTimeString())
+
+                UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
+
+                mMesonetUIController.OnPause()
+                mMesonetUIController.OnDestroy()
+                mConnectivityStatusProvider.OnPause()
+                mConnectivityStatusProvider.OnDestroy()
+                mMesonetSiteDataController.OnPause()
+                mMesonetSiteDataController.OnDestroy()
             }
 
             override fun onError(e: Throwable) {
@@ -88,49 +112,6 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
     }
 
 
-    internal fun SetMesonetViews(inContext: Context, inAppWidgetManager: AppWidgetManager, inRemoteViews: RemoteViews, inAppWidgetIds: IntArray) {
-        mMesonetSiteDataController.GetCurrentSelectionSubject(inContext).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<String>{
-            var siteDisposable: Disposable? = null
-            override fun onComplete() {}
-            override fun onSubscribe(d: Disposable) {
-                siteDisposable = d
-            }
-
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-
-            override fun onNext(t: String) {
-                siteDisposable?.dispose()
-                mMesonetUIController.GetDisplayFieldsSubject(inContext).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<MesonetUIController.MesonetDisplayFields> {
-                    var uiDisposable: Disposable? = null
-                    override fun onComplete() {}
-                    override fun onSubscribe(d: Disposable)
-                    {
-                        uiDisposable = d
-                    }
-
-                    override fun onNext(t: MesonetUIController.MesonetDisplayFields) {
-                        uiDisposable?.dispose()
-                        inRemoteViews.setTextViewText(R.id.widget_place, t.GetStationName())
-                        inRemoteViews.setTextViewText(R.id.widget_tair, t.GetAirTempString())
-
-                        inRemoteViews.setTextViewText(R.id.widget_feelslike, t.GetApparentTempString())
-                        inRemoteViews.setTextViewText(R.id.widget_wind, t.GetWindString())
-                        inRemoteViews.setTextViewText(R.id.widget_time, t.GetTimeString())
-
-                        UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
-                    }
-
-                    override fun onError(e: Throwable) {
-                        e.printStackTrace()
-                    }
-                })
-            }
-        })
-    }
-
-
     internal open fun GetClickLayoutId(): Int {
         return R.id.widget_small_layout
     }
@@ -142,7 +123,8 @@ open class WidgetProvider @Inject constructor() : AppWidgetProvider() {
 
 
     override fun onDeleted(context: Context?, appWidgetIds: IntArray?) {
-        mMesonetSiteDataController.Dispose()
+        mMesonetSiteDataController.OnDestroy()
+        mMesonetUIController.OnDestroy()
         super.onDeleted(context, appWidgetIds)
     }
 }

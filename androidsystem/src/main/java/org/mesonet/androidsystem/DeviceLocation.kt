@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.support.v4.content.ContextCompat
 
-import io.reactivex.Observable
 import io.reactivex.schedulers.Schedulers
 
 import org.mesonet.dataprocessing.LocationProvider
@@ -16,9 +15,7 @@ import android.os.Looper
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
-import io.reactivex.ObservableEmitter
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
+import io.reactivex.*
 import io.reactivex.disposables.Disposable
 import org.mesonet.core.PerContext
 
@@ -34,15 +31,14 @@ constructor(var mContext: Context) : LocationProvider
 
     val mLocationProviderClient = LocationServices.getFusedLocationProviderClient(mContext)
 
-    val mWaitingObservers: ArrayList<ObservableEmitter<LocationProvider.LocationResult>> = ArrayList()
+    val mWaitingObservers: ArrayList<SingleEmitter<LocationProvider.LocationResult>> = ArrayList()
 
-    override fun GetLocation(): Observable<LocationProvider.LocationResult> {
-        return Observable.create (ObservableOnSubscribe<LocationProvider.LocationResult>{ locationSubscriber ->
-            mPermissions.RequestPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION).observeOn(Schedulers.computation()).subscribe(object: Observer<Boolean>{
-                override fun onComplete() {}
+    override fun GetLocation(): Single<LocationProvider.LocationResult> {
+        return Single.create (SingleOnSubscribe<LocationProvider.LocationResult>{ locationSubscriber ->
+            mPermissions.RequestPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION).observeOn(Schedulers.computation()).subscribe(object: SingleObserver<Boolean> {
                 override fun onSubscribe(d: Disposable) {}
 
-                override fun onNext(t: Boolean) {
+                override fun onSuccess(t: Boolean) {
                     if (t && ContextCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                         if (Looper.myLooper() == null)
                             Looper.prepare()
@@ -58,7 +54,7 @@ constructor(var mContext: Context) : LocationProvider
                         val client: SettingsClient = LocationServices.getSettingsClient(mContext)
                         val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
 
-                        task.addOnSuccessListener { locationSettingsResponse ->
+                        task.addOnSuccessListener {
                             mLocationProviderClient.requestLocationUpdates(locationRequest,
                                     object : LocationCallback() {
                                         override
@@ -66,13 +62,11 @@ constructor(var mContext: Context) : LocationProvider
 
                                         fun onLocationResult(locationResult: LocationResult?) {
                                             if (locationResult == null) {
-                                                locationSubscriber.onNext(LocationResultImpl(null))
-                                                locationSubscriber.onComplete()
+                                                locationSubscriber.onSuccess(LocationResultImpl(null))
                                                 return
                                             }
 
-                                            locationSubscriber.onNext(LocationResultImpl(locationResult.locations.first()))
-                                            locationSubscriber.onComplete()
+                                            locationSubscriber.onSuccess(LocationResultImpl(locationResult.locations.first()))
                                             mLocationProviderClient.removeLocationUpdates(this)
                                         }
                                     },
@@ -86,29 +80,25 @@ constructor(var mContext: Context) : LocationProvider
                                         mWaitingObservers.add(locationSubscriber)
                                         exception.startResolutionForResult(mContext as Activity, mPermissions.LocationRequestCode())
                                     } catch (sendEx: IntentSender.SendIntentException) {
-                                        locationSubscriber.onNext(LocationResultImpl(null))
-                                        locationSubscriber.onComplete()
+                                        locationSubscriber.onSuccess(LocationResultImpl(null))
                                     }
                                 } else {
-                                    locationSubscriber.onNext(LocationResultImpl(null))
-                                    locationSubscriber.onComplete()
+                                    locationSubscriber.onSuccess(LocationResultImpl(null))
                                 }
                             }
                             else {
-                                locationSubscriber.onNext(LocationResultImpl(null))
-                                locationSubscriber.onComplete()
+                                locationSubscriber.onSuccess(LocationResultImpl(null))
                             }
                         }
 
                     } else {
-                        locationSubscriber.onNext(LocationResultImpl(null))
-                        locationSubscriber.onComplete()
+                        locationSubscriber.onSuccess(LocationResultImpl(null))
                     }
                 }
 
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
-                    onNext(false)
+                    onSuccess(false)
                 }
             })
 
@@ -137,21 +127,18 @@ constructor(var mContext: Context) : LocationProvider
 
                                     fun onLocationResult(locationResult: LocationResult?) {
                                         if (locationResult == null) {
-                                            locationSubscriber.onNext(LocationResultImpl(null))
-                                            locationSubscriber.onComplete()
+                                            locationSubscriber.onSuccess(LocationResultImpl(null))
                                             return
                                         }
 
-                                        locationSubscriber.onNext(LocationResultImpl(locationResult.locations.first()))
-                                        locationSubscriber.onComplete()
+                                        locationSubscriber.onSuccess(LocationResultImpl(locationResult.locations.first()))
                                         mLocationProviderClient.removeLocationUpdates(this)
                                     }
                                 },
                                 null)
                     }
                 } else {
-                    mWaitingObservers[0].onNext(LocationResultImpl(null))
-                    mWaitingObservers[0].onComplete()
+                    mWaitingObservers[0].onSuccess(LocationResultImpl(null))
                 }
 
                 mWaitingObservers.removeAt(0)
