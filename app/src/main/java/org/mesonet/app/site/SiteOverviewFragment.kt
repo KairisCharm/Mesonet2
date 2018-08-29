@@ -321,7 +321,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
 
                     val forecastPages = ArrayList<ForecastListView>()
                     var i = 0
-                    while (i < mFiveDayForecastDataController.GetCount()) {
+                    while (i < mFiveDayForecastDataController.GetCount() && i < (pageCount * forecastsPerPage)) {
                         val forecastListView = ForecastListView(activity ?: Activity())
 
                         var j = 0
