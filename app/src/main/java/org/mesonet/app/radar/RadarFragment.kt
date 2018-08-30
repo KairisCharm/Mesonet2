@@ -104,7 +104,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.radar_fragment, inContainer, false)
 
         val options = MapboxMapOptions()
-        options.styleUrl("mapbox://styles/okmesonet/cjic5xvsd02xl2sp7sh1eljuj")
+        options.styleUrl("mapbox://styles/okmesonet/cjkmvlllh7oo12rplp8zufopc")
         options.textureMode(true)
         options.logoGravity(Gravity.TOP or Gravity.START)
         options.attributionGravity(Gravity.TOP or Gravity.START)
@@ -135,7 +135,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             filterTransaction.replace(R.id.childFragmentContainer, FilterListFragment())
             filterTransaction.commit()
             RevealView(mBinding?.radarLayout)
-            mBinding?.playPauseButton?.hide()
+            (mBinding?.playPauseButton as View?)?.visibility = View.GONE
         }
 
         mBinding?.transparencySeekBar?.max = 255
@@ -205,7 +205,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                             mTransparencyDisposable?.dispose()
                             mSelectedRadarDisposable?.dispose()
                             mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
-                            mBinding?.playPauseButton?.hide()
+                            (mBinding?.playPauseButton as View?)?.visibility = View.GONE
                             mSnackbar?.dismiss()
                         }
                         PageStateInfo.PageState.kError -> {
@@ -213,7 +213,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                             mTransparencyDisposable?.dispose()
                             mSelectedRadarDisposable?.dispose()
                             mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
-                            mBinding?.playPauseButton?.hide()
+                            (mBinding?.playPauseButton as View?)?.visibility = View.GONE
                             val errorMessage = t.GetErrorMessage()
 
                             if (errorMessage != null) {
@@ -307,7 +307,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                     mHoldPlay = false
                                     mMapController.SetFrameCount(inImageList.size)
 
-                                    mBinding?.playPauseButton?.show()
+                                    (mBinding?.playPauseButton as View?)?.visibility = View.VISIBLE
                                 }
 
                                 override fun onError(e: Throwable) {
@@ -400,7 +400,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
         Observable.create(ObservableOnSubscribe<Void>{
             RevealView(mBinding?.radarLayout)
             mSnackbar?.show()
-            mBinding?.playPauseButton?.show()
+            (mBinding?.playPauseButton as View?)?.visibility = View.VISIBLE
             it.onComplete()
         }).subscribeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void> {
             override fun onComplete() {}
