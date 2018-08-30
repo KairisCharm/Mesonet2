@@ -18,8 +18,8 @@ android {
         applicationId "org.mesonet.app"
         minSdkVersion 24
         targetSdkVersion 28
-        versionCode 60
-        versionName "2.0-alpha8"
+        versionCode 61
+        versionName "2.0-alpha9"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         multiDexEnabled true
