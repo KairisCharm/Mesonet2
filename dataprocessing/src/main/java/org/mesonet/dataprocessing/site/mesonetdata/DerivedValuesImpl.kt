@@ -2,6 +2,7 @@ package org.mesonet.dataprocessing.site.mesonetdata
 
 
 import org.mesonet.dataprocessing.formulas.UnitConverter
+import java.lang.Math.pow
 import javax.inject.Inject
 
 class DerivedValuesImpl @Inject
@@ -86,10 +87,17 @@ constructor(): DerivedValues {
     }
 
 
-    override fun GetMSLPressure(inTemperature: Number, inStationPressure: Number?, inElevation: Number?): Number? {
-        return if (inStationPressure == null || inElevation == null) null else inStationPressure.toDouble() * Math.pow(1 - 0.0065 * inElevation.toDouble() / (inTemperature.toDouble() + 0.0065 * inElevation.toDouble() + 273.0), -5.257)
+    override fun GetMSLPressure(inStationPressure: Number?, inElevation: Number?): Number? {
+        val kGamma = 6.5		// Lapse rate for standard atmosphere.
+        val kMTAIR = 288.0		// Mean surface temperature for standard atmosphere.
+        val kMPSL = 1013.25		// Mean surface pressure for standard atmosphere.
+        val kC1 = 0.1901631		// C1 = gamma Rd/g.
+        val kC2 = 5.258643		// C2 = g/gamma Rd.
 
+        val elev = (inElevation?: return null).toDouble() / 1000.0
+        return (inStationPressure?: return null).toDouble() * pow(1 + pow((kMPSL / inStationPressure.toDouble()), kC1) * (kGamma * elev / kMTAIR), kC2)
     }
+
 
     companion object {
         private val kWindChillTempThreshold = 50.0

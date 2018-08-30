@@ -263,7 +263,7 @@ class MesonetDataControllerImpl @Inject constructor(private var mSiteDataControl
         if (inUnitPreference == Preferences.UnitPreference.kImperial)
             pressureUnits = DefaultUnits.PressureUnits.kInHg
 
-        val result = mUnitConverter.GetPressureInPreferredUnits(mDerivedValues.GetMSLPressure(inMesonetData.GetTAir()?: 0.0, inMesonetData.GetPres(), elev), inMesonetData, pressureUnits)
+        val result = mUnitConverter.GetPressureInPreferredUnits(mDerivedValues.GetMSLPressure(inMesonetData.GetPres(), elev), inMesonetData, pressureUnits)
                 ?: return null
 
         return result.toDouble()
