@@ -360,6 +360,10 @@ constructor(internal var mLocationProvider: LocationProvider,
                     return it.value.GetName()?: ""
                 }
 
+                override fun GetSortString(): String {
+                    return GetName()
+                }
+
                 override fun IsFavorite(): Boolean {
                     return inFavorites.contains(it.key)
                 }

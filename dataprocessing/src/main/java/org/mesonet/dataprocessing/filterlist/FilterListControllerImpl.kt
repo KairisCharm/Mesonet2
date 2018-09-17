@@ -27,8 +27,8 @@ class FilterListControllerImpl @Inject constructor(): FilterListController {
         val sortData = MapToPairs(inSearchFields)
         Collections.sort<Pair<String, BasicListData>>(sortData, object : Comparator<Pair<String, BasicListData>> {
             override fun compare(stringPairPair: Pair<String, BasicListData>, t1: Pair<String, BasicListData>): Int {
-                val name1 = stringPairPair.second.GetName()
-                val name2 = t1.second.GetName()
+                val name1 = stringPairPair.second.GetSortString()
+                val name2 = t1.second.GetSortString()
 
                 var result = 0
 
@@ -106,7 +106,7 @@ class FilterListControllerImpl @Inject constructor(): FilterListController {
     }
 
 
-    override fun SortByName(inSortText: String?, inListData: Map<String, BasicListData>?): Single<MutableList<Pair<String, BasicListData>>> {
+    override fun SortBySortString(inSortText: String?, inListData: Map<String, BasicListData>?): Single<MutableList<Pair<String, BasicListData>>> {
         mSortByNearest.set(false)
         return TryGetLocationAndFillListObservable(inSortText, inListData)
     }

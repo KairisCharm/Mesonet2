@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
-import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 
@@ -86,7 +85,7 @@ class FilterListFragment : BaseFragment(), SelectSiteListener, Observer<MutableL
                 mDisposable?.dispose()
                 mDisposable = null
                 mFilterListData.AsBasicListData().flatMap {
-                    mFilterListController.SortByName(mBinding.searchText.text.toString(), it.first).toObservable()
+                    mFilterListController.SortBySortString(mBinding.searchText.text.toString(), it.first).toObservable()
                 }.observeOn(AndroidSchedulers.mainThread()).subscribe(this@FilterListFragment)
             }
 

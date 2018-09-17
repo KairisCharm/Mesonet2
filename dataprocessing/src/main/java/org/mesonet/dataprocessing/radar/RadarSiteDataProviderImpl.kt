@@ -1,7 +1,6 @@
 package org.mesonet.dataprocessing.radar
 
 import android.app.Activity
-import android.content.Context
 import android.location.Location
 import io.reactivex.*
 import io.reactivex.disposables.Disposable
@@ -98,6 +97,10 @@ constructor(inContext: Activity, var mRadarDetailCreator: RadarDetailCreator, in
                 object : BasicListData {
                     override fun GetName(): String {
                         return "${it.key} - ${it.value.GetName()}"
+                    }
+
+                    override fun GetSortString(): String {
+                        return "${it.value.GetName()}"
                     }
 
                     override fun IsFavorite(): Boolean {
