@@ -106,7 +106,7 @@ constructor(internal var mLocationProvider: LocationProvider,
                 { siteList, favorites, location, cachedSite ->
                     var site = cachedSite
 
-                    if (location.LocationResult() != null)
+                    if (site.isBlank() && location.LocationResult() != null)
                         site = GetNearestSite(siteList, location.LocationResult())
 
                     if (site.isBlank() && mMesonetSiteListSubject.hasValue() && mMesonetSiteListSubject.value?.filter { it.key == kDefaultSelection }?.entries?.isNotEmpty()?: false)
@@ -263,7 +263,7 @@ constructor(internal var mLocationProvider: LocationProvider,
         var shortestDistance = java.lang.Float.MAX_VALUE
 
         for (i in keys.indices) {
-            val site = inMesonetSiteList.get(keys[i])
+            val site = inMesonetSiteList[keys[i]]
 
             if(site != null) {
                 val siteLocation = Location("none")
