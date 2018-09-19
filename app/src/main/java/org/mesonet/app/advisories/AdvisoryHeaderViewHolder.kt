@@ -4,8 +4,8 @@ import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
 import android.view.LayoutInflater
 import android.view.ViewGroup
-
 import org.mesonet.app.R
+
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.HeaderViewHolderBinding
 import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilder

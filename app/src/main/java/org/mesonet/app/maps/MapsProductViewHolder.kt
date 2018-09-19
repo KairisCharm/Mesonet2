@@ -8,13 +8,12 @@ import android.view.View
 import android.view.ViewGroup
 
 import com.squareup.picasso.Picasso
-
 import org.mesonet.app.R
+
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.MapsProductViewHolderBinding
 import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.dataprocessing.maps.MapsDataProvider
-import java.util.*
 
 
 class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.GenericMapData, MapsProductViewHolderBinding>(inBinding) {

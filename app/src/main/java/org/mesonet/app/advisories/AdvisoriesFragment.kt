@@ -9,8 +9,8 @@ import android.view.ViewGroup
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-
 import org.mesonet.app.R
+
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.AdvisoriesFragmentBinding
 import org.mesonet.dataprocessing.PageStateInfo

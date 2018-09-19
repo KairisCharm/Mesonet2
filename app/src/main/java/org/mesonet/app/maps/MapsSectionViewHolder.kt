@@ -5,8 +5,8 @@ import android.databinding.ViewDataBinding
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-
 import org.mesonet.app.R
+
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.MapsSectionViewHolderBinding
 import org.mesonet.dataprocessing.maps.MapsDataProvider

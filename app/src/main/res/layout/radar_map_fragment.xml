@@ -9,26 +9,28 @@
         android:layout_height="match_parent">
 
         <RelativeLayout
-            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <!--<ImageButton-->
-                <!--android:id="@+id/opacityToggleButton"-->
-                <!--android:layout_width="28dp"-->
-                <!--android:layout_height="28dp"-->
-                <!--android:layout_alignParentEnd="true"-->
-                <!--android:scaleType="fitXY"-->
-                <!--android:src="@drawable/baseline_opacity_white_36"-->
-                <!--android:background="@color/cardview_dark_background"/>-->
+            <ImageButton
+                android:id="@+id/opacityToggleButton"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:padding="4dp"
+                android:layout_alignParentEnd="true"
+                android:scaleType="fitXY"
+                android:src="@drawable/baseline_opacity_white_36"
+                android:background="@color/cardview_dark_background"/>
             <FrameLayout
                 android:id="@+id/legendTransparencyLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/opacityToggleButton">
                 <SeekBar
                     android:id="@+id/transparencySeekBar"
                     android:layout_width="match_parent"
-                    android:layout_height="28dp"
+                    android:layout_height="30dp"
                     android:paddingTop="2dp"
                     android:paddingBottom="2dp"
                     android:background="@color/cardview_dark_background"
@@ -38,7 +40,7 @@
                     android:id="@+id/legend"
                     android:src="@drawable/map_legend"
                     android:layout_width="match_parent"
-                    android:layout_height="28dp"
+                    android:layout_height="30dp"
                     android:scaleType="fitXY" />
             </FrameLayout>
 

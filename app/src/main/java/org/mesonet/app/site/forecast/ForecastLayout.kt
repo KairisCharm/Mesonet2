@@ -2,21 +2,16 @@ package org.mesonet.app.site.forecast
 
 import android.app.Activity
 import android.databinding.DataBindingUtil
-import android.os.Build
-import android.text.Layout.BREAK_STRATEGY_HIGH_QUALITY
-import android.text.Layout.BREAK_STRATEGY_SIMPLE
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.RelativeLayout
 import com.squareup.picasso.Picasso
-import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-
 import org.mesonet.app.R
+
 import org.mesonet.app.databinding.ForecastLayoutBinding
 import org.mesonet.dataprocessing.PageStateInfo
 import org.mesonet.dataprocessing.site.forecast.ForecastData

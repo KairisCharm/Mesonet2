@@ -15,7 +15,6 @@ import android.view.View
 import android.view.ViewAnimationUtils
 import android.view.ViewGroup
 import android.support.v7.widget.Toolbar
-import android.util.Log
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
@@ -23,8 +22,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.Observables
 import io.reactivex.schedulers.Schedulers
-
 import org.mesonet.app.R
+
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.MesonetDataContainerBinding
 import org.mesonet.app.webview.WebViewActivity

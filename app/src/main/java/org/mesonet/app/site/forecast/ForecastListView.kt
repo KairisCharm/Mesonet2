@@ -5,12 +5,9 @@ import android.databinding.DataBindingUtil
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import io.reactivex.Observer
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import org.mesonet.app.R
 import org.mesonet.app.databinding.ForecastListViewBinding
-import org.mesonet.dataprocessing.site.forecast.ForecastData
 import org.mesonet.dataprocessing.site.forecast.SemiDayForecastDataController
 
 class ForecastListView(inActivity: Activity) : LinearLayout(inActivity) {

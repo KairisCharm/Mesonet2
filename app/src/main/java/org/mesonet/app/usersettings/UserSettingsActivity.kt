@@ -6,7 +6,6 @@ import android.support.v4.app.Fragment
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import org.mesonet.app.MainActivity
-import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.databinding.UserSettingsActivityBinding
 import org.mesonet.dataprocessing.userdata.Preferences
@@ -14,6 +13,7 @@ import javax.inject.Inject
 import android.content.Intent
 import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
+import org.mesonet.app.R
 
 
 class UserSettingsActivity: BaseActivity()

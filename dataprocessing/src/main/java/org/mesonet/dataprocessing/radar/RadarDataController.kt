@@ -69,7 +69,7 @@ constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
     override fun OnResume(inContext: Context)
     {
         if(mUpdateDisposable?.isDisposed != false) {
-            mTickObservable = Observable.interval(0, 1, TimeUnit.MINUTES).distinctUntilChanged{tick -> tick}
+            mTickObservable = Observable.interval(0, 1, TimeUnit.MINUTES).distinctUntilChanged{tick -> tick}.retryWhen { mConnecectivityObservable }
             mSiteObservable = GetSiteInfoObservable().retryWhen { mTickObservable }.retryWhen { mConnecectivityObservable }
             Observables.combineLatest(
                 Observables.combineLatest(mTickObservable, mConnecectivityObservable, mSiteObservable)
@@ -121,14 +121,14 @@ constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
                     }
 
                     site
-                }.flatMap {
+                }.retryWhen { mTickObservable }.retryWhen { mSiteObservable }.retryWhen { mConnecectivityObservable }.flatMap {
                     site ->
                     mDataProvider.GetRadarHistory(site.key).retryWhen { mTickObservable }.retryWhen { mSiteObservable }.retryWhen { mConnecectivityObservable }
-                },
+                }.retryWhen { mTickObservable }.retryWhen { mSiteObservable }.retryWhen { mConnecectivityObservable },
                 mConnecectivityObservable)
             { history, connectivity ->
                 Pair(history, connectivity)
-            }.flatMap {
+            }.retryWhen { mTickObservable }.retryWhen { mSiteObservable }.retryWhen { mConnecectivityObservable }.flatMap {
                 historyConnectivityPair ->
 
                 if(historyConnectivityPair.second) {

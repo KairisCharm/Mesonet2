@@ -1,26 +1,20 @@
 package org.mesonet.app.contact
 
 import android.Manifest
-import android.app.Activity
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.support.v4.app.Fragment
-import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.databinding.ContactActivityBinding
 import android.content.Intent
 import android.net.Uri
 import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
-import android.os.SystemClock
 import android.support.v4.content.ContextCompat
-import io.reactivex.Observer
-import io.reactivex.Single
 import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import org.mesonet.androidsystem.Permissions
-import java.util.*
+import org.mesonet.app.R
 
 
 class ContactActivity: BaseActivity()

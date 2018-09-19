@@ -3,16 +3,14 @@ package org.mesonet.app.advisories
 import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
-import android.os.SystemClock
 import android.view.LayoutInflater
 import android.view.ViewGroup
-
 import org.mesonet.app.R
+
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.AdvisoryViewHolderBinding
 import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.dataprocessing.advisories.AdvisoryDisplayListBuilder
-import java.util.*
 
 class AdvisoryViewHolder(inBinding: AdvisoryViewHolderBinding) : RecyclerViewHolder<Pair<AdvisoryDisplayListBuilder.AdvisoryDataType, AdvisoryDisplayListBuilder.AdvisoryData>, AdvisoryViewHolderBinding>(inBinding) {
 

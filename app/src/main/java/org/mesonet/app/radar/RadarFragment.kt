@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.databinding.DataBindingUtil
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
 import android.util.Log
 import android.view.*
@@ -25,11 +24,11 @@ import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.Observables
-import io.reactivex.subjects.BehaviorSubject
-
 import org.mesonet.app.R
+
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.RadarFragmentBinding
+import org.mesonet.app.databinding.RadarMapFragmentBinding
 import org.mesonet.app.filterlist.FilterListFragment
 import org.mesonet.dataprocessing.PageStateInfo
 import org.mesonet.dataprocessing.radar.MapboxMapController
@@ -59,9 +58,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
     private var mEmtpyImage = Bitmap.createBitmap(1, 1, Bitmap.Config.ALPHA_8)
 
-    private var mBinding: RadarFragmentBinding? = null
-
-    private var mSnackbar: Snackbar? = null
+    private var mBinding: RadarMapFragmentBinding? = null
 
     private var mMapFragment: SupportMapFragment? = null
 
@@ -101,7 +98,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
 
     override fun onCreateView(inInflater: LayoutInflater, inContainer: ViewGroup?, inSavedInstanceState: Bundle?): View {
-        mBinding = DataBindingUtil.inflate(inInflater, R.layout.radar_fragment, inContainer, false)
+        mBinding = DataBindingUtil.inflate(inInflater, R.layout.radar_map_fragment, inContainer, false)
 
         val options = MapboxMapOptions()
         options.styleUrl("mapbox://styles/okmesonet/cjkmvlllh7oo12rplp8zufopc")
@@ -130,13 +127,34 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             mMapController.TogglePlay()
         }
 
-        mSnackbar = Snackbar.make(mBinding?.radarLayout ?: View(context), "", Snackbar.LENGTH_INDEFINITE).setAction("Change") {
+        mBinding?.radarLocationFab?.setOnClickListener {
             val filterTransaction = childFragmentManager.beginTransaction()
             filterTransaction.replace(R.id.childFragmentContainer, FilterListFragment())
             filterTransaction.commit()
-            RevealView(mBinding?.radarLayout)
+            RevealView(mBinding?.radarLocationFab)
             (mBinding?.playPauseButton as View?)?.visibility = View.GONE
+            (mBinding?.radarLocationFab as View?)?.visibility = View.GONE
         }
+
+        mBinding?.opacityToggleButton?.setOnClickListener {
+            if(mBinding?.legend?.visibility == View.VISIBLE)
+            {
+                mBinding?.legend?.visibility = View.GONE
+                mBinding?.transparencySeekBar?.visibility = View.VISIBLE
+            }
+            else
+            {
+                mBinding?.legend?.visibility = View.VISIBLE
+                mBinding?.transparencySeekBar?.visibility = View.GONE
+            }
+        }
+//        mSnackbar = Snackbar.make(mBinding?.radarLayout ?: View(context), "", Snackbar.LENGTH_INDEFINITE).setAction("Change") {
+//            val filterTransaction = childFragmentManager.beginTransaction()
+//            filterTransaction.replace(R.id.childFragmentContainer, FilterListFragment())
+//            filterTransaction.commit()
+//            RevealView(mBinding?.radarLayout)
+//            (mBinding?.playPauseButton as View?)?.visibility = View.GONE
+//        }
 
         mBinding?.transparencySeekBar?.max = 255
 
@@ -206,7 +224,8 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                             mSelectedRadarDisposable?.dispose()
                             mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
                             (mBinding?.playPauseButton as View?)?.visibility = View.GONE
-                            mSnackbar?.dismiss()
+                            (mBinding?.radarLocationFab as View?)?.visibility = View.GONE
+                            mBinding?.readingInfoLayout?.visibility = View.GONE
                         }
                         PageStateInfo.PageState.kError -> {
                             Log.e("PageState Received", "Error")
@@ -214,13 +233,14 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                             mSelectedRadarDisposable?.dispose()
                             mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
                             (mBinding?.playPauseButton as View?)?.visibility = View.GONE
+                            (mBinding?.radarLocationFab as View?)?.visibility = View.GONE
                             val errorMessage = t.GetErrorMessage()
 
                             if (errorMessage != null) {
-                                mSnackbar?.setText(errorMessage)
-                                mSnackbar?.show()
+                                mBinding?.readingInfoTextView?.text = errorMessage
+                                mBinding?.readingInfoLayout?.visibility = View.VISIBLE
                             } else
-                                mSnackbar?.dismiss()
+                                mBinding?.readingInfoLayout?.visibility = View.GONE
                         }
                         PageStateInfo.PageState.kData -> {
                             Log.e("PageState Received", "Data")
@@ -264,7 +284,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
                                         if(mState == PageStateInfo.PageState.kData) {
                                             SetSnackbarText(radarInfo.key, radarInfo.value.GetName(), "")
-                                            mSnackbar?.show()
+                                            mBinding?.readingInfoLayout?.visibility = View.VISIBLE
                                         }
 
                                         mMapFragment?.getMapAsync { map ->
@@ -308,6 +328,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                     mMapController.SetFrameCount(inImageList.size)
 
                                     (mBinding?.playPauseButton as View?)?.visibility = View.VISIBLE
+                                    (mBinding?.radarLocationFab as View?)?.visibility = View.VISIBLE
                                 }
 
                                 override fun onError(e: Throwable) {
@@ -399,8 +420,9 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
     override fun Close() {
         Observable.create(ObservableOnSubscribe<Void>{
             RevealView(mBinding?.radarLayout)
-            mSnackbar?.show()
+            mBinding?.readingInfoLayout?.visibility = View.VISIBLE
             (mBinding?.playPauseButton as View?)?.visibility = View.VISIBLE
+            (mBinding?.radarLocationFab as View?)?.visibility = View.VISIBLE
             it.onComplete()
         }).subscribeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void> {
             override fun onComplete() {}
@@ -461,7 +483,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             val radarId = inRadarId ?: ""
             val radarName = inRadarName ?: ""
 
-            mSnackbar?.setText("$radarId - $radarName$timeString")
+            mBinding?.readingInfoTextView?.text = ("$radarId - $radarName$timeString")
         }
     }
 }

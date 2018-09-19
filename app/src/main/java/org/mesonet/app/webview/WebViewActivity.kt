@@ -3,24 +3,13 @@ package org.mesonet.app.webview
 import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.os.Bundle
-import android.os.SystemClock
 import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
-import android.webkit.WebSettings
 import android.webkit.WebViewClient
-
 import org.mesonet.app.R
-import org.mesonet.app.databinding.WebViewActivityBinding
 
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
-import java.net.HttpURLConnection
-import java.net.MalformedURLException
-import java.net.URL
-import java.net.URLEncoder
-import java.util.*
+import org.mesonet.app.databinding.WebViewActivityBinding
 
 
 class WebViewActivity : AppCompatActivity() {

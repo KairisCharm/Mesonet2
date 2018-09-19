@@ -4,17 +4,15 @@ package org.mesonet.app.maps
 import android.databinding.DataBindingUtil
 import android.databinding.ViewDataBinding
 import android.os.Bundle
-import android.os.SystemClock
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-
 import org.mesonet.app.R
+
 import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.MapsGroupViewHolderBinding
 import org.mesonet.dataprocessing.maps.MapsDataProvider
-import java.util.*
 
 class MapsGroupViewHolder(private val mBaseActivity: BaseActivity?, inBinding: MapsGroupViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.MapAbbreviatedGroupDisplayData, MapsGroupViewHolderBinding>(inBinding) {
 

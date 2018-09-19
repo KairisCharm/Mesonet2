@@ -7,11 +7,7 @@ import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import io.reactivex.subjects.BehaviorSubject
-
 import org.mesonet.app.R
-import org.mesonet.dataprocessing.radar.MapboxMapController
-
 
 
 class PlayPauseButton(mContext: Context, inAttrs: AttributeSet) : FloatingActionButton(mContext, inAttrs), Observer<Boolean> {
