@@ -7,6 +7,7 @@ import android.databinding.DataBindingUtil
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.text.Html
 import android.util.Log
 import android.view.*
 import android.widget.SeekBar
@@ -27,7 +28,6 @@ import io.reactivex.rxkotlin.Observables
 import org.mesonet.app.R
 
 import org.mesonet.app.baseclasses.BaseFragment
-import org.mesonet.app.databinding.RadarFragmentBinding
 import org.mesonet.app.databinding.RadarMapFragmentBinding
 import org.mesonet.app.filterlist.FilterListFragment
 import org.mesonet.dataprocessing.PageStateInfo
@@ -114,7 +114,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                                                      LatLng(0.0, 0.0)), R.drawable.blank_drawable)
 
 
-
         mRadarLayer = RasterLayer(kRasterImageName, mRadarImageSource?.id)
 
         val mapTransaction = childFragmentManager.beginTransaction()
@@ -127,34 +126,21 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             mMapController.TogglePlay()
         }
 
-        mBinding?.radarLocationFab?.setOnClickListener {
+        mBinding?.readingInfoLayout?.setOnClickListener {
             val filterTransaction = childFragmentManager.beginTransaction()
             filterTransaction.replace(R.id.childFragmentContainer, FilterListFragment())
             filterTransaction.commit()
-            RevealView(mBinding?.radarLocationFab)
+            RevealView(mBinding?.readingInfoLayout, mBinding?.childFragmentContainer)
             (mBinding?.playPauseButton as View?)?.visibility = View.GONE
-            (mBinding?.radarLocationFab as View?)?.visibility = View.GONE
         }
 
-        mBinding?.opacityToggleButton?.setOnClickListener {
-            if(mBinding?.legend?.visibility == View.VISIBLE)
-            {
-                mBinding?.legend?.visibility = View.GONE
-                mBinding?.transparencySeekBar?.visibility = View.VISIBLE
-            }
-            else
-            {
-                mBinding?.legend?.visibility = View.VISIBLE
-                mBinding?.transparencySeekBar?.visibility = View.GONE
-            }
+        mBinding?.opacityDrawerButtonLayout?.setOnClickListener {
+            RevealView(mBinding?.opacityDrawerButtonLayout, mBinding?.opacityLayout)
         }
-//        mSnackbar = Snackbar.make(mBinding?.radarLayout ?: View(context), "", Snackbar.LENGTH_INDEFINITE).setAction("Change") {
-//            val filterTransaction = childFragmentManager.beginTransaction()
-//            filterTransaction.replace(R.id.childFragmentContainer, FilterListFragment())
-//            filterTransaction.commit()
-//            RevealView(mBinding?.radarLayout)
-//            (mBinding?.playPauseButton as View?)?.visibility = View.GONE
-//        }
+
+        mBinding?.opacityCloseButton?.setOnClickListener {
+            RevealView(mBinding?.opacityDrawerButtonLayout, mBinding?.opacityLayout)
+        }
 
         mBinding?.transparencySeekBar?.max = 255
 
@@ -196,6 +182,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             }
         })
 
+
         return mBinding?.root?: View(context)
     }
 
@@ -224,7 +211,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                             mSelectedRadarDisposable?.dispose()
                             mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
                             (mBinding?.playPauseButton as View?)?.visibility = View.GONE
-                            (mBinding?.radarLocationFab as View?)?.visibility = View.GONE
                             mBinding?.readingInfoLayout?.visibility = View.GONE
                         }
                         PageStateInfo.PageState.kError -> {
@@ -233,7 +219,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                             mSelectedRadarDisposable?.dispose()
                             mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
                             (mBinding?.playPauseButton as View?)?.visibility = View.GONE
-                            (mBinding?.radarLocationFab as View?)?.visibility = View.GONE
                             val errorMessage = t.GetErrorMessage()
 
                             if (errorMessage != null) {
@@ -328,7 +313,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                     mMapController.SetFrameCount(inImageList.size)
 
                                     (mBinding?.playPauseButton as View?)?.visibility = View.VISIBLE
-                                    (mBinding?.radarLocationFab as View?)?.visibility = View.VISIBLE
                                 }
 
                                 override fun onError(e: Throwable) {
@@ -376,6 +360,9 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
             })
         }
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
+            mBinding?.overlayOpacityText?.visibility = View.VISIBLE
     }
 
 
@@ -419,10 +406,9 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
     override fun Close() {
         Observable.create(ObservableOnSubscribe<Void>{
-            RevealView(mBinding?.radarLayout)
+            RevealView(mBinding?.radarLayout, mBinding?.childFragmentContainer)
             mBinding?.readingInfoLayout?.visibility = View.VISIBLE
             (mBinding?.playPauseButton as View?)?.visibility = View.VISIBLE
-            (mBinding?.radarLocationFab as View?)?.visibility = View.VISIBLE
             it.onComplete()
         }).subscribeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Void> {
             override fun onComplete() {}
@@ -435,17 +421,17 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
     }
 
 
-    private fun RevealView(view: View?) {
-        val cx = view?.left ?: 0 + (view?.right ?: 0) - 24
-        val cy = (view?.top ?: 0 + (view?.bottom ?: 0)) / 2
-        val radius = Math.max(mBinding?.childFragmentContainer?.width ?: 0, mBinding?.childFragmentContainer?.height ?: 0) * 2.0f
+    private fun RevealView(inClickView: View?, inViewToReveal: View?) {
+        val cx = inClickView?.left ?: 0 + (inClickView?.right ?: 0) - 24
+        val cy = (inClickView?.top ?: 0 + (inClickView?.bottom ?: 0)) - 24
+        val radius = Math.max(inViewToReveal?.width ?: 0, inViewToReveal?.height ?: 0) * 2.0f
 
-        if (mBinding?.childFragmentContainer?.visibility != View.VISIBLE) {
-            mBinding?.childFragmentContainer?.visibility = View.VISIBLE
-            val hide = ViewAnimationUtils.createCircularReveal(mBinding?.childFragmentContainer, cx, cy, 0f, radius)
+        if (inViewToReveal?.visibility != View.VISIBLE) {
+            inViewToReveal?.visibility = View.VISIBLE
+            val hide = ViewAnimationUtils.createCircularReveal(inViewToReveal, cx, cy, 0f, radius)
             hide.addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
-                    mBinding?.childFragmentContainer?.visibility = View.VISIBLE
+                    inViewToReveal?.visibility = View.VISIBLE
                     hide.removeListener(this)
                 }
             })
@@ -453,10 +439,10 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
         } else {
             val reveal = ViewAnimationUtils.createCircularReveal(
-                    mBinding?.childFragmentContainer, cx, cy, radius, 0f)
+                    inViewToReveal, cx, cy, radius, 0f)
             reveal.addListener(object : AnimatorListenerAdapter() {
                 override fun onAnimationEnd(animation: Animator) {
-                    mBinding?.childFragmentContainer?.visibility = View.INVISIBLE
+                    inViewToReveal.visibility = View.INVISIBLE
                     reveal.removeListener(this)
                 }
             })
@@ -473,9 +459,9 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
             if (inTimeString != null) {
                 if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-                    timeString = "\n"
+                    timeString = "<br>"
                 else
-                    timeString += ", "
+                    timeString += "&nbsp;&nbsp;&nbsp; "
             }
 
             timeString += inTimeString ?: ""
@@ -483,7 +469,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             val radarId = inRadarId ?: ""
             val radarName = inRadarName ?: ""
 
-            mBinding?.readingInfoTextView?.text = ("$radarId - $radarName$timeString")
+            mBinding?.readingInfoTextView?.text = Html.fromHtml("<b><span style=\"color: #acc0fb;\">$radarId</span>&nbsp;&nbsp; $radarName</b>$timeString\n", 0)
         }
     }
 }

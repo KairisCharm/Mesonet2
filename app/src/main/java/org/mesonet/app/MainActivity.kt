@@ -143,7 +143,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     if (t.isNotEmpty())
                         mBinding?.bottomNav?.menu?.getItem(3)?.icon = resources.getDrawable(R.drawable.advisory_badge, theme)
                     else
-                        mBinding?.bottomNav?.menu?.getItem(3)?.setIcon(R.drawable.advisories_image)
+                        mBinding?.bottomNav?.menu?.getItem(3)?.setIcon(R.drawable.advisories_selector)
                 }
             })
         }

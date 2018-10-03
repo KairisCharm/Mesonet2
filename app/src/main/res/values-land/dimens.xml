@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="radarLocationFabBottomMargin">8dp</dimen>
-    <dimen name="radarPlayPauseFabBottomMargin">60dp</dimen>
+    <dimen name="radarPlayPauseFabBottomMargin">44dp</dimen>
+    <dimen name="radarInfoLayoutHeight">30dp</dimen>
 </resources>
