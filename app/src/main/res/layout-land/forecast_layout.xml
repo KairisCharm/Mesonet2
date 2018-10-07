@@ -35,8 +35,8 @@
                     android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:gravity="center_horizontal"
-                    android:paddingStart="12dp"
-                    android:paddingEnd="12dp">
+                    android:paddingStart="@dimen/forecast_data_padding_land"
+                    android:paddingEnd="@dimen/forecast_data_padding_land">
 
                     <View
                         android:layout_width="match_parent"

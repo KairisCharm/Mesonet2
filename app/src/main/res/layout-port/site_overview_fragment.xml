@@ -15,7 +15,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:background="@color/siteBackground"
-            android:padding="2dp">
+            android:padding="@dimen/mesonet_data_padding">
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -57,25 +57,27 @@
 
                 <ImageButton
                     android:id="@+id/previousFab"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/forecast_scroll_arrow_size"
+                    android:layout_height="@dimen/forecast_scroll_arrow_size"
                     app:fabSize="mini"
                     android:layout_marginStart="16dp"
                     android:layout_marginTop="75dp"
                     android:src="@drawable/ic_navigate_before_white_24dp"
+                    android:scaleType="fitXY"
                     android:elevation="6dp"
                     android:background="@android:color/transparent"
                     android:visibility="gone"/>
 
                 <ImageButton
                     android:id="@+id/nextFab"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="@dimen/forecast_scroll_arrow_size"
+                    android:layout_height="@dimen/forecast_scroll_arrow_size"
                     app:fabSize="mini"
                     android:layout_marginEnd="16dp"
                     android:layout_marginTop="75dp"
                     android:layout_alignParentEnd="true"
                     android:src="@drawable/ic_navigate_next_white_24dp"
+                    android:scaleType="fitXY"
                     android:elevation="6dp"
                     android:background="@android:color/transparent"
                     android:visibility="gone"/>
