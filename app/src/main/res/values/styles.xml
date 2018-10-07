@@ -13,7 +13,10 @@
         <item name="android:actionOverflowButtonStyle">@style/OverflowButtonStyle</item>
         <item name="android:actionOverflowMenuStyle">@style/OverflowMenuStyle</item>
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
+        <item name="android:alertDialogTheme">@style/Theme.AppCompat.Light.Dialog</item>
     </style>
+
+    <!--<style name="AppAlertDialog" parent="AlertDialog.AppCompat.Light"></style>-->
 
     <style name="OverflowButtonStyle" parent="Widget.AppCompat.ActionButton.Overflow">
         <item name="android:tint">@color/whiteTextColor</item>

@@ -19,17 +19,31 @@ class ConnectivityStatusProviderImpl @Inject constructor(): ConnectivityManager.
 
     private var mConnectivityManager: ConnectivityManager? = null
 
+    private var mPaused = true
+
     override fun OnCreate(inContext: Context) {
         mConnectivityManager = inContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
     override fun OnResume(inContext: Context) {
-        mConnectivityStatusSubject.onNext(mConnectivityManager?.activeNetwork != null && mConnectivityManager?.activeNetworkInfo?.isConnected == true)
-        mConnectivityManager?.registerNetworkCallback(mNetworkRequest, this)
+        synchronized(this)
+        {
+            mConnectivityStatusSubject.onNext(mConnectivityManager?.activeNetwork != null && mConnectivityManager?.activeNetworkInfo?.isConnected == true)
+            mConnectivityManager?.registerNetworkCallback(mNetworkRequest, this)
+
+            mPaused = false
+        }
     }
 
     override fun OnPause() {
-        mConnectivityManager?.unregisterNetworkCallback(this)
+        synchronized(this)
+        {
+            if(!mPaused)
+            {
+                mConnectivityManager?.unregisterNetworkCallback(this)
+                mPaused = true
+            }
+        }
     }
 
     override fun OnDestroy()

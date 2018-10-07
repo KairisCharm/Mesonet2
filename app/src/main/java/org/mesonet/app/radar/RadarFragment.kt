@@ -273,14 +273,19 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                         }
 
                                         mMapFragment?.getMapAsync { map ->
+                                            map.uiSettings.attributionDialogManager
                                             map.uiSettings.isRotateGesturesEnabled = false
                                             map.uiSettings.isTiltGesturesEnabled = false
                                             val sourceId = mRadarImageSource?.id ?: ""
                                             val layerId = mRadarLayer?.id ?: ""
-                                            if (sourceId.isNotEmpty() && map.getSource(sourceId) == null)
-                                                map.addSource(mRadarImageSource ?: ImageSource(0))
-                                            if (radarInfo.key.isNotEmpty() && map.getLayer(layerId) == null)
-                                                map.addLayer(mRadarLayer ?: RasterLayer(0))
+
+                                            val radarImageSource = mRadarImageSource
+                                            val radarLayer = mRadarLayer
+
+                                            if (sourceId.isNotEmpty() && map.getSource(sourceId) == null && radarImageSource != null)
+                                                map.addSource(radarImageSource)
+                                            if (radarInfo.key.isNotEmpty() && map.getLayer(layerId) == null && radarLayer != null)
+                                                map.addLayer(radarLayer)
                                             mRadarImageSource?.setCoordinates(LatLngQuad(LatLng(radarInfo.value.GetNorthEastCorner()?.GetLatitude()?.toDouble()
                                                     ?: 0.0, radarInfo.value.GetSouthWestCorner()?.GetLongitude()?.toDouble()
                                                     ?: 0.0),

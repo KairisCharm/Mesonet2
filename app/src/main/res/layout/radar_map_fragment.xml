@@ -14,17 +14,15 @@
 
             <ImageView
                 android:id="@+id/legend"
-                android:src="@drawable/map_legend2"
+                android:src="@drawable/map_legend"
                 android:layout_width="match_parent"
                 android:layout_height="30dp"
                 android:scaleType="fitXY" />
 
             <LinearLayout
-                android:layout_marginTop="4dp"
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="#8000">
+                android:layout_height="wrap_content">
 
                 <View
                     android:layout_width="0dp"
