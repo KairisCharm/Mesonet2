@@ -1,5 +1,0 @@
-<adaptive-icon xmlns:android1="http://schemas.android.com/apk/res/android"
-    xmlns:android="http://schemas.android.com/tools">
-    <background android:color="@color/mapbox_blue"/>
-    <foreground android1:drawable="@mipmap/ic_launcher"/>
-</adaptive-icon>
