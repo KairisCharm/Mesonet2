@@ -57,20 +57,14 @@ constructor(): DerivedValues {
             if (inWindSpeed == null)
                 return null
 
-            val windChill = GetWindChill(inTemp, inWindSpeed)
-
-            if (windChill != null)
-                return windChill
+            return GetWindChill(inTemp, inWindSpeed)
         }
 
         if (fahrenheit?.toDouble()?: 0.0 >= kHeatIndexTempThreshold) {
             if (inHumidity == null)
                 return null
 
-            val heatIndex = GetHeatIndex(inTemp, inHumidity)
-
-            if (heatIndex != null)
-                return heatIndex
+            return GetHeatIndex(inTemp, inHumidity)
         }
 
         return inTemp
