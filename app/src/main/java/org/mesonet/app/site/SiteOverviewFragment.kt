@@ -472,6 +472,7 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                                 intent.putExtra(WebViewActivity.kInitialZoom, 1)
                                 intent.putExtra(WebViewActivity.kAllowUserZoom, true)
                                 intent.putExtra(WebViewActivity.kAllowShare, true)
+                                intent.putExtra(WebViewActivity.kUpdateInterval, 60000L)
                                 startActivity(intent)
                             }
 

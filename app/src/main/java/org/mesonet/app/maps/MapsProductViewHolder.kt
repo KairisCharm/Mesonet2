@@ -42,6 +42,7 @@ class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerV
                 intent.putExtra(WebViewActivity.kAllowShare, true)
                 intent.putExtra(WebViewActivity.kInitialZoom, 1)
                 intent.putExtra(WebViewActivity.kAllowUserZoom, true)
+                intent.putExtra(WebViewActivity.kUpdateInterval, 60000L)
                 binding.root.context.startActivity(intent)
 
                 it.isEnabled = true

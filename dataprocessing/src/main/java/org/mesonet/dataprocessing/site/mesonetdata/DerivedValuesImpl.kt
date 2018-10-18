@@ -38,8 +38,11 @@ constructor(): DerivedValues {
         val fahrenheit = mUnitConverter.CelsiusToFahrenheit(inTemp)
         val mph = mUnitConverter.MpsToMph(inWindSpeed)
 
-        if (fahrenheit?.toDouble()?: 0.0 > kWindChillTempThreshold || mph?.toDouble()?: 0.0 < 3.0)
+        if (fahrenheit?.toDouble()?: 0.0 > kWindChillTempThreshold)
             return null
+
+        if(mph?.toDouble()?: 0.0 < 3.0)
+            return fahrenheit
 
         val windSpeedFunction = Math.pow(mph?.toDouble()?: 0.0, 0.16)
 
