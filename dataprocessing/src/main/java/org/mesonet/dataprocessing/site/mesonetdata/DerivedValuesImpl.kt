@@ -42,7 +42,7 @@ constructor(): DerivedValues {
             return null
 
         if(mph?.toDouble()?: 0.0 < 3.0)
-            return fahrenheit
+            return inTemp
 
         val windSpeedFunction = Math.pow(mph?.toDouble()?: 0.0, 0.16)
 
