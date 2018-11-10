@@ -111,7 +111,7 @@ class ForecastLayout(inActivity: Activity, val inIndex: Int) : RelativeLayout(in
 
         if (!imageUrl.isEmpty() && imageUrl != mForecastImageUrl) {
             mForecastImageUrl = imageUrl
-            Picasso.with(mActivity).load(imageUrl).into(mBinding.image)
+            Picasso.get().load(imageUrl).into(mBinding.image)
         }
     }
 

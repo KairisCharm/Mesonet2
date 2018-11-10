@@ -32,7 +32,7 @@ class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerV
             else
                 binding?.productSection?.visibility = View.VISIBLE
 
-            Picasso.with(binding?.root?.context).load(inData.GetImageUrl()).into(binding?.productPreview)
+            Picasso.get().load(inData.GetImageUrl()).into(binding?.productPreview)
 
             binding?.layout?.setOnClickListener {
                 it.isEnabled = false

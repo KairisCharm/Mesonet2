@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter
 import android.content.res.Configuration
 import android.databinding.DataBindingUtil
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.text.Html
@@ -474,7 +475,10 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
             val radarId = inRadarId ?: ""
             val radarName = inRadarName ?: ""
 
-            mBinding?.readingInfoTextView?.text = Html.fromHtml("<b><span style=\"color: #acc0fb;\">$radarId</span>&nbsp;&nbsp; $radarName</b>$timeString\n", 0)
+            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.M)
+                mBinding?.readingInfoTextView?.text = Html.fromHtml("<b><span style=\"color: #acc0fb;\">$radarId</span>&nbsp;&nbsp; $radarName</b>$timeString\n", 0)
+            else
+                mBinding?.readingInfoTextView?.text = Html.fromHtml("<b><font color=\"#acc0fb\">$radarId</font>&nbsp;&nbsp; $radarName</b>$timeString\n")
         }
     }
 }

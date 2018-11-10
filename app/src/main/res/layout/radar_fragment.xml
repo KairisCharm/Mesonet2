@@ -88,7 +88,7 @@
             app:layout_anchor="@+id/mapContainer"
             app:layout_anchorGravity="bottom|end"
             app:fabSize="mini"
-            android:layout_marginBottom="@dimen/radarLocationFabBottomMargin"
+            android:layout_marginBottom="24dp"
             android:layout_marginEnd="24dp"
             android:elevation="4dp"
             android:visibility="gone"/>

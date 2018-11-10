@@ -46,7 +46,7 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
                     inRemoteViews.setTextViewText(R.id.widget_forecast_loworhigh1, highOrLow.last())
                     inRemoteViews.setTextViewText(R.id.widget_forecast_time1, t.GetTime())
                     if (!iconUrl1.isEmpty())
-                        Picasso.with(inContext).load(iconUrl1).into(inRemoteViews, R.id.widget_forecast_image1, inAppWidgetIds)
+                        Picasso.get().load(iconUrl1).into(inRemoteViews, R.id.widget_forecast_image1, inAppWidgetIds)
 
                     UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
 
@@ -104,7 +104,7 @@ class WidgetProviderLarge @Inject constructor() : WidgetProvider() {
                     inRemoteViews.setTextViewText(R.id.widget_forecast_loworhigh2, highOrLow.last())
                     inRemoteViews.setTextViewText(R.id.widget_forecast_time2, t.GetTime())
                     if (!iconUrl2.isEmpty())
-                        Picasso.with(inContext).load(iconUrl2).into(inRemoteViews, R.id.widget_forecast_image2, inAppWidgetIds)
+                        Picasso.get().load(iconUrl2).into(inRemoteViews, R.id.widget_forecast_image2, inAppWidgetIds)
 
                     UpdateWidgets(inContext, inAppWidgetManager, inRemoteViews, inAppWidgetIds)
 

@@ -196,7 +196,10 @@ constructor(private var mDataController: MesonetDataController,
             if (temp == null)
                 displayFields.mAirTempString = "-"
             else
-                displayFields.mAirTempString = String.format(Locale.getDefault(), if (unitPreference == Preferences.UnitPreference.kImperial) "%.0f" else "%.1f", temp) + "°"
+                displayFields.mAirTempString = String.format(Locale.getDefault(), "%.0f", temp) + "°"
+
+            if(displayFields.mAirTempString.startsWith("-0°"))
+                displayFields.mAirTempString = displayFields.mAirTempString.replace("-0°", "0°")
 
             val apparentTemp = data.GetApparentTemp()
 
@@ -204,24 +207,23 @@ constructor(private var mDataController: MesonetDataController,
                 displayFields.mApparentTempString = "-"
             else {
                 var unit = ""
-                var format = ""
 
                 when (unitPreference) {
                     Preferences.UnitPreference.kMetric -> {
                         unit = "C"
-                        format = "%.1f"
                     }
                     Preferences.UnitPreference.kImperial -> {
                         unit = "F"
-                        format = "%.0f"
                     }
                     null -> {
                         unit = "F"
-                        format = "%.0f"
                     }
                 }
 
-                displayFields.mApparentTempString = String.format(Locale.getDefault(), format, apparentTemp) + "°" + unit
+                displayFields.mApparentTempString = String.format(Locale.getDefault(), "%.0f", apparentTemp) + "°" + unit
+
+                if(displayFields.mApparentTempString.startsWith("-0°"))
+                    displayFields.mApparentTempString = displayFields.mApparentTempString.replace("-0°", "0°")
             }
 
             val dewPoint = data.GetDewpoint()
@@ -230,24 +232,23 @@ constructor(private var mDataController: MesonetDataController,
                 displayFields.mDewPointString = "-"
             else {
                 var unit = ""
-                var format = ""
 
                 when (unitPreference) {
                     null -> {
                         unit = "F"
-                        format = "%.0f"
                     }
                     Preferences.UnitPreference.kMetric -> {
                         unit = "C"
-                        format = "%.1f"
                     }
                     Preferences.UnitPreference.kImperial -> {
                         unit = "F"
-                        format = "%.0f"
                     }
                 }
 
-                displayFields.mDewPointString = String.format(Locale.getDefault(), format, dewPoint) + "°" + unit
+                displayFields.mDewPointString = String.format(Locale.getDefault(), "%.0f", dewPoint) + "°" + unit
+
+                if(displayFields.mDewPointString.startsWith("-0°"))
+                    displayFields.mDewPointString = displayFields.mDewPointString.replace("-0°", "0°")
             }
 
             val windSpd = data.GetWindSpeed()
