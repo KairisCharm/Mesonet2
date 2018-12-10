@@ -1,13 +1,9 @@
 package org.mesonet.androidsystem
 
 import android.content.Context
-import android.util.Log
 import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
-import io.reactivex.Observer
 import io.reactivex.Single
 import io.reactivex.SingleOnSubscribe
-import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.core.PerContext

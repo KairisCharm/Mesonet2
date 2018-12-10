@@ -2,7 +2,6 @@ package org.mesonet.dataprocessing.radar
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.util.Log
 import io.reactivex.Observable
 import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
@@ -79,7 +78,6 @@ constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
                     if(mLastSiteSelected != mLastSiteLoaded)
                     {
                         if(connectivity) {
-                            Log.e("PageState Sent", "Loading 2")
                             mPageStateSubject.onNext(object : PageStateInfo {
                                 override fun GetPageState(): PageStateInfo.PageState {
                                     return PageStateInfo.PageState.kLoading
@@ -93,7 +91,6 @@ constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
                         }
                         else
                         {
-                            Log.e("PageState Sent", "Error 2")
                             mPageStateSubject.onNext(object: PageStateInfo{
                                 override fun GetPageState(): PageStateInfo.PageState {
                                     return PageStateInfo.PageState.kError
@@ -246,7 +243,6 @@ constructor(internal var mSiteDataProvider: RadarSiteDataProvider,
                     if(t.first.GetPageState() == PageStateInfo.PageState.kData)
                         mRadarImageDataSubject.onNext(t.second)
 
-                    Log.e("PageState Sent", t.first.GetPageState().name)
                     mPageStateSubject.onNext(t.first)
                 }
 

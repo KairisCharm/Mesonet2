@@ -1,7 +1,6 @@
 package org.mesonet.dataprocessing.site.mesonetdata
 
 import android.content.Context
-import android.util.Log
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.rxkotlin.Observables

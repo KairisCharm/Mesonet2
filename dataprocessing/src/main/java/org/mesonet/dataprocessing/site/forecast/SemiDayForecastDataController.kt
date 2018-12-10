@@ -1,7 +1,6 @@
 package org.mesonet.dataprocessing.site.forecast
 
 import android.content.Context
-import android.util.Log
 import io.reactivex.*
 
 

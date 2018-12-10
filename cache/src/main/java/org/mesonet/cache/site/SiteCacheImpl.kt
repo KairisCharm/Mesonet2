@@ -1,7 +1,6 @@
 package org.mesonet.cache.site
 
 import android.content.Context
-import android.util.Log
 import io.reactivex.*
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers

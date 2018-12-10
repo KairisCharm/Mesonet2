@@ -9,7 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.text.Html
-import android.util.Log
 import android.view.*
 import android.widget.SeekBar
 import com.mapbox.mapboxsdk.camera.CameraPosition
@@ -207,7 +206,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                     mState = t.GetPageState()
                     when (t.GetPageState()) {
                         PageStateInfo.PageState.kLoading -> {
-                            Log.e("PageState Received", "Loading")
                             mTransparencyDisposable?.dispose()
                             mSelectedRadarDisposable?.dispose()
                             mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
@@ -215,7 +213,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                             mBinding?.readingInfoLayout?.visibility = View.GONE
                         }
                         PageStateInfo.PageState.kError -> {
-                            Log.e("PageState Received", "Error")
                             mTransparencyDisposable?.dispose()
                             mSelectedRadarDisposable?.dispose()
                             mRadarLayer?.setProperties(PropertyFactory.rasterOpacity(0.0f))
@@ -229,7 +226,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                 mBinding?.readingInfoLayout?.visibility = View.GONE
                         }
                         PageStateInfo.PageState.kData -> {
-                            Log.e("PageState Received", "Data")
                             mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Float> {
                                 override fun onComplete() {}
                                 override fun onSubscribe(d: Disposable) {

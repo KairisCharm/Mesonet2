@@ -20,7 +20,6 @@ import javax.inject.Inject
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import android.content.Context
-import android.util.Log
 import io.reactivex.*
 import io.reactivex.Observable
 import io.reactivex.Observer
