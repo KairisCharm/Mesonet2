@@ -139,39 +139,16 @@
                     android:layout_alignParentBottom="true"
                     android:layout_alignParentEnd="true"
                     android:clickable="true"
-                    android:background="@drawable/opacity_bar_background">
-
-                    <LinearLayout
-                        android:id="@+id/opacityCloseButton"
-                        android:gravity="center"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content">
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_marginStart="8dp"
-                            android:layout_marginEnd="8dp"
-                            android:background="@drawable/opacity_bar_background"
-                            android:src="@drawable/ic_navigate_next_white_24dp"
-                            android:tint="@color/lightBlue"/>
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:layout_marginEnd="8dp"
-                            android:textAllCaps="true"
-                            android:text="OVERLAY OPACITY"
-                            android:textColor="@color/whiteTextColor"/>
-
-                    </LinearLayout>
+                    android:background="@drawable/opacity_bar_background"
+                    android:layoutDirection="rtl">
 
                     <LinearLayout
                         android:orientation="horizontal"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
-                        android:layout_marginEnd="8dp">
+                        android:layout_marginEnd="8dp"
+                        android:layoutDirection="ltr">
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -193,6 +170,32 @@
                             android:textAllCaps="true"
                             android:text="100%"
                             android:textColor="@color/whiteTextColor"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/opacityCloseButton"
+                        android:gravity="center"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layoutDirection="ltr">
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="@drawable/opacity_bar_background"
+                            android:src="@drawable/ic_navigate_next_white_24dp"
+                            android:tint="@color/lightBlue"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="8dp"
+                            android:textAllCaps="true"
+                            android:text="OVERLAY OPACITY"
+                            android:textColor="@color/whiteTextColor"/>
+
                     </LinearLayout>
 
                 </LinearLayout>
