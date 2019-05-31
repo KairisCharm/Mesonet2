@@ -14,6 +14,8 @@ import org.mesonet.app.R
 import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.baseclasses.BaseFragment
 import org.mesonet.app.databinding.MapListFragmentBinding
+import org.mesonet.app.maps.traditional.TraditionalMapsGroupRecyclerViewAdapter
+import org.mesonet.app.maps.traditional.TraditionalMapsSectionRecyclerViewAdapter
 import org.mesonet.dataprocessing.PageStateInfo
 import org.mesonet.dataprocessing.maps.MapsDataProvider
 
@@ -47,7 +49,7 @@ class MapListFragment : BaseFragment()
             group = arguments?.getSerializable(kMapGroupFullList) as MapsDataProvider.MapFullGroupDisplayData
 
         if(group == null) {
-            mBinding.mapList.setAdapter(MapsGroupRecyclerViewAdapter(mActivity))
+            mBinding.mapList.setAdapter(TraditionalMapsGroupRecyclerViewAdapter(mActivity))
 
             mDataProvider.GetMapsListObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>>
             {
@@ -116,7 +118,7 @@ class MapListFragment : BaseFragment()
             (mBinding.mapList as RecyclerView).visibility = View.VISIBLE
             mBinding.groupNameToolbar.title = group.GetTitle()
             mBinding.groupNameToolbar.visibility = View.VISIBLE
-            mBinding.mapList.setAdapter(MapsSectionRecyclerViewAdapter())
+            mBinding.mapList.setAdapter(TraditionalMapsSectionRecyclerViewAdapter())
             mBinding.mapList.SetItems(ArrayList(group.GetSections().values))
         }
 
