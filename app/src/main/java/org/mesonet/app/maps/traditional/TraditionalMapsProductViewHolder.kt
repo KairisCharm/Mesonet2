@@ -5,16 +5,15 @@ import android.databinding.DataBindingUtil
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import org.mesonet.app.R
-import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.TraditionalMapsViewHolderBinding
 import org.mesonet.app.webview.WebViewActivity
 import org.mesonet.dataprocessing.maps.MapsDataProvider
 
-class TraditionalMapsProductViewHolder(private val mBaseActivity: BaseActivity?, inBinding: TraditionalMapsViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct, TraditionalMapsViewHolderBinding>(inBinding) {
+class TraditionalMapsProductViewHolder(inBinding: TraditionalMapsViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct, TraditionalMapsViewHolderBinding>(inBinding) {
     companion object {
-        fun NewInstance(inBaseActivity: BaseActivity, inParent: ViewGroup): TraditionalMapsProductViewHolder {
-            return TraditionalMapsProductViewHolder(inBaseActivity, DataBindingUtil.inflate(LayoutInflater.from(inParent.context), R.layout.traditional_maps_view_holder, inParent, false))
+        fun NewInstance(inParent: ViewGroup): TraditionalMapsProductViewHolder {
+            return TraditionalMapsProductViewHolder(DataBindingUtil.inflate(LayoutInflater.from(inParent.context), R.layout.traditional_maps_view_holder, inParent, false))
         }
     }
     override fun SetData(inData: MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct?) {

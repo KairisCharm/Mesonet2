@@ -118,7 +118,7 @@ class MapListFragment : BaseFragment()
             (mBinding.mapList as RecyclerView).visibility = View.VISIBLE
             mBinding.groupNameToolbar.title = group.GetTitle()
             mBinding.groupNameToolbar.visibility = View.VISIBLE
-            mBinding.mapList.setAdapter(TraditionalMapsSectionRecyclerViewAdapter(mActivity))
+            mBinding.mapList.setAdapter(TraditionalMapsSectionRecyclerViewAdapter())
             mBinding.mapList.SetItems(ArrayList(group.GetSections().values))
         }
 

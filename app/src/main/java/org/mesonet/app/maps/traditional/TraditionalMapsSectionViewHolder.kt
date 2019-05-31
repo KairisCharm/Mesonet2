@@ -9,15 +9,15 @@ import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.TraditionalMapsSectionViewHolderBinding
 import org.mesonet.dataprocessing.maps.MapsDataProvider
 
-class TraditionalMapsSectionViewHolder(mBaseActivity: BaseActivity, inBinding: TraditionalMapsSectionViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection, TraditionalMapsSectionViewHolderBinding>(inBinding) {
+class TraditionalMapsSectionViewHolder(inBinding: TraditionalMapsSectionViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection, TraditionalMapsSectionViewHolderBinding>(inBinding) {
     companion object {
-        fun NewInstance(inBaseActivity: BaseActivity, inParent: ViewGroup): TraditionalMapsSectionViewHolder {
-            return TraditionalMapsSectionViewHolder(inBaseActivity, DataBindingUtil.inflate(LayoutInflater.from(inParent.context), R.layout.traditional_maps_section_view_holder, inParent, false))
+        fun NewInstance(inParent: ViewGroup): TraditionalMapsSectionViewHolder {
+            return TraditionalMapsSectionViewHolder(DataBindingUtil.inflate(LayoutInflater.from(inParent.context), R.layout.traditional_maps_section_view_holder, inParent, false))
         }
     }
 
     init {
-        GetBinding()?.productRecyclerView?.setAdapter(TraditionalMapsProductRecyclerViewAdapter(mBaseActivity))
+        GetBinding()?.productRecyclerView?.setAdapter(TraditionalMapsProductRecyclerViewAdapter())
     }
 
     override fun SetData(inData: MapsDataProvider.MapFullGroupDisplayData.MapGroupSection?) {
