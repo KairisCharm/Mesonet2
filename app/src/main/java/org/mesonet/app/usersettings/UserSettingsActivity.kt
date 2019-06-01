@@ -23,6 +23,11 @@ class UserSettingsActivity: BaseActivity()
 
     lateinit var mBinding: UserSettingsActivityBinding
 
+    private var mGetUnitsPreferenceDisposable: Disposable? = null
+    private var mGetMapsDisplayModePreferenceDisposable: Disposable? = null
+    private var mSetUnitsPreferenceDisposable: Disposable? = null
+    private var mSetMapsDisplayModePreferenceDisposable: Disposable? = null
+
     public override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
@@ -31,20 +36,17 @@ class UserSettingsActivity: BaseActivity()
 
         mPreferences.UnitPreferencesObservable(this).observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<Preferences.UnitPreference>
         {
-            var disposable: Disposable? = null
             override fun onComplete() {}
             override fun onSubscribe(d: Disposable)
             {
-                disposable = d
+                mGetUnitsPreferenceDisposable?.dispose()
+                mGetUnitsPreferenceDisposable = d
             }
             override fun onNext(t: Preferences.UnitPreference) {
                 when (t) {
                     Preferences.UnitPreference.kImperial -> mBinding.imperialButton.isChecked = true
                     Preferences.UnitPreference.kMetric -> mBinding.metricButton.isChecked = true
                 }
-
-                disposable?.dispose()
-                disposable = null
             }
 
             override fun onError(e: Throwable) {
@@ -56,20 +58,17 @@ class UserSettingsActivity: BaseActivity()
 
         mPreferences.MapsDisplayModePreferenceObservable(this).observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<Preferences.MapsDisplayModePreference>
         {
-            var disposable: Disposable? = null
             override fun onComplete() {}
             override fun onSubscribe(d: Disposable)
             {
-                disposable = d
+                mGetMapsDisplayModePreferenceDisposable?.dispose()
+                mGetMapsDisplayModePreferenceDisposable = d
             }
             override fun onNext(t: Preferences.MapsDisplayModePreference) {
                 when (t) {
                     Preferences.MapsDisplayModePreference.kTraditional -> mBinding.traditionalMapsButton.isChecked = true
                     Preferences.MapsDisplayModePreference.kThumbnail -> mBinding.thumbnailMapsButton.isChecked = true
                 }
-
-                disposable?.dispose()
-                disposable = null
             }
 
             override fun onError(e: Throwable) {
@@ -88,12 +87,15 @@ class UserSettingsActivity: BaseActivity()
 
             mPreferences.SetUnitPreference(this, preference).subscribe(object: SingleObserver<Int>{
                 override fun onSuccess(t: Int) {}
-                override fun onSubscribe(d: Disposable) {}
+                override fun onSubscribe(d: Disposable)
+                {
+                    mSetUnitsPreferenceDisposable?.dispose()
+                    mSetUnitsPreferenceDisposable = d
+                }
 
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
                 }
-
             })
         }
 
@@ -106,7 +108,11 @@ class UserSettingsActivity: BaseActivity()
 
             mPreferences.SetMapsDisplayModePreference(this, preference).subscribe(object: SingleObserver<Int>{
                 override fun onSuccess(t: Int) {}
-                override fun onSubscribe(d: Disposable) {}
+                override fun onSubscribe(d: Disposable)
+                {
+                    mSetMapsDisplayModePreferenceDisposable?.dispose()
+                    mSetMapsDisplayModePreferenceDisposable = d
+                }
 
                 override fun onError(e: Throwable) {
                     e.printStackTrace()
@@ -116,33 +122,16 @@ class UserSettingsActivity: BaseActivity()
     }
 
 
-    override fun onBackPressed() {
-        mPreferences.UnitPreferencesObservable(this).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Preferences.UnitPreference>{
-            var disposable: Disposable? = null
-            override fun onComplete() {}
-            override fun onSubscribe(d: Disposable)
-            {
-                disposable = d
-            }
-
-            override fun onNext(t: Preferences.UnitPreference) {
-                val returnIntent = Intent()
-                returnIntent.putExtra(MainActivity.kUserSettingsResultName, t.name)
-                setResult(MainActivity.kUserSettingsRequestCode, returnIntent)
-                finish()
-                disposable?.dispose()
-                disposable = null
-            }
-
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-        })
-    }
-
-
     override fun onDestroy() {
         mPreferences.Dispose()
+        mGetUnitsPreferenceDisposable?.dispose()
+        mGetMapsDisplayModePreferenceDisposable?.dispose()
+        mSetUnitsPreferenceDisposable?.dispose()
+        mSetMapsDisplayModePreferenceDisposable?.dispose()
+        mGetUnitsPreferenceDisposable = null
+        mGetMapsDisplayModePreferenceDisposable = null
+        mSetUnitsPreferenceDisposable = null
+        mSetMapsDisplayModePreferenceDisposable = null
         super.onDestroy()
     }
 

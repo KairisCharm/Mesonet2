@@ -29,7 +29,7 @@ import javax.inject.Inject
 class MapListFragment : BaseFragment()
 {
     companion object {
-        val kMapGroupFullList = "mapGroupFullList"
+        const val kMapGroupFullList = "mapGroupFullList"
     }
 
     private lateinit var mBinding: MapListFragmentBinding
@@ -66,6 +66,7 @@ class MapListFragment : BaseFragment()
                 override fun onComplete() {}
                 override fun onSubscribe(d: Disposable)
                 {
+                    mGroupListDataDisposable?.dispose()
                     mGroupListDataDisposable = d
                 }
 
@@ -144,10 +145,10 @@ class MapListFragment : BaseFragment()
         if(myContext != null)
             mDataProvider.OnResume(myContext)
 
-        var mapListDataObservable: Observable<Any>? = null
+        val mapListDataObservable: Observable<Any> =
 
         if(mSectionListSubject.hasValue()) {
-            mapListDataObservable = Observables.combineLatest(mSectionListSubject, mPreferences.MapsDisplayModePreferenceObservable(mActivity)) {
+            Observables.combineLatest(mSectionListSubject, mPreferences.MapsDisplayModePreferenceObservable(mActivity)) {
                 list, mapPreference ->
 
                 if(mapPreference == Preferences.MapsDisplayModePreference.kTraditional)
@@ -159,7 +160,7 @@ class MapListFragment : BaseFragment()
             }
         }
         else {
-            mapListDataObservable = Observables.combineLatest(mGroupsListSubject, mPreferences.MapsDisplayModePreferenceObservable(mActivity)) {
+            Observables.combineLatest(mGroupsListSubject, mPreferences.MapsDisplayModePreferenceObservable(mActivity)) {
                 list, mapPreference ->
 
                 if(mapPreference == Preferences.MapsDisplayModePreference.kTraditional)

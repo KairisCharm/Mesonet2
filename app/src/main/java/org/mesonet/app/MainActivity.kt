@@ -31,7 +31,6 @@ import android.content.res.Configuration
 import android.support.v4.widget.DrawerLayout
 import android.view.Gravity
 import io.reactivex.Observer
-import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import org.mesonet.app.contact.ContactActivity
@@ -51,11 +50,6 @@ import org.mesonet.models.advisories.Advisory
 
 @PerContext
 class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener, Toolbar.OnMenuItemClickListener {
-    companion object {
-        val kUserSettingsRequestCode = 1
-        val kUserSettingsResultName = "UserSettings"
-    }
-
     private val kSelectedTabId = "selectedTabId"
 
     private var mBinding: MainActivityBinding? = null
@@ -342,7 +336,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             R.id.userSettings -> {
                 val userSettingsIntent = Intent(baseContext, UserSettingsActivity::class.java)
 
-                startActivityForResult(userSettingsIntent, kUserSettingsRequestCode)
+                startActivity(userSettingsIntent)
             }
             R.id.contact -> {
                 val contactIntent = Intent(baseContext, ContactActivity::class.java)
@@ -381,16 +375,6 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         if(requestCode == mPermissions.LocationRequestCode())
         {
             mLocationProvider.RegisterGpsResult(resultCode)
-        }
-        else if (requestCode == kUserSettingsRequestCode && data != null)
-        {
-            mPreferences.SetUnitPreference(this, Preferences.UnitPreference.valueOf(data.getStringExtra(kUserSettingsResultName))).subscribe(object: SingleObserver<Int>{
-                override fun onSuccess(t: Int) {}
-                override fun onSubscribe(d: Disposable) {}
-                override fun onError(e: Throwable) {
-                    e.printStackTrace()
-                }
-            })
         }
     }
 
