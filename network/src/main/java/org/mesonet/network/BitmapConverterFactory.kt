@@ -19,7 +19,10 @@ class BitmapConverterFactory : Converter.Factory() {
                 val stream = ByteArrayOutputStream()
                 original.compress(Bitmap.CompressFormat.PNG, 100, stream)
 
-                BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size())
+                val result = BitmapFactory.decodeByteArray(stream.toByteArray(), 0, stream.size())
+                stream.close()
+
+                result
             }
         } else {
             retrofit.nextResponseBodyConverter(this, type, annotations)

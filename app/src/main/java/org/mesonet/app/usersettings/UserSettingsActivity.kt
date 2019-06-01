@@ -54,6 +54,31 @@ class UserSettingsActivity: BaseActivity()
 
         })
 
+        mPreferences.MapsDisplayModePreferenceObservable(this).observeOn(AndroidSchedulers.mainThread()).subscribe (object: Observer<Preferences.MapsDisplayModePreference>
+        {
+            var disposable: Disposable? = null
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable)
+            {
+                disposable = d
+            }
+            override fun onNext(t: Preferences.MapsDisplayModePreference) {
+                when (t) {
+                    Preferences.MapsDisplayModePreference.kTraditional -> mBinding.traditionalMapsButton.isChecked = true
+                    Preferences.MapsDisplayModePreference.kThumbnail -> mBinding.thumbnailMapsButton.isChecked = true
+                }
+
+                disposable?.dispose()
+                disposable = null
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+                onNext(Preferences.MapsDisplayModePreference.kTraditional)
+            }
+
+        })
+
         mBinding.unitsRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             val preference= when(checkedId) {
                 R.id.imperialButton -> Preferences.UnitPreference.kImperial
@@ -69,6 +94,23 @@ class UserSettingsActivity: BaseActivity()
                     e.printStackTrace()
                 }
 
+            })
+        }
+
+        mBinding.mapsDisplayModeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            val preference = when(checkedId) {
+                R.id.traditionalMapsButton -> Preferences.MapsDisplayModePreference.kTraditional
+                R.id.thumbnailMapsButton -> Preferences.MapsDisplayModePreference.kThumbnail
+                else -> Preferences.MapsDisplayModePreference.kTraditional
+            }
+
+            mPreferences.SetMapsDisplayModePreference(this, preference).subscribe(object: SingleObserver<Int>{
+                override fun onSuccess(t: Int) {}
+                override fun onSubscribe(d: Disposable) {}
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
             })
         }
     }
