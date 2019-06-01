@@ -16,7 +16,6 @@
             android:title="User Settings"
             app:title="User Settings"/>
 
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -28,6 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@color/dividerColor"/>
+
         <RadioGroup
             android:id="@+id/unitsRadioGroup"
             android:layout_width="match_parent"
@@ -52,6 +52,50 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="8dp"
                 android:text="Metric"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/dividerColor"/>
+
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAllCaps="true"
+            android:layout_margin="8dp"
+            android:text="Maps Display Mode"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/dividerColor"/>
+
+        <RadioGroup
+            android:id="@+id/mapsDisplayModeRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white">
+
+            <RadioButton
+                android:id="@+id/traditionalMapsButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:text="Traditional"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/dividerColor"/>
+
+            <RadioButton
+                android:id="@+id/thumbnailMapsButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:text="Thumbnail"/>
 
             <View
                 android:layout_width="match_parent"

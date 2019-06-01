@@ -15,13 +15,14 @@ import javax.inject.Inject
 @PerContext
 class UserSettings @Inject constructor() : Preferences {
     val mUnitPreferenceSubject: BehaviorSubject<Preferences.UnitPreference> = BehaviorSubject.create()
+    val mMapsDisplayModeSubject: BehaviorSubject<Preferences.MapsDisplayModePreference> = BehaviorSubject.create()
 
     val mStidSubject: BehaviorSubject<String> = BehaviorSubject.create()
     val mRadarSubject: BehaviorSubject<String> = BehaviorSubject.create()
 
     internal fun SetPreference(inContext: Context, inName: String, inValue: String): Single<Int> {
-        return Single.create (SingleOnSubscribe<Int>{
-            synchronized(UserSettings@this)
+        return Single.create {
+            synchronized(this)
             {
                 val preferences = inContext.getSharedPreferences(kMesonetSettings, Context.MODE_PRIVATE)
 
@@ -31,12 +32,12 @@ class UserSettings @Inject constructor() : Preferences {
 
                 it.onSuccess(0)
             }
-        })
+        }
     }
 
 
     internal fun GetStringPreference(inContext: Context, inName: String, inDefault: String): String {
-        synchronized(UserSettings@this)
+        synchronized(this)
         {
             val preferences = inContext.getSharedPreferences(kMesonetSettings, Context.MODE_PRIVATE)
 
@@ -46,22 +47,38 @@ class UserSettings @Inject constructor() : Preferences {
 
 
     override fun UnitPreferencesObservable(inContext: Context): Observable<Preferences.UnitPreference> {
-        val prefence = Preferences.UnitPreference.valueOf(GetStringPreference(inContext, kUnitPreference, Preferences.UnitPreference.kImperial.name))
-        if(!mUnitPreferenceSubject.hasValue() || mUnitPreferenceSubject.value != prefence)
-            mUnitPreferenceSubject.onNext(prefence)
+        val preference = Preferences.UnitPreference.valueOf(GetStringPreference(inContext, kUnitPreference, Preferences.UnitPreference.kImperial.name))
+        if(!mUnitPreferenceSubject.hasValue() || mUnitPreferenceSubject.value != preference)
+            mUnitPreferenceSubject.onNext(preference)
 
         return mUnitPreferenceSubject
     }
 
 
+    override fun MapsDisplayModePreferenceObservable(inContext: Context): Observable<Preferences.MapsDisplayModePreference> {
+        val preference = Preferences.MapsDisplayModePreference.valueOf(GetStringPreference(inContext, kMapsDisplayModePreference, Preferences.MapsDisplayModePreference.kTraditional.name))
+        if(!mMapsDisplayModeSubject.hasValue() || mMapsDisplayModeSubject.value != preference)
+            mMapsDisplayModeSubject.onNext(preference)
+
+        return mMapsDisplayModeSubject
+    }
+
+
     override fun SetUnitPreference(inContext: Context, inPreference: Preferences.UnitPreference): Single<Int> {
-        return SetPreference(inContext, UserSettings.kUnitPreference, inPreference.toString()).doOnSubscribe{it ->
+        return SetPreference(inContext, kUnitPreference, inPreference.toString()).doOnSubscribe{
             mUnitPreferenceSubject.onNext(inPreference)
         }.subscribeOn(Schedulers.computation())
     }
 
+
+    override fun SetMapsDisplayModePreference(inContext: Context, inPreference: Preferences.MapsDisplayModePreference): Single<Int> {
+        return SetPreference(inContext, kMapsDisplayModePreference, inPreference.toString()).doOnSubscribe{
+            mMapsDisplayModeSubject.onNext(inPreference)
+        }.subscribeOn(Schedulers.computation())
+    }
+
     override fun SelectedStidObservable(inContext: Context): Observable<String> {
-        val preference = GetStringPreference(inContext, UserSettings.kSelectedStid, "")
+        val preference = GetStringPreference(inContext, kSelectedStid, "")
         if(!mStidSubject.hasValue() || mStidSubject.value != preference)
             mStidSubject.onNext(preference)
 
@@ -69,13 +86,13 @@ class UserSettings @Inject constructor() : Preferences {
     }
 
     override fun SetSelectedStid(inContext: Context, inStid: String): Single<Int> {
-        return SetPreference(inContext, UserSettings.kSelectedStid, inStid).doOnSubscribe {
+        return SetPreference(inContext, kSelectedStid, inStid).doOnSubscribe {
             mStidSubject.onNext(inStid)
         }.subscribeOn(Schedulers.computation())
     }
 
     override fun SelectedRadarObservable(inContext: Context): Observable<String> {
-        val preference = GetStringPreference(inContext, UserSettings.kSelectedRadar, "")
+        val preference = GetStringPreference(inContext, kSelectedRadar, "")
         if(!mRadarSubject.hasValue() || mRadarSubject.value != preference)
             mRadarSubject.onNext(preference)
 
@@ -83,7 +100,7 @@ class UserSettings @Inject constructor() : Preferences {
     }
 
     override fun SetSelectedRadar(inContext: Context, inRadarName: String): Single<Int> {
-        return SetPreference(inContext, UserSettings.kSelectedRadar, inRadarName).doOnSubscribe{
+        return SetPreference(inContext, kSelectedRadar, inRadarName).doOnSubscribe{
             mRadarSubject.onNext(inRadarName)
         }.subscribeOn(Schedulers.computation())
     }
@@ -96,9 +113,10 @@ class UserSettings @Inject constructor() : Preferences {
 
 
     companion object {
-        private val kMesonetSettings = "MesonetSettings"
-        val kUnitPreference = "UnitPreference"
-        val kSelectedStid = "SelectedStid"
-        val kSelectedRadar = "SelectedRadar"
+        private const val kMesonetSettings = "MesonetSettings"
+        const val kUnitPreference = "UnitPreference"
+        const val kMapsDisplayModePreference = "MapsDisplayModePreference"
+        const val kSelectedStid = "SelectedStid"
+        const val kSelectedRadar = "SelectedRadar"
     }
 }
