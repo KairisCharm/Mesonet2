@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 
-class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser, Toolbar.OnMenuItemClickListener, Observer<MesonetSiteDataController.ProcessedMesonetSite> {
+class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser, Toolbar.OnMenuItemClickListener, View.OnClickListener, Observer<MesonetSiteDataController.ProcessedMesonetSite> {
     private var mMesonetDataBinding: MesonetDataContainerBinding? = null
 
     private var mBinding: SiteOverviewFragmentBinding? = null
@@ -168,16 +168,28 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
         menuItem.isEnabled = false
         when (menuItem.itemId) {
             R.id.openList -> {
-                val transaction = childFragmentManager.beginTransaction()
-                transaction.replace(R.id.childFragmentContainer, FilterListFragment())
-                transaction.commit()
-                RevealView(mMesonetDataBinding?.siteToolbar)
+                OpenSiteMenu()
             }
             R.id.favorite -> ToggleFavorite()
         }
         menuItem.isEnabled = true
         return false
     }
+
+
+    override fun onClick(v: View?) {
+        OpenSiteMenu()
+    }
+
+
+    private fun OpenSiteMenu() {
+        val transaction = childFragmentManager.beginTransaction()
+        transaction.replace(R.id.childFragmentContainer, FilterListFragment())
+        transaction.commit()
+        RevealView(mMesonetDataBinding?.siteToolbar)
+    }
+
+
 
     private fun ToggleFavorite() {
         mMesonetSiteDataController.ToggleFavorite(mMesonetSiteDataController.CurrentSelection()).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Boolean> {
@@ -461,6 +473,8 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                         if (mMesonetDataBinding?.siteToolbar?.menu?.hasVisibleItems() != true) {
                             mMesonetDataBinding?.siteToolbar?.inflateMenu(R.menu.mesonet_site_menu)
                         }
+
+                        mMesonetDataBinding?.siteToolbar?.setOnClickListener(this@SiteOverviewFragment)
                         mMesonetDataBinding?.siteToolbar?.setOnMenuItemClickListener(this@SiteOverviewFragment)
                         mMesonetDataBinding?.siteToolbar?.setNavigationIcon(R.drawable.ic_multiline_chart_white_36dp)
                         mMesonetDataBinding?.siteToolbar?.setNavigationOnClickListener {
