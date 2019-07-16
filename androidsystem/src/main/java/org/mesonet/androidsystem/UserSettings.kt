@@ -16,6 +16,7 @@ import javax.inject.Inject
 class UserSettings @Inject constructor() : Preferences {
     val mUnitPreferenceSubject: BehaviorSubject<Preferences.UnitPreference> = BehaviorSubject.create()
     val mMapsDisplayModeSubject: BehaviorSubject<Preferences.MapsDisplayModePreference> = BehaviorSubject.create()
+    val mRadarColorThemeSubject: BehaviorSubject<Preferences.RadarColorThemePreference> = BehaviorSubject.create()
 
     val mStidSubject: BehaviorSubject<String> = BehaviorSubject.create()
     val mRadarSubject: BehaviorSubject<String> = BehaviorSubject.create()
@@ -64,6 +65,15 @@ class UserSettings @Inject constructor() : Preferences {
     }
 
 
+    override fun RadarColorThemePreferenceObservable(inContext: Context): Observable<Preferences.RadarColorThemePreference> {
+        val preference = Preferences.RadarColorThemePreference.valueOf(GetStringPreference(inContext, kRadarColorThemePreference, Preferences.RadarColorThemePreference.kLight.name))
+        if(!mRadarColorThemeSubject.hasValue() || mRadarColorThemeSubject.value != preference)
+            mRadarColorThemeSubject.onNext(preference)
+
+        return mRadarColorThemeSubject
+    }
+
+
     override fun SetUnitPreference(inContext: Context, inPreference: Preferences.UnitPreference): Single<Int> {
         return SetPreference(inContext, kUnitPreference, inPreference.toString()).doOnSubscribe{
             mUnitPreferenceSubject.onNext(inPreference)
@@ -76,6 +86,14 @@ class UserSettings @Inject constructor() : Preferences {
             mMapsDisplayModeSubject.onNext(inPreference)
         }.subscribeOn(Schedulers.computation())
     }
+
+
+    override fun SetRadarColorThemePreference(inContext: Context, inPreference: Preferences.RadarColorThemePreference): Single<Int> {
+        return SetPreference(inContext, kRadarColorThemePreference, inPreference.toString()).doOnSubscribe {
+            mRadarColorThemeSubject.onNext(inPreference)
+        }.subscribeOn(Schedulers.computation())
+    }
+
 
     override fun SelectedStidObservable(inContext: Context): Observable<String> {
         val preference = GetStringPreference(inContext, kSelectedStid, "")
@@ -116,6 +134,7 @@ class UserSettings @Inject constructor() : Preferences {
         private const val kMesonetSettings = "MesonetSettings"
         const val kUnitPreference = "UnitPreference"
         const val kMapsDisplayModePreference = "MapsDisplayModePreference"
+        const val kRadarColorThemePreference = "RadarColorThemePreference"
         const val kSelectedStid = "SelectedStid"
         const val kSelectedRadar = "SelectedRadar"
     }

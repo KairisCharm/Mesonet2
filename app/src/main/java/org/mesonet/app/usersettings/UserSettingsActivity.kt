@@ -5,12 +5,10 @@ import android.os.Bundle
 import android.support.v4.app.Fragment
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
-import org.mesonet.app.MainActivity
 import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.databinding.UserSettingsActivityBinding
 import org.mesonet.dataprocessing.userdata.Preferences
 import javax.inject.Inject
-import android.content.Intent
 import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
 import org.mesonet.app.R
@@ -25,8 +23,10 @@ class UserSettingsActivity: BaseActivity()
 
     private var mGetUnitsPreferenceDisposable: Disposable? = null
     private var mGetMapsDisplayModePreferenceDisposable: Disposable? = null
+    private var mGetRadarColorThemePreferenceDisposable: Disposable? = null
     private var mSetUnitsPreferenceDisposable: Disposable? = null
     private var mSetMapsDisplayModePreferenceDisposable: Disposable? = null
+    private var mSetRadarColorThemePreferenceDisposable: Disposable? = null
 
     public override fun onCreate(savedInstanceState: Bundle?)
     {
@@ -78,6 +78,28 @@ class UserSettingsActivity: BaseActivity()
 
         })
 
+
+        mPreferences.RadarColorThemePreferenceObservable(this).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Preferences.RadarColorThemePreference>{
+            override fun onComplete() {}
+            override fun onSubscribe(d: Disposable) {
+                mGetRadarColorThemePreferenceDisposable?.dispose()
+                mGetRadarColorThemePreferenceDisposable = d
+            }
+
+            override fun onNext(t: Preferences.RadarColorThemePreference) {
+                when (t) {
+                    Preferences.RadarColorThemePreference.kLight -> mBinding.lightThemeButton.isChecked = true
+                    Preferences.RadarColorThemePreference.kDark -> mBinding.darkThemeButton.isChecked = true
+                }
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+                onNext(Preferences.RadarColorThemePreference.kLight)
+            }
+
+        })
+
         mBinding.unitsRadioGroup.setOnCheckedChangeListener { _, checkedId ->
             val preference= when(checkedId) {
                 R.id.imperialButton -> Preferences.UnitPreference.kImperial
@@ -119,6 +141,26 @@ class UserSettingsActivity: BaseActivity()
                 }
             })
         }
+
+        mBinding.radarColorThemeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            val preference = when(checkedId) {
+                R.id.lightThemeButton -> Preferences.RadarColorThemePreference.kLight
+                R.id.darkThemeButton -> Preferences.RadarColorThemePreference.kDark
+                else -> Preferences.RadarColorThemePreference.kLight
+            }
+
+            mPreferences.SetRadarColorThemePreference(this, preference).subscribe(object: SingleObserver<Int> {
+                override fun onSuccess(t: Int) {}
+                override fun onSubscribe(d: Disposable) {
+                    mSetRadarColorThemePreferenceDisposable?.dispose()
+                    mSetRadarColorThemePreferenceDisposable = d
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+            })
+        }
     }
 
 
@@ -126,8 +168,10 @@ class UserSettingsActivity: BaseActivity()
         mPreferences.Dispose()
         mGetUnitsPreferenceDisposable?.dispose()
         mGetMapsDisplayModePreferenceDisposable?.dispose()
+        mGetRadarColorThemePreferenceDisposable?.dispose()
         mSetUnitsPreferenceDisposable?.dispose()
         mSetMapsDisplayModePreferenceDisposable?.dispose()
+        mSetRadarColorThemePreferenceDisposable?.dispose()
         mGetUnitsPreferenceDisposable = null
         mGetMapsDisplayModePreferenceDisposable = null
         mSetUnitsPreferenceDisposable = null

@@ -103,5 +103,49 @@
                 android:background="@color/dividerColor"/>
 
         </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAllCaps="true"
+            android:layout_margin="8dp"
+            android:text="Radar Color Theme"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/dividerColor"/>
+
+        <RadioGroup
+            android:id="@+id/radarColorThemeRadioGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white">
+
+            <RadioButton
+                android:id="@+id/lightThemeButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:text="Light"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/dividerColor"/>
+
+            <RadioButton
+                android:id="@+id/darkThemeButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:text="Dark"/>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/dividerColor"/>
+
+        </RadioGroup>
     </LinearLayout>
 </layout>

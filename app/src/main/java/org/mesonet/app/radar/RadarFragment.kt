@@ -2,12 +2,12 @@ package org.mesonet.app.radar
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.app.Activity
 import android.content.res.Configuration
 import android.databinding.DataBindingUtil
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Bundle
-import android.support.v4.app.Fragment
 import android.text.Html
 import android.view.*
 import android.widget.SeekBar
@@ -15,6 +15,7 @@ import com.mapbox.mapboxsdk.camera.CameraPosition
 import com.mapbox.mapboxsdk.geometry.LatLng
 import com.mapbox.mapboxsdk.geometry.LatLngQuad
 import com.mapbox.mapboxsdk.maps.MapboxMapOptions
+import com.mapbox.mapboxsdk.maps.Style
 import com.mapbox.mapboxsdk.maps.SupportMapFragment
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory
 import com.mapbox.mapboxsdk.style.layers.RasterLayer
@@ -34,6 +35,7 @@ import org.mesonet.dataprocessing.PageStateInfo
 import org.mesonet.dataprocessing.radar.MapboxMapController
 import org.mesonet.dataprocessing.radar.RadarDataController
 import org.mesonet.dataprocessing.radar.RadarImageDataProvider
+import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.radar.RadarDetails
 
 import javax.inject.Inject
@@ -42,12 +44,20 @@ import javax.inject.Inject
 class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
     private val kRasterImageName = "Radar"
+    private val kLightThemeUrl = "mapbox://styles/okmesonet/cjkmvlllh7oo12rplp8zufopc"
+    private val kDarkThemeUrl = "mapbox://styles/okmesonet/cjkjtvw1n0nnm2rpen1ggwh99"
 
     @Inject
     internal lateinit var mRadarImageDataProvider: RadarImageDataProvider
 
     @Inject
+    internal lateinit var mPreferences: Preferences
+
+    @Inject
     internal lateinit var mMapController: MapboxMapController
+
+    @Inject
+    internal lateinit var mActivity: Activity
 
     private var mTransparencyDisposable: Disposable? = null
     private var mSelectedRadarDisposable: Disposable? = null
@@ -66,6 +76,7 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
     private var mRadarImageSource: ImageSource? = null
 
     private var mLastRadarUpdated = ""
+    private var mLastColorTheme = Preferences.RadarColorThemePreference.kLight
 
     private var mHoldPlay = false
     private var mState = PageStateInfo.PageState.kLoading
@@ -73,7 +84,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
 
         mMapController.GetCameraPositionObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<CameraPosition>
         {
@@ -101,7 +111,6 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.radar_map_fragment, inContainer, false)
 
         val options = MapboxMapOptions()
-        options.styleUrl("mapbox://styles/okmesonet/cjkmvlllh7oo12rplp8zufopc")
         options.textureMode(true)
         options.logoGravity(Gravity.TOP or Gravity.START)
         options.attributionGravity(Gravity.TOP or Gravity.START)
@@ -116,9 +125,11 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
 
         mRadarLayer = RasterLayer(kRasterImageName, mRadarImageSource?.id)
 
-        val mapTransaction = childFragmentManager.beginTransaction()
-        mapTransaction.add(R.id.mapContainer, mMapFragment ?: Fragment())
-        mapTransaction.commit()
+        mMapFragment?.let {
+            val mapTransaction = childFragmentManager.beginTransaction()
+            mapTransaction.add(R.id.mapContainer, it)
+            mapTransaction.commit()
+        }
 
         mBinding?.playPauseButton?.SetPlayPauseState(mMapController.GetPlayPauseStateObservable())
 
@@ -243,7 +254,8 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                 }
                             })
 
-                            mRadarImageDataProvider.GetSiteInfoObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Map.Entry<String, RadarDetails>> {
+                            Observables.combineLatest(mRadarImageDataProvider.GetSiteInfoObservable(),
+                                                    mPreferences.RadarColorThemePreferenceObservable(mActivity)).observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Pair<Map.Entry<String, RadarDetails>, Preferences.RadarColorThemePreference>> {
                                 override fun onComplete() {}
 
                                 override fun onSubscribe(d: Disposable) {
@@ -257,15 +269,16 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                     SetSnackbarText("Error", "", "")
                                 }
 
-                                override fun onNext(radarInfo: Map.Entry<String, RadarDetails>) {
-                                    if (mLastRadarUpdated != radarInfo.key) {
+                                override fun onNext(radarInfo: Pair<Map.Entry<String, RadarDetails>, Preferences.RadarColorThemePreference>) {
+                                    if (mLastRadarUpdated != radarInfo.first.key || mLastColorTheme != radarInfo.second) {
 
-                                        mLastRadarUpdated = radarInfo.key
+                                        mLastRadarUpdated = radarInfo.first.key
+                                        mLastColorTheme = radarInfo.second
 
                                         mHoldPlay = true
 
                                         if(mState == PageStateInfo.PageState.kData) {
-                                            SetSnackbarText(radarInfo.key, radarInfo.value.GetName(), "")
+                                            SetSnackbarText(radarInfo.first.key, radarInfo.first.value.GetName(), "")
                                             mBinding?.readingInfoLayout?.visibility = View.VISIBLE
                                         }
 
@@ -273,31 +286,39 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                             map.uiSettings.attributionDialogManager
                                             map.uiSettings.isRotateGesturesEnabled = false
                                             map.uiSettings.isTiltGesturesEnabled = false
-                                            val sourceId = mRadarImageSource?.id ?: ""
-                                            val layerId = mRadarLayer?.id ?: ""
 
-                                            val radarImageSource = mRadarImageSource
-                                            val radarLayer = mRadarLayer
+                                            var styleUrl = kLightThemeUrl
 
-                                            if (sourceId.isNotEmpty() && map.getSource(sourceId) == null && radarImageSource != null)
-                                                map.addSource(radarImageSource)
-                                            if (radarInfo.key.isNotEmpty() && map.getLayer(layerId) == null && radarLayer != null)
-                                                map.addLayer(radarLayer)
-                                            mRadarImageSource?.setCoordinates(LatLngQuad(LatLng(radarInfo.value.GetNorthEastCorner()?.GetLatitude()?.toDouble()
-                                                    ?: 0.0, radarInfo.value.GetSouthWestCorner()?.GetLongitude()?.toDouble()
-                                                    ?: 0.0),
-                                                    LatLng(radarInfo.value.GetNorthEastCorner()?.GetLatitude()?.toDouble()
-                                                            ?: 0.0, radarInfo.value.GetNorthEastCorner()?.GetLongitude()?.toDouble()
-                                                            ?: 0.0),
-                                                    LatLng(radarInfo.value.GetSouthWestCorner()?.GetLatitude()?.toDouble()
-                                                            ?: 0.0, radarInfo.value.GetNorthEastCorner()?.GetLongitude()?.toDouble()
-                                                            ?: 0.0),
-                                                    LatLng(radarInfo.value.GetSouthWestCorner()?.GetLatitude()?.toDouble()
-                                                            ?: 0.0, radarInfo.value.GetSouthWestCorner()?.GetLongitude()?.toDouble()
-                                                            ?: 0.0)))
-                                            mMapController.SetCameraPosition(radarInfo.value.GetLatitude()?.toDouble()
-                                                    ?: 0.0, radarInfo.value.GetLongitude()?.toDouble()
-                                                    ?: 0.0, 5.0)
+                                            if(radarInfo.second == Preferences.RadarColorThemePreference.kDark)
+                                                styleUrl = kDarkThemeUrl
+
+                                            map.setStyle(Style.Builder().fromUrl(styleUrl)) { style ->
+                                                val sourceId = mRadarImageSource?.id ?: ""
+                                                val layerId = mRadarLayer?.id ?: ""
+
+                                                val radarImageSource = mRadarImageSource
+                                                val radarLayer = mRadarLayer
+
+                                                if (sourceId.isNotEmpty() && style.getSource(sourceId) == null && radarImageSource != null)
+                                                    style.addSource(radarImageSource)
+                                                if (radarInfo.first.key.isNotEmpty() && style.getLayer(layerId) == null && radarLayer != null)
+                                                    style.addLayer(radarLayer)
+                                                mRadarImageSource?.setCoordinates(LatLngQuad(LatLng(radarInfo.first.value.GetNorthEastCorner()?.GetLatitude()?.toDouble()
+                                                        ?: 0.0, radarInfo.first.value.GetSouthWestCorner()?.GetLongitude()?.toDouble()
+                                                        ?: 0.0),
+                                                        LatLng(radarInfo.first.value.GetNorthEastCorner()?.GetLatitude()?.toDouble()
+                                                                ?: 0.0, radarInfo.first.value.GetNorthEastCorner()?.GetLongitude()?.toDouble()
+                                                                ?: 0.0),
+                                                        LatLng(radarInfo.first.value.GetSouthWestCorner()?.GetLatitude()?.toDouble()
+                                                                ?: 0.0, radarInfo.first.value.GetNorthEastCorner()?.GetLongitude()?.toDouble()
+                                                                ?: 0.0),
+                                                        LatLng(radarInfo.first.value.GetSouthWestCorner()?.GetLatitude()?.toDouble()
+                                                                ?: 0.0, radarInfo.first.value.GetSouthWestCorner()?.GetLongitude()?.toDouble()
+                                                                ?: 0.0)))
+                                                mMapController.SetCameraPosition(radarInfo.first.value.GetLatitude()?.toDouble()
+                                                        ?: 0.0, radarInfo.first.value.GetLongitude()?.toDouble()
+                                                        ?: 0.0, 5.0)
+                                            }
                                         }
                                     }
                                 }

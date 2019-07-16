@@ -58,6 +58,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
     private var mLoadedFragmentId = R.id.mesonetOption
 
+    private var mLoadedFragment: Fragment? = null
+
 
     @Inject
     internal lateinit var mAdvisoryDataProvider: AdvisoryDataProvider
@@ -116,6 +118,21 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     }
 
 
+    override fun onStart() {
+        super.onStart()
+
+        mLoadedFragment?.let {
+            if(it is RadarFragment) {
+                val newRadarFragment = RadarFragment()
+                val fragmentTransaction = supportFragmentManager.beginTransaction()
+                fragmentTransaction.replace(R.id.fragmentLayout, newRadarFragment)
+                fragmentTransaction.commit()
+                mLoadedFragment = newRadarFragment
+            }
+        }
+    }
+
+
     override fun onResume() {
         super.onResume()
         mConnectivityStatusProvider.OnResume(this)
@@ -157,25 +174,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
 
 
     private fun LoadBinding(inSelectedTab: Int) {
-        var fragment: Fragment? = null
-
-        when (inSelectedTab) {
-            R.id.mesonetOption -> fragment = SiteOverviewFragment()
-
-            R.id.mapsOption -> fragment = MapListFragment()
-
-            R.id.radarOption -> fragment = RadarFragment()
-
-            R.id.advisoriesOption -> fragment = AdvisoriesFragment()
-        }
-
-        mLoadedFragmentId = inSelectedTab
-
-        if (fragment != null) {
-            val fragmentTransaction = supportFragmentManager.beginTransaction()
-            fragmentTransaction.replace(R.id.fragmentLayout, fragment)
-            fragmentTransaction.commit()
-        }
+        SetPage(inSelectedTab)
 
         mBinding = DataBindingUtil.setContentView(this, R.layout.main_activity)
 
@@ -223,25 +222,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
 
         mBinding?.bottomNav?.setOnNavigationItemSelectedListener { inItem ->
-            var resultFragment: Fragment? = null
-
-            when (inItem.itemId) {
-                R.id.mesonetOption -> resultFragment = SiteOverviewFragment()
-
-                R.id.mapsOption -> resultFragment = MapListFragment()
-
-                R.id.radarOption -> resultFragment = RadarFragment()
-
-                R.id.advisoriesOption -> resultFragment = AdvisoriesFragment()
-            }
-
-            mLoadedFragmentId = inItem.itemId
-
-            if (resultFragment != null) {
-                val fragmentTransaction = supportFragmentManager.beginTransaction()
-                fragmentTransaction.replace(R.id.fragmentLayout, resultFragment)
-                fragmentTransaction.commit()
-            }
+            SetPage(inItem.itemId)
 
             true
         }
@@ -272,6 +253,27 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putInt(kSelectedTabId, mBinding?.bottomNav?.selectedItemId?: 0)
         super.onSaveInstanceState(outState)
+    }
+
+
+    private fun SetPage(inSelectedTab: Int) {
+        when (inSelectedTab) {
+            R.id.mesonetOption -> mLoadedFragment = SiteOverviewFragment()
+
+            R.id.mapsOption -> mLoadedFragment = MapListFragment()
+
+            R.id.radarOption -> mLoadedFragment = RadarFragment()
+
+            R.id.advisoriesOption -> mLoadedFragment = AdvisoriesFragment()
+        }
+
+        mLoadedFragmentId = inSelectedTab
+
+        mLoadedFragment?.let {
+            val fragmentTransaction = supportFragmentManager.beginTransaction()
+            fragmentTransaction.replace(R.id.fragmentLayout, it)
+            fragmentTransaction.commit()
+        }
     }
 
 
