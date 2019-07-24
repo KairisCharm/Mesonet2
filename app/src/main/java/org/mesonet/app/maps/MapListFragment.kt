@@ -22,6 +22,7 @@ import org.mesonet.app.maps.traditional.TraditionalMapsSectionRecyclerViewAdapte
 import org.mesonet.dataprocessing.PageStateInfo
 import org.mesonet.dataprocessing.maps.MapsDataProvider
 import org.mesonet.dataprocessing.userdata.Preferences
+import org.mesonet.models.maps.MapsList
 
 import javax.inject.Inject
 
@@ -47,21 +48,21 @@ class MapListFragment : BaseFragment()
     @Inject
     internal lateinit var mPreferences: Preferences
 
-    private val mGroupsListSubject: BehaviorSubject<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>> = BehaviorSubject.create()
-    private val mSectionListSubject: BehaviorSubject<MutableList<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection>> = BehaviorSubject.create()
+    private val mGroupsListSubject: BehaviorSubject<MapsList> = BehaviorSubject.create()
+    private val mSectionListSubject: BehaviorSubject<LinkedHashMap<String, MapsList.GroupSection>> = BehaviorSubject.create()
 
 
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.map_list_fragment, inParent, false)
 
-        var group: MapsDataProvider.MapFullGroupDisplayData? = null
+        var group: MapsList.Group? = null
 
         if (arguments != null && arguments?.containsKey(kMapGroupFullList) == true)
-            group = arguments?.getSerializable(kMapGroupFullList) as MapsDataProvider.MapFullGroupDisplayData
+            group = arguments?.getSerializable(kMapGroupFullList) as MapsList.Group
 
         if(group == null) {
 
-            mDataProvider.GetMapsListObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>>
+            mDataProvider.GetMapsListObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MapsList?>
             {
                 override fun onComplete() {}
                 override fun onSubscribe(d: Disposable)
@@ -70,7 +71,7 @@ class MapListFragment : BaseFragment()
                     mGroupListDataDisposable = d
                 }
 
-                override fun onNext(t: MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>)
+                override fun onNext(t: MapsList)
                 {
                     mGroupsListSubject.onNext(t)
                 }
@@ -129,8 +130,7 @@ class MapListFragment : BaseFragment()
             mBinding.groupNameToolbar.title = group.GetTitle()
             mBinding.groupNameToolbar.visibility = View.VISIBLE
 
-            mSectionListSubject.onNext(ArrayList(group.GetSections().values))
-
+            mDataProvider.GetSections(group.GetSections()).observeOn(AndroidSchedulers.mainThread()).subscribe(mSectionListSubject)
         }
 
         return mBinding.root
@@ -145,32 +145,29 @@ class MapListFragment : BaseFragment()
         if(myContext != null)
             mDataProvider.OnResume(myContext)
 
-        val mapListDataObservable: Observable<Any> =
+        val sectionObservable: Observable<Any> = Observables.combineLatest(mSectionListSubject, mPreferences.MapsDisplayModePreferenceObservable(mActivity)) {
+            list, mapPreference ->
 
-        if(mSectionListSubject.hasValue()) {
-            Observables.combineLatest(mSectionListSubject, mPreferences.MapsDisplayModePreferenceObservable(mActivity)) {
-                list, mapPreference ->
+            if(mapPreference == Preferences.MapsDisplayModePreference.kTraditional)
+                mBinding.mapList.setAdapter(TraditionalMapsSectionRecyclerViewAdapter(mDataProvider))
+            else
+                mBinding.mapList.setAdapter(MapsSectionRecyclerViewAdapter(mDataProvider))
 
-                if(mapPreference == Preferences.MapsDisplayModePreference.kTraditional)
-                    mBinding.mapList.setAdapter(TraditionalMapsSectionRecyclerViewAdapter())
-                else
-                    mBinding.mapList.setAdapter(MapsSectionRecyclerViewAdapter())
-
-                mBinding.mapList.SetItems(list)
-            }
+            mBinding.mapList.SetItems(ArrayList(list.values))
         }
-        else {
-            Observables.combineLatest(mGroupsListSubject, mPreferences.MapsDisplayModePreferenceObservable(mActivity)) {
-                list, mapPreference ->
 
-                if(mapPreference == Preferences.MapsDisplayModePreference.kTraditional)
-                    mBinding.mapList.setAdapter(TraditionalMapsGroupRecyclerViewAdapter(mActivity))
-                else
-                    mBinding.mapList.setAdapter(MapsGroupRecyclerViewAdapter(mActivity))
+        val groupObservable = Observables.combineLatest(mGroupsListSubject, mPreferences.MapsDisplayModePreferenceObservable(mActivity)) {
+            list, mapPreference ->
 
-                mBinding.mapList.SetItems(list)
-            }
+            if(mapPreference == Preferences.MapsDisplayModePreference.kTraditional)
+                mBinding.mapList.setAdapter(TraditionalMapsGroupRecyclerViewAdapter(mActivity))
+            else
+                mBinding.mapList.setAdapter(MapsGroupRecyclerViewAdapter(mActivity, mDataProvider))
+
+            mBinding.mapList.SetItems(ArrayList(list.GetMain()))
         }
+
+        val mapListDataObservable: Observable<Any> = sectionObservable.mergeWith(groupObservable)
 
         mapListDataObservable.subscribe(object: Observer<Any>{
             override fun onComplete() {}

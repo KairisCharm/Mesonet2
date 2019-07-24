@@ -9,10 +9,10 @@ class MapsModel: MapsList
     private val mMain: List<MainModel>? = null
 
     @SerializedName("sections")
-    private lateinit var mSections: Map<String, SectionModel>
+    private lateinit var mSections: LinkedHashMap<String, SectionModel>
 
     @SerializedName("products")
-    private lateinit var mProducts: Map<String, ProductModel>
+    private lateinit var mProducts: LinkedHashMap<String, ProductModel>
 
 
     override fun GetMain(): List<MapsList.Group>? {
@@ -20,13 +20,12 @@ class MapsModel: MapsList
     }
 
 
-    override fun GetSections(): Map<String, MapsList.GroupSection> {
-        return mSections
+    override fun GetSections(): LinkedHashMap<String, MapsList.GroupSection> {
+        return mSections as LinkedHashMap<String, MapsList.GroupSection>
     }
 
-    override fun GetProducts(): Map<String, MapsList.Product>
-    {
-        return mProducts
+    override fun GetProducts(): LinkedHashMap<String, MapsList.Product> {
+        return mProducts as LinkedHashMap<String, MapsList.Product>
     }
 
 

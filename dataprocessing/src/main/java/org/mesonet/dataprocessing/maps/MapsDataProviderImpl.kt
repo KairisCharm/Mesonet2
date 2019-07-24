@@ -2,7 +2,6 @@ package org.mesonet.dataprocessing.maps
 
 import android.content.Context
 import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
@@ -10,15 +9,13 @@ import io.reactivex.subjects.BehaviorSubject
 import org.mesonet.core.PerContext
 import org.mesonet.dataprocessing.ConnectivityStatusProvider
 import org.mesonet.dataprocessing.PageStateInfo
-import org.mesonet.dataprocessing.maps.MapsDataProvider.Companion.kAbbreviatedDisplayLimit
-import org.mesonet.dataprocessing.maps.MapsDataProvider.Companion.kGenericSectionHeaderText
 import org.mesonet.models.maps.MapsList
 import org.mesonet.network.DataProvider
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
-import kotlin.collections.HashSet
+import kotlin.collections.LinkedHashMap
 
 
 @PerContext
@@ -27,7 +24,7 @@ class MapsDataProviderImpl @Inject constructor(internal var mDataProvider: DataP
 {
     private var mLastUpdate = 0L
 
-    private var mMapsSubject: BehaviorSubject<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>> = BehaviorSubject.create()
+    private var mMapsSubject: BehaviorSubject<MapsList> = BehaviorSubject.create()
     private var mPageStateSubject: BehaviorSubject<PageStateInfo> = BehaviorSubject.create()
 
     private val mConnectivityObservable = mConnectivityStatusProvider.ConnectivityStatusObservable()
@@ -106,7 +103,19 @@ class MapsDataProviderImpl @Inject constructor(internal var mDataProvider: DataP
 
                 override fun onNext(t: MapsList) {
                     mLastUpdate = Date().time
-                    mMapsSubject.onNext(LoadMapsList(t))
+                    mMapsSubject.onNext(FilterMapsList(t)?: object: MapsList{
+                        override fun GetMain(): List<MapsList.Group>? {
+                            return null
+                        }
+
+                        override fun GetSections(): LinkedHashMap<String, MapsList.GroupSection> {
+                            return LinkedHashMap()
+                        }
+
+                        override fun GetProducts(): LinkedHashMap<String, MapsList.Product> {
+                            return LinkedHashMap()
+                        }
+                    })
 
                     mPageStateSubject.onNext(object: PageStateInfo{
                         override fun GetPageState(): PageStateInfo.PageState {
@@ -137,7 +146,7 @@ class MapsDataProviderImpl @Inject constructor(internal var mDataProvider: DataP
 
 
 
-    override fun GetMapsListObservable(): Observable<MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>>
+    override fun GetMapsListObservable(): Observable<MapsList?>
     {
         return mMapsSubject
     }
@@ -149,177 +158,59 @@ class MapsDataProviderImpl @Inject constructor(internal var mDataProvider: DataP
     }
 
 
-    internal fun LoadMapsList(inMapsList: MapsList?): MutableList<MapsDataProvider.MapAbbreviatedGroupDisplayData>
+    internal fun FilterMapsList(inMapsList: MapsList?): MapsList?
     {
-        val allGroups = inMapsList?.GetMain()
-        val allSections = inMapsList?.GetSections()
-        val allProducts = inMapsList?.GetProducts()
-        val abbreviatedGroups = ArrayList<MapsDataProvider.MapAbbreviatedGroupDisplayData>()
+        inMapsList?.let {mapList ->
+            mapList.GetMain()?.let {groups ->
+                val filteredProducts = LinkedHashMap<String, MapsList.Product>()
+                val filteredSections = LinkedHashMap<String, MapsList.GroupSection>()
+                val filteredGroups = ArrayList<MapsList.Group>()
 
-        val fullGroupList = ArrayList<MapFullGroupDisplayDataImpl>()
+                filteredProducts.putAll(mapList.GetProducts().filter { !it.value.GetUrl().isNullOrBlank() })
+                filteredSections.putAll(mapList.GetSections().filter { section -> section.value.GetProducts().any { filteredProducts.containsKey(it) } })
+                filteredGroups.addAll(groups.filter { group -> group.GetSections().any { sectionName -> filteredSections.containsKey(sectionName) } })
 
-        var previousGroupIndex: Int? = null
-        var previousSectionKey: String? = null
-
-        for(key in allProducts?.keys?: HashSet())
-        {
-            if(!allProducts?.get(key)?.GetUrl().isNullOrBlank()) {
-                val newProduct = MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl()
-
-                newProduct.mTitle = allProducts?.get(key)?.GetTitle()?.replace("&deg;", "°") ?: ""
-                newProduct.mImageUrl = mDataProvider.GetMapImageUrl(allProducts?.get(key)?.GetUrl()?: "")
-                newProduct.mSectionTitle = ""
-
-                var sectionKey = allSections?.keys?.first { allSections[it]?.GetProducts()?.contains(key)?: false }
-                val groupIndex = allGroups?.indices?.first { allGroups[it].GetSections().contains(sectionKey) }
-
-                if(sectionKey != previousSectionKey)
-                {
-                    if(groupIndex != previousGroupIndex)
-                    {
-                        fullGroupList.add(MapFullGroupDisplayDataImpl())
-
-                        if(groupIndex == null)
-                            fullGroupList.last().mTitle = ""
-                        else
-                            fullGroupList.last().mTitle = allGroups[groupIndex].GetTitle()
-
-                        previousGroupIndex = groupIndex
+                return object: MapsList {
+                    override fun GetMain(): List<MapsList.Group>? {
+                        return filteredGroups
                     }
 
-                    if(sectionKey == null)
-                    {
-                        var uncategorizedIndex = 0
-                        while(fullGroupList.last().mSections.containsKey("uncategorized$uncategorizedIndex"))
-                            uncategorizedIndex++
-
-                        sectionKey = "uncategorized$uncategorizedIndex"
-
+                    override fun GetSections(): LinkedHashMap<String, MapsList.GroupSection> {
+                        return filteredSections
                     }
 
-                    fullGroupList.last().mSections[sectionKey] = MapFullGroupDisplayDataImpl.MapGroupSectionImpl()
-                    (fullGroupList.last().mSections[sectionKey] as MapFullGroupDisplayDataImpl.MapGroupSectionImpl).mTitle = allSections?.get(sectionKey)?.GetTitle()?: ""
+                    override fun GetProducts(): LinkedHashMap<String, MapsList.Product> {
+                        return filteredProducts
+                    }
 
-                    previousSectionKey = sectionKey
                 }
-
-                (fullGroupList.last().mSections[sectionKey] as MapFullGroupDisplayDataImpl.MapGroupSectionImpl).mProducts[key] = newProduct
             }
         }
 
-        for(i in fullGroupList.indices)
-        {
-            val productList = ArrayList<MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl>()
-
-            var totalProducts = 0
-
-            fullGroupList[i].mSections.values.forEach{ totalProducts += it.GetProducts().size }
-
-            val sectionIterator = fullGroupList[i].mSections.keys.iterator()
-            var sectionKey = sectionIterator.next()
-            var productIterator = (fullGroupList[i].mSections[sectionKey] as MapFullGroupDisplayDataImpl.MapGroupSectionImpl).mProducts.keys.iterator()
-            var productKey = productIterator.next()
-
-            while(productList.size < totalProducts && productList.size < kAbbreviatedDisplayLimit)
-            {
-                val fullProduct = (fullGroupList[i].mSections[sectionKey] as MapFullGroupDisplayDataImpl.MapGroupSectionImpl).mProducts[productKey]
-                productList.add(MapFullGroupDisplayDataImpl.MapGroupSectionImpl.MapsProductImpl(fullProduct?.GetTitle(), fullGroupList[i].mSections[sectionKey]?.GetTitle()?: "", fullProduct?.GetImageUrl()))
-
-                if(productIterator.hasNext())
-                    productKey = productIterator.next()
-
-                else if(sectionIterator.hasNext())
-                {
-                    sectionKey = sectionIterator.next()
-
-                    productIterator = (fullGroupList[i].mSections[sectionKey] as MapFullGroupDisplayDataImpl.MapGroupSectionImpl).mProducts.keys.iterator()
-                    productKey = productIterator.next()
-                }
-            }
-
-            abbreviatedGroups.add(MapAbbreviatedGroupDisplayDataImpl(fullGroupList[i].mTitle, totalProducts, productList as MutableList<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct>, fullGroupList[i]))
-        }
-
-        return abbreviatedGroups
+        return null
     }
 
 
 
-    class MapAbbreviatedGroupDisplayDataImpl(var mTitle: String? = null,
-                                             var mFullListSize: Int,
-                                             var mProducts: MutableList<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct> = ArrayList(),
-                                             var mMapFullGroupDisplayData: MapsDataProvider.MapFullGroupDisplayData): MapsDataProvider.MapAbbreviatedGroupDisplayData
-    {
-        override fun GetFullListSize(): Int {
-            return mFullListSize
-        }
-
-        override fun GetTitle(): String?
-        {
-            return mTitle
-        }
-
-
-        override fun GetProducts(): MutableList<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct>
-        {
-            return mProducts
-        }
-
-
-        override fun GetMapFullGroupDisplayData(): MapsDataProvider.MapFullGroupDisplayData {
-            return mMapFullGroupDisplayData
-        }
-
-
-        override fun GetGroupDisplayLimit(): Int {
-            return kAbbreviatedDisplayLimit
-        }
+    override fun GetSections(inSectionIds: List<String>): Observable<LinkedHashMap<String, MapsList.GroupSection>> {
+        return mMapsSubject.map { mapsList -> SortMapValues(mapsList.GetSections(), inSectionIds) }
     }
 
 
-    private class MapFullGroupDisplayDataImpl(var mTitle: String? = null,
-                                              val mSections: LinkedHashMap<String, MapsDataProvider.MapFullGroupDisplayData.MapGroupSection> = LinkedHashMap()): MapsDataProvider.MapFullGroupDisplayData
-    {
-        override fun GetTitle(): String? {
-            return mTitle
-        }
+    override fun GetProducts(inProductIds: List<String>): Observable<LinkedHashMap<String, MapsList.Product>> {
+        return mMapsSubject.map { mapsList -> SortMapValues(mapsList.GetProducts(), inProductIds) }
+    }
 
-        override fun GetSections(): HashMap<String, MapsDataProvider.MapFullGroupDisplayData.MapGroupSection> {
-            return mSections
-        }
-        class MapGroupSectionImpl(var mTitle: String? = null,
-                                  var mTitleAsSubtext: String? = null,
-                                  var mProducts: LinkedHashMap<String, MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct> = LinkedHashMap()): MapsDataProvider.MapFullGroupDisplayData.MapGroupSection
-        {
-            override fun GetTitle(): String?
-            {
-                return mTitle
-            }
+    private fun <T> SortMapValues(inMap: HashMap<String, T>, inKeys: List<String>): LinkedHashMap<String, T> {
+        val result: LinkedHashMap<String, T> = linkedMapOf()
 
-            override fun GetTitleAsSubtext(): String? {
-                return mTitleAsSubtext
-            }
-
-            override fun GetProducts(): HashMap<String, MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct>
-            {
-                return mProducts
-            }
-
-
-            class MapsProductImpl(var mTitle: String? = null, var mSectionTitle: String? = null, var mImageUrl: String? = null): MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct
-            {
-                override fun GetTitle(): String? {
-                    return mTitle
-                }
-
-                override fun GetSectionTitle(): String? {
-                    return mSectionTitle
-                }
-
-                override fun GetImageUrl(): String? {
-                    return mImageUrl
-                }
+        inKeys.forEach{key ->
+            inMap[key]?.let {
+                result[key] = it
             }
         }
+
+        return result
     }
 }
+

@@ -13,32 +13,30 @@ import org.mesonet.app.R
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.MapsProductViewHolderBinding
 import org.mesonet.app.webview.WebViewActivity
-import org.mesonet.dataprocessing.maps.MapsDataProvider
+import org.mesonet.models.maps.MapsList
 
 
-class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.GenericMapData, MapsProductViewHolderBinding>(inBinding) {
-
-
-    override fun SetData(inData: MapsDataProvider.GenericMapData?)
+class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding) : RecyclerViewHolder<Pair<MapsList.Product, MapsList.GroupSection?>, MapsProductViewHolderBinding>(inBinding) {
+    override fun SetData(inData: Pair<MapsList.Product, MapsList.GroupSection?>?)
     {
-        if(inData is MapsDataProvider.MapFullGroupDisplayData.MapGroupSection.MapsProduct) {
+        if(inData is Pair<MapsList.Product, MapsList.GroupSection?>) {
             val binding = GetBinding()
 
-            binding?.productTitle?.text = inData.GetTitle()
-            binding?.productSection?.text = inData.GetSectionTitle()
+            binding?.productTitle?.text = inData.first.GetTitle()
+            binding?.productSection?.text = inData.second?.GetTitle()
 
-            if (inData.GetSectionTitle() == null || inData.GetSectionTitle()?.isEmpty() != false)
+            if (inData.second == null || inData.second?.GetTitle()?.isEmpty() != false)
                 binding?.productSection?.visibility = View.GONE
             else
                 binding?.productSection?.visibility = View.VISIBLE
 
-            Picasso.get().load(inData.GetImageUrl()).into(binding?.productPreview)
+            Picasso.get().load(inData.first.GetUrl()).into(binding?.productPreview)
 
             binding?.layout?.setOnClickListener {
                 it.isEnabled = false
                 val intent = Intent(binding.root.context, WebViewActivity::class.java)
-                intent.putExtra(WebViewActivity.kTitle, inData.GetTitle())
-                intent.putExtra(WebViewActivity.kUrl, inData.GetImageUrl())
+                intent.putExtra(WebViewActivity.kTitle, inData.first.GetTitle())
+                intent.putExtra(WebViewActivity.kUrl, inData.first.GetUrl())
                 intent.putExtra(WebViewActivity.kAllowShare, true)
                 intent.putExtra(WebViewActivity.kInitialZoom, 1)
                 intent.putExtra(WebViewActivity.kAllowUserZoom, true)

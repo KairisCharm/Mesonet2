@@ -5,6 +5,10 @@ import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 
 import java.util.ArrayList
+import android.content.ContextWrapper
+import android.app.Activity
+
+
 
 
 abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHolder<TData, ViewDataBinding>> : RecyclerView.Adapter<TRecyclerViewHolder>() {
@@ -79,7 +83,8 @@ abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHold
 
         mDataItems = inDataItems
         mUsePagination = (mDataItems?.size ?: 0) < inTotalItems
-        notifyDataSetChanged()
+
+        dataSetChanged()
     }
 
 
@@ -89,13 +94,34 @@ abstract class RecyclerViewAdapter<TData, TRecyclerViewHolder : RecyclerViewHold
 
         mDataItems?.addAll(inDataItems)
         mUsePagination = mDataItems?.size ?: 0 < inTotalItems
-        notifyDataSetChanged()
+
+        dataSetChanged()
     }
+
 
     internal fun ClearItems() {
         mDataItems?.clear()
         mUsePagination = false
-        notifyDataSetChanged()
+
+        dataSetChanged()
+    }
+
+    private fun dataSetChanged() {
+        GetActivity()?.runOnUiThread {
+            notifyDataSetChanged()
+        }
+    }
+
+
+    private fun GetActivity(): Activity? {
+        var context = mRecyclerView?.context
+        while (context is ContextWrapper) {
+            if (context is Activity) {
+                return context
+            }
+            context = context.baseContext
+        }
+        return null
     }
 
 

@@ -9,10 +9,10 @@ import org.mesonet.app.baseclasses.BaseActivity
 import org.mesonet.app.baseclasses.RecyclerViewHolder
 import org.mesonet.app.databinding.TraditionalMapsViewHolderBinding
 import org.mesonet.app.maps.MapListFragment
-import org.mesonet.dataprocessing.maps.MapsDataProvider
+import org.mesonet.models.maps.MapsList
 
-class TraditionalMapsGroupViewHolder(private val mBaseActivity: BaseActivity?, inBinding: TraditionalMapsViewHolderBinding) : RecyclerViewHolder<MapsDataProvider.MapAbbreviatedGroupDisplayData, TraditionalMapsViewHolderBinding>(inBinding) {
-    override fun SetData(inData: MapsDataProvider.MapAbbreviatedGroupDisplayData?) {
+class TraditionalMapsGroupViewHolder(private val mBaseActivity: BaseActivity?, inBinding: TraditionalMapsViewHolderBinding) : RecyclerViewHolder<MapsList.Group, TraditionalMapsViewHolderBinding>(inBinding) {
+    override fun SetData(inData: MapsList.Group?) {
         val binding = GetBinding()
 
         binding?.title = inData?.GetTitle()
@@ -20,7 +20,7 @@ class TraditionalMapsGroupViewHolder(private val mBaseActivity: BaseActivity?, i
         binding?.layout?.setOnClickListener{
             it.isEnabled = false
             val args = Bundle()
-            args.putSerializable(MapListFragment.kMapGroupFullList, inData?.GetMapFullGroupDisplayData())
+            args.putSerializable(MapListFragment.kMapGroupFullList, inData)
 
             val fragment = MapListFragment()
             fragment.arguments = args

@@ -1,14 +1,16 @@
 package org.mesonet.models.maps
 
+import java.io.Serializable
+
 
 interface MapsList
 {
     fun GetMain(): List<Group>?
-    fun GetSections(): Map<String, GroupSection>
-    fun GetProducts(): Map<String, Product>
+    fun GetSections(): LinkedHashMap<String, GroupSection>
+    fun GetProducts(): LinkedHashMap<String, Product>
 
 
-    interface Group
+    interface Group: Serializable
     {
         fun GetSections(): List<String>
         fun GetTitle(): String?

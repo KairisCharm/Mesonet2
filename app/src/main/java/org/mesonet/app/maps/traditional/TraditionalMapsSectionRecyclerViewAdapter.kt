@@ -3,9 +3,10 @@ package org.mesonet.app.maps.traditional
 import android.view.ViewGroup
 import org.mesonet.app.baseclasses.RecyclerViewAdapter
 import org.mesonet.dataprocessing.maps.MapsDataProvider
+import org.mesonet.models.maps.MapsList
 
-class TraditionalMapsSectionRecyclerViewAdapter : RecyclerViewAdapter<MapsDataProvider.MapFullGroupDisplayData.MapGroupSection, TraditionalMapsSectionViewHolder>() {
+class TraditionalMapsSectionRecyclerViewAdapter(private val mMapsDataProvider: MapsDataProvider) : RecyclerViewAdapter<MapsList.GroupSection, TraditionalMapsSectionViewHolder>() {
     override fun onCreateViewHolder(inParent: ViewGroup, inViewType: Int): TraditionalMapsSectionViewHolder {
-        return TraditionalMapsSectionViewHolder.NewInstance(inParent)
+        return TraditionalMapsSectionViewHolder.NewInstance(inParent, mMapsDataProvider)
     }
 }
