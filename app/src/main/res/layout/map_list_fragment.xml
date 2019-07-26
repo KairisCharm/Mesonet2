@@ -3,9 +3,9 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <android.support.v4.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+        <!--<android.support.v4.widget.NestedScrollView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent">-->
             <FrameLayout
                 android:orientation="vertical"
                 android:layout_width="match_parent"
@@ -15,7 +15,7 @@
                 <LinearLayout
                     android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="match_parent">
 
                     <android.support.v7.widget.Toolbar
                         android:id="@+id/groupNameToolbar"
@@ -37,7 +37,7 @@
 
                 </LinearLayout>
             </FrameLayout>
-        </android.support.v4.widget.NestedScrollView>
+        <!--</android.support.v4.widget.NestedScrollView>-->
         <ProgressBar
             android:id="@+id/progressBar"
             android:layout_width="56dp"
