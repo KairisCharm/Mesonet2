@@ -481,12 +481,12 @@ class SiteOverviewFragment : BaseFragment(), FilterListFragment.FilterListCloser
                             it.isEnabled = false
                             if (mMesonetSiteDataController.CurrentSelection() != "") {
                                 val intent = Intent(activity?.baseContext, WebViewActivity::class.java)
-                                intent.putExtra(WebViewActivity.kTitle, t.first.GetName() + " Meteogram")
-                                intent.putExtra(WebViewActivity.kUrl, t.first.GetMeteogramUrl())
+                                intent.putStringArrayListExtra(WebViewActivity.kTitles, arrayListOf(t.first.GetName() + " Meteogram"))
+                                intent.putStringArrayListExtra(WebViewActivity.kUrls, arrayListOf(t.first.GetMeteogramUrl()))
                                 intent.putExtra(WebViewActivity.kInitialZoom, 1)
                                 intent.putExtra(WebViewActivity.kAllowUserZoom, true)
                                 intent.putExtra(WebViewActivity.kAllowShare, true)
-                                intent.putExtra(WebViewActivity.kUpdateInterval, 60000L)
+                                intent.putExtra(WebViewActivity.kUpdateInterval, 150000L)
                                 startActivity(intent)
                             }
 

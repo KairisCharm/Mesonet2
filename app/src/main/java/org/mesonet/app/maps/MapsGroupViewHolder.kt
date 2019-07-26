@@ -24,7 +24,7 @@ class MapsGroupViewHolder(private val mBaseActivity: BaseActivity?, private val 
     var productsDisposable: Disposable? = null
 
     init {
-        inBinding.productRecyclerView.setAdapter(MapsProductRecyclerViewAdapter())
+        inBinding.productRecyclerView.setAdapter(MapsProductRecyclerViewAdapter(mMapDataProvider))
     }
 
     override fun SetData(inData: MapsList.Group?) {
@@ -61,7 +61,7 @@ class MapsGroupViewHolder(private val mBaseActivity: BaseActivity?, private val 
                             for(i in 0 until (if(products.size > 4 ) 4 else products.size)) {
                                 abbreviatedMap[products.keys.toTypedArray()[i]] = products.values.elementAt(i)
                             }
-                            binding?.productRecyclerView?.GetAdapter()?.SetItems(ArrayList((abbreviatedMap).map {product -> Pair(product.value, sections.values.first { it.GetProducts().contains(product.key) }) }))
+                            binding?.productRecyclerView?.GetAdapter()?.SetItems(ArrayList((abbreviatedMap).map {product -> Triple(product, sections.values.first { it.GetProducts().contains(product.key) }, inData) }))
 
                             if (products.size > 4)
                                 binding?.viewAllLayout?.visibility = View.VISIBLE

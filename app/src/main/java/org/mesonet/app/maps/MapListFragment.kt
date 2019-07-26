@@ -51,16 +51,16 @@ class MapListFragment : BaseFragment()
     private val mGroupsListSubject: BehaviorSubject<MapsList> = BehaviorSubject.create()
     private val mSectionListSubject: BehaviorSubject<LinkedHashMap<String, MapsList.GroupSection>> = BehaviorSubject.create()
 
+    private var mGroup: MapsList.Group? = null
+
 
     override fun onCreateView(inInflater: LayoutInflater, inParent: ViewGroup?, inSavedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.map_list_fragment, inParent, false)
 
-        var group: MapsList.Group? = null
-
         if (arguments != null && arguments?.containsKey(kMapGroupFullList) == true)
-            group = arguments?.getSerializable(kMapGroupFullList) as MapsList.Group
+            mGroup = arguments?.getSerializable(kMapGroupFullList) as MapsList.Group
 
-        if(group == null) {
+        if(mGroup == null) {
 
             mDataProvider.GetMapsListObservable().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<MapsList?>
             {
@@ -124,13 +124,16 @@ class MapListFragment : BaseFragment()
         }
         else
         {
-            mBinding.progressBar.visibility = View.GONE
-            mBinding.emptyListText.visibility = View.GONE
-            (mBinding.mapList as RecyclerView).visibility = View.VISIBLE
-            mBinding.groupNameToolbar.title = group.GetTitle()
-            mBinding.groupNameToolbar.visibility = View.VISIBLE
+            mGroup?.let { group ->
+                mBinding.progressBar.visibility = View.GONE
+                mBinding.emptyListText.visibility = View.GONE
+                (mBinding.mapList as RecyclerView).visibility = View.VISIBLE
+                mBinding.groupNameToolbar.title = group.GetTitle()
 
-            mDataProvider.GetSections(group.GetSections()).observeOn(AndroidSchedulers.mainThread()).subscribe(mSectionListSubject)
+                mBinding.groupNameToolbar.visibility = View.VISIBLE
+
+                mDataProvider.GetSections(group.GetSections()).observeOn(AndroidSchedulers.mainThread()).subscribe(mSectionListSubject)
+            }
         }
 
         return mBinding.root
@@ -153,7 +156,15 @@ class MapListFragment : BaseFragment()
             else
                 mBinding.mapList.setAdapter(MapsSectionRecyclerViewAdapter(mDataProvider))
 
-            mBinding.mapList.SetItems(ArrayList(list.values))
+            val items: ArrayList<Pair<MapsList.GroupSection, MapsList.Group>> = arrayListOf()
+
+            list.values.forEach {section ->
+                mGroup?.let {group ->
+                    items.add(Pair(section, group))
+                }
+            }
+
+            mBinding.mapList.SetItems(items)
         }
 
         val groupObservable = Observables.combineLatest(mGroupsListSubject, mPreferences.MapsDisplayModePreferenceObservable(mActivity)) {

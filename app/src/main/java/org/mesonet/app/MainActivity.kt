@@ -291,8 +291,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         item.isEnabled = false
         val intent = Intent(baseContext, WebViewActivity::class.java)
-        intent.putExtra(WebViewActivity.kTitle, "Ticker")
-        intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt")
+        intent.putStringArrayListExtra(WebViewActivity.kTitles, arrayListOf("Ticker"))
+        intent.putStringArrayListExtra(WebViewActivity.kUrls, arrayListOf("http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt"))
         startActivity(intent)
         item.isEnabled = true
 
@@ -347,7 +347,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
             }
             R.id.about -> {
                 val intent = Intent(baseContext, WebViewActivity::class.java)
-                intent.putExtra(WebViewActivity.kTitle, getString(R.string.AboutAndTermsOfUse))
+                intent.putStringArrayListExtra(WebViewActivity.kTitles, arrayListOf(getString(R.string.AboutAndTermsOfUse)))
                 intent.putExtra(WebViewActivity.kRaw, "file:///android_res/raw/about.html")
                 startActivity(intent)
             }
@@ -362,8 +362,8 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
     override fun onMenuItemClick(item: MenuItem): Boolean {
         item.isEnabled = false
         val intent = Intent(baseContext, WebViewActivity::class.java)
-        intent.putExtra(WebViewActivity.kTitle, "Ticker")
-        intent.putExtra(WebViewActivity.kUrl, "http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt")
+        intent.putStringArrayListExtra(WebViewActivity.kTitles, arrayListOf("Ticker"))
+        intent.putStringArrayListExtra(WebViewActivity.kUrls, arrayListOf("http://www.mesonet.org/index.php/app/ticker_article/latest.ticker.txt"))
         startActivity(intent)
         item.isEnabled = true
 

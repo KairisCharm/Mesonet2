@@ -17,17 +17,17 @@ import org.mesonet.models.maps.MapsList
 
 
 class MapsSectionViewHolder(inBinding: MapsSectionViewHolderBinding, private val mMapsDataProvider: MapsDataProvider,
-                            val mIsFirst: Boolean) : RecyclerViewHolder<MapsList.GroupSection, MapsSectionViewHolderBinding>(inBinding) {
+                            val mIsFirst: Boolean) : RecyclerViewHolder<Pair<MapsList.GroupSection, MapsList.Group>, MapsSectionViewHolderBinding>(inBinding) {
 
     private var mDisposable: Disposable? = null
 
-    override fun SetData(inData: MapsList.GroupSection?) {
+    override fun SetData(inData: Pair<MapsList.GroupSection, MapsList.Group>?) {
         mDisposable?.dispose()
 
         if(inData == null)
             GetBinding()?.root?.visibility = View.GONE
 
-        inData?.let {section ->
+        inData?.first?.let {section ->
             mMapsDataProvider.GetProducts(section.GetProducts()).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<LinkedHashMap<String, MapsList.Product>>{
                 override fun onComplete() {}
 
@@ -39,14 +39,14 @@ class MapsSectionViewHolder(inBinding: MapsSectionViewHolderBinding, private val
                 override fun onNext(t: LinkedHashMap<String, MapsList.Product>) {
                     val binding = GetBinding()
 
-                    binding?.productRecyclerView?.setAdapter(MapsProductRecyclerViewAdapter())
+                    binding?.productRecyclerView?.setAdapter(MapsProductRecyclerViewAdapter(mMapsDataProvider))
 
-                    binding?.header?.headerText?.text = inData.GetTitle()
+                    binding?.header?.headerText?.text = section.GetTitle()
 
                     if (mIsFirst && binding?.header?.headerText?.text.isNullOrBlank())
                         binding?.header?.headerText?.visibility = View.GONE
 
-                    binding?.productRecyclerView?.SetItems(ArrayList(t.values.map { Pair(it, null) }))
+                    binding?.productRecyclerView?.SetItems(ArrayList(t.values.map { Triple(it, null, inData.second) }))
                 }
 
                 override fun onError(e: Throwable) {

@@ -4,6 +4,8 @@ import android.content.Intent
 import android.databinding.DataBindingUtil
 import android.os.Bundle
 import android.os.Handler
+import android.support.v4.view.PagerAdapter
+import android.support.v4.view.ViewPager
 import android.support.v7.app.AppCompatActivity
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +14,8 @@ import org.mesonet.app.R
 
 import org.mesonet.app.databinding.WebViewActivityBinding
 import java.util.*
+import android.view.ViewGroup
+import android.webkit.WebView
 
 
 class WebViewActivity : AppCompatActivity() {
@@ -19,62 +23,98 @@ class WebViewActivity : AppCompatActivity() {
     var mLastUpdate = 0L
     var mBinding: WebViewActivityBinding? = null
 
+    var mAdapter: WebViewPagerAdapter? = null
+
     public override fun onCreate(inSavedInstanceState: Bundle?) {
         super.onCreate(inSavedInstanceState)
-        mBinding = DataBindingUtil.inflate<WebViewActivityBinding>(LayoutInflater.from(this), R.layout.web_view_activity, null, false)
+        mBinding = DataBindingUtil.inflate(LayoutInflater.from(this), R.layout.web_view_activity, null, false)
 
-        val title = intent.getStringExtra(kTitle)
-        var url: String? = null
+        var urls: List<String>? = null
+        var titles: List<String>? = null
+        var startIndex = 0
 
-        if(intent.hasExtra(kUrl))
-            url = intent.getStringExtra(kUrl)
+        mAdapter = WebViewPagerAdapter()
 
-        if (url != null && intent.getBooleanExtra(kUseGoogleDocs, false))
-            url = "http://docs.google.com/gview?embedded=true&url=$url"// + URLEncoder.encode(url, "UTF-8")
+        if(intent.hasExtra(kUrls))
+            urls = intent.getStringArrayListExtra(kUrls)
 
-        if (intent.getBooleanExtra(kAllowUserZoom, false)) {
-            mBinding?.webView?.settings?.setSupportZoom(true)
-            mBinding?.webView?.settings?.builtInZoomControls = true
-        }
+        if(intent.hasExtra(kTitles))
+            titles = intent.getStringArrayListExtra(kTitles)
 
-        val webSettings = mBinding?.webView?.settings
-        webSettings?.javaScriptEnabled = true
-        mBinding?.webView?.webViewClient = WebViewClient()
+        if(intent.hasExtra(kStartIndex))
+            startIndex = intent.getIntExtra(kStartIndex, 0)
 
-        mBinding?.toolBar?.title = title
+        val pagerList = ArrayList<PagerData>()
+
         mBinding?.toolBar?.setNavigationIcon(R.drawable.ic_close_white_36dp)
         mBinding?.toolBar?.setNavigationOnClickListener { finish() }
 
-        val finalUrl = url
+        for(i in 0 until (urls?.size?: 0)) {
+            var url = urls?.get(i)
+            if (intent.getBooleanExtra(kUseGoogleDocs, false))
+                url = "http://docs.google.com/gview?embedded=true&url=$url"// + URLEncoder.encode(url, "UTF-8")
+
+            pagerList.add(PagerData(titles?.get(i)?: "", url))
+        }
 
         if (intent.getBooleanExtra(kAllowShare, false)) {
-            mBinding?.shareButton?.visibility = View.VISIBLE
+            mBinding?.shareButton?.show()
             mBinding?.shareButton?.setOnClickListener {
                 it.isEnabled = false
                 val i = Intent(Intent.ACTION_SEND)
                 i.type = "text/plain"
-                i.putExtra(Intent.EXTRA_SUBJECT, title)
-                i.putExtra(Intent.EXTRA_TEXT, finalUrl)
+
+                (mBinding?.viewPager?.adapter as WebViewPagerAdapter).mData?.let {data ->
+                    if(data.isNotEmpty()) {
+                        val selectedMap = data[mBinding?.viewPager?.currentItem ?: 0]
+                        i.putExtra(Intent.EXTRA_SUBJECT, selectedMap.mTitle)
+                        i.putExtra(Intent.EXTRA_TEXT, selectedMap.mUrl)
+                    }
+                }
+
                 startActivity(Intent.createChooser(i, "Share URL"))
                 it.isEnabled = true
             }
         }
 
-        val initialScale = intent.getIntExtra(kInitialZoom, -1)
+        if (urls == null) {
+            if (intent.hasExtra(kRaw) && !intent.getStringExtra(kRaw).isBlank()) {
+                var title = ""
+                if(titles?.size?: 0 > 0)
+                    title = titles?.get(0)?: ""
 
-        if (initialScale != -1) {
-            mBinding?.webView?.setInitialScale(initialScale)
-
-            mBinding?.webView?.settings?.loadWithOverviewMode = true
-            mBinding?.webView?.settings?.useWideViewPort = true
+                mAdapter?.SetItems(listOf(PagerData(title, null)))
+            }
         }
-
-        if(url != null)
-            mBinding?.webView?.loadUrl(url)
-        else if(intent.hasExtra(kRaw))
-            mBinding?.webView?.loadUrl(intent.getStringExtra(kRaw))
+        else
+            mAdapter?.SetItems(pagerList)
 
         mLastUpdate = Date().time
+
+        mBinding?.viewPager?.adapter = mAdapter
+
+        val pageChangeListener = object: ViewPager.OnPageChangeListener {
+            override fun onPageScrollStateChanged(p0: Int) {}
+            override fun onPageScrolled(p0: Int, p1: Float, p2: Int) {}
+
+            override fun onPageSelected(inPage: Int) {
+                val title = (mBinding?.viewPager?.adapter as WebViewPagerAdapter).mData?.get(inPage)?.mTitle
+
+                mBinding?.toolBar?.title = title
+            }
+
+        }
+
+        mBinding?.viewPager?.addOnPageChangeListener(pageChangeListener)
+
+        mBinding?.viewPager?.postDelayed({
+                if(startIndex == 0)
+                    pageChangeListener.onPageSelected(0)
+                else
+                    mBinding?.viewPager?.setCurrentItem(startIndex, false)
+
+
+        }, 100)
 
         setContentView(mBinding?.root)
     }
@@ -91,7 +131,7 @@ class WebViewActivity : AppCompatActivity() {
                     override fun run() {
                         if (!mPaused) {
                             if(mLastUpdate - updateInterval < Date().time) {
-                                mBinding?.webView?.reload()
+                                (mBinding?.viewPager?.adapter as WebViewPagerAdapter).RefreshPages()
                                 mLastUpdate = Date().time
                             }
                             Handler().postDelayed(this, updateInterval)
@@ -109,8 +149,9 @@ class WebViewActivity : AppCompatActivity() {
     }
 
     companion object {
-        val kTitle = "title"
-        val kUrl = "url"
+        val kTitles = "titles"
+        val kUrls = "urls"
+        val kStartIndex = "startIndex"
         val kRaw = "raw"
         val kInitialZoom = "initialZoom"
         val kAllowUserZoom = "allowUserZoom"
@@ -118,4 +159,77 @@ class WebViewActivity : AppCompatActivity() {
         val kAllowShare = "allowShare"
         val kUpdateInterval = "updateInterval"
     }
+
+
+    inner class WebViewPagerAdapter: PagerAdapter() {
+        var mData: List<PagerData>? = null
+        var mWebViews: ArrayList<WebView>? = null
+
+        fun SetItems(pagerData: List<PagerData>) {
+            mData = pagerData
+            mWebViews = arrayListOf()
+            notifyDataSetChanged()
+        }
+
+        override fun instantiateItem(collection: ViewGroup, position: Int): Any {
+            val layout = layoutInflater.inflate(R.layout.web_view, collection, false)
+
+            val webView = layout.findViewById<WebView>(R.id.webView)
+
+            val webSettings = webView.settings
+            webSettings?.javaScriptEnabled = true
+            webView.webViewClient = WebViewClient()
+
+            if (intent.getBooleanExtra(kAllowUserZoom, false)) {
+                webView.settings?.setSupportZoom(true)
+                webView.settings?.builtInZoomControls = true
+            }
+
+            val initialScale = intent.getIntExtra(kInitialZoom, -1)
+
+            if (initialScale != -1) {
+                webView.setInitialScale(initialScale)
+
+                webView.settings?.loadWithOverviewMode = true
+                webView.settings?.useWideViewPort = true
+            }
+
+            collection.addView(layout)
+
+            mWebViews?.add(webView)
+
+            mData?.get(position)?.mUrl?.let {
+                webView.loadUrl(it)
+                return layout
+            }
+
+            if(intent.hasExtra(kRaw))
+                webView.loadUrl(intent.getStringExtra(kRaw))
+
+            return layout
+        }
+
+        fun RefreshPages() {
+            mWebViews?.forEach { webView ->
+                webView.reload()
+            }
+        }
+
+        override fun destroyItem(inContainer: ViewGroup, inPosition: Int, inObject: Any) {
+            inContainer.removeView(inObject as View)
+        }
+
+        override fun isViewFromObject(inView: View, inObject: Any): Boolean {
+            return inView == inObject
+        }
+
+        override fun getCount(): Int {
+            return mData?.size?: 0
+        }
+    }
+
+    class PagerData (
+        val mTitle: String,
+        val mUrl: String?
+    )
 }

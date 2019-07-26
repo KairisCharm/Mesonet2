@@ -1,13 +1,12 @@
 package org.mesonet.app.maps.traditional
 
-import android.databinding.ViewDataBinding
 import android.view.ViewGroup
 import org.mesonet.app.baseclasses.RecyclerViewAdapter
-import org.mesonet.app.baseclasses.RecyclerViewHolder
+import org.mesonet.dataprocessing.maps.MapsDataProvider
 import org.mesonet.models.maps.MapsList
 
-class TraditionalMapsProductRecyclerViewAdapter : RecyclerViewAdapter<MapsList.Product, RecyclerViewHolder<MapsList.Product, ViewDataBinding>>() {
-    override fun onCreateViewHolder(inParent: ViewGroup, inViewGroup: Int): RecyclerViewHolder<MapsList.Product, ViewDataBinding> {
-        return TraditionalMapsProductViewHolder.NewInstance(inParent)
+class TraditionalMapsProductRecyclerViewAdapter(private val mMapsDataProvider: MapsDataProvider) : RecyclerViewAdapter<Pair<Map.Entry<String, MapsList.Product>, MapsList.Group>, TraditionalMapsProductViewHolder>() {
+    override fun onCreateViewHolder(inParent: ViewGroup, inViewGroup: Int): TraditionalMapsProductViewHolder {
+        return TraditionalMapsProductViewHolder.NewInstance(inParent, mMapsDataProvider)
     }
 }

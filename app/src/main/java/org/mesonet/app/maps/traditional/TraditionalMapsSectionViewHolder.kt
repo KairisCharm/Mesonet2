@@ -12,7 +12,7 @@ import org.mesonet.app.databinding.TraditionalMapsSectionViewHolderBinding
 import org.mesonet.dataprocessing.maps.MapsDataProvider
 import org.mesonet.models.maps.MapsList
 
-class TraditionalMapsSectionViewHolder(inBinding: TraditionalMapsSectionViewHolderBinding, private val mMapsDataProvider: MapsDataProvider) : RecyclerViewHolder<MapsList.GroupSection, TraditionalMapsSectionViewHolderBinding>(inBinding) {
+class TraditionalMapsSectionViewHolder(inBinding: TraditionalMapsSectionViewHolderBinding, private val mMapsDataProvider: MapsDataProvider) : RecyclerViewHolder<Pair<MapsList.GroupSection, MapsList.Group>, TraditionalMapsSectionViewHolderBinding>(inBinding) {
     private var mDisposable: Disposable? = null
 
     companion object {
@@ -22,14 +22,14 @@ class TraditionalMapsSectionViewHolder(inBinding: TraditionalMapsSectionViewHold
     }
 
     init {
-        GetBinding()?.productRecyclerView?.setAdapter(TraditionalMapsProductRecyclerViewAdapter())
+        GetBinding()?.productRecyclerView?.setAdapter(TraditionalMapsProductRecyclerViewAdapter(mMapsDataProvider))
     }
 
-    override fun SetData(inData: MapsList.GroupSection?) {
+    override fun SetData(inData: Pair<MapsList.GroupSection, MapsList.Group>?) {
         mDisposable?.dispose()
 
-        inData?.let {section ->
-            mMapsDataProvider.GetProducts(section.GetProducts()).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<LinkedHashMap<String, MapsList.Product>>{
+        inData?.let {data ->
+            mMapsDataProvider.GetProducts(data.first.GetProducts()).observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<LinkedHashMap<String, MapsList.Product>>{
                 override fun onComplete() {}
 
                 override fun onSubscribe(d: Disposable) {
@@ -37,10 +37,13 @@ class TraditionalMapsSectionViewHolder(inBinding: TraditionalMapsSectionViewHold
                     mDisposable = d
                 }
 
-                override fun onNext(t: LinkedHashMap<String, MapsList.Product>) {
-                    val list = mutableListOf<MapsList.Product>()
+                override fun onNext(inProducts: LinkedHashMap<String, MapsList.Product>) {
+                    val list = mutableListOf<Pair<Map.Entry<String, MapsList.Product>, MapsList.Group>>()
 
-                    list.addAll(t.values)
+                    inProducts.forEach{
+                        list.add(Pair(it, inData.second))
+                    }
+
                     GetBinding()?.productRecyclerView?.SetItems(list)
                 }
 

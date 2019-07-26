@@ -25,8 +25,8 @@ class AdvisoryViewHolder(inBinding: AdvisoryViewHolderBinding) : RecyclerViewHol
             binding.root.setOnClickListener {
                 it.isEnabled = false
                 val intent = Intent(binding.root.context, WebViewActivity::class.java)
-                intent.putExtra(WebViewActivity.kTitle, advisoryData?.AdvisoryType())
-                intent.putExtra(WebViewActivity.kUrl, advisoryData?.Url())
+                intent.putStringArrayListExtra(WebViewActivity.kTitles, arrayListOf(advisoryData?.AdvisoryType()))
+                intent.putStringArrayListExtra(WebViewActivity.kUrls, arrayListOf(advisoryData?.Url()))
                 intent.putExtra(WebViewActivity.kUseGoogleDocs, true)
                 binding.root.context.startActivity(intent)
                 it.isEnabled = true
