@@ -28,5 +28,6 @@ interface MapsList
     {
         fun GetUrl(): String?
         fun GetTitle(): String?
+        fun GetThumbnail(): String?
     }
 }

@@ -46,7 +46,7 @@ class MapsSectionViewHolder(inBinding: MapsSectionViewHolderBinding, private val
                     if (mIsFirst && binding?.header?.headerText?.text.isNullOrBlank())
                         binding?.header?.headerText?.visibility = View.GONE
 
-                    binding?.productRecyclerView?.SetItems(ArrayList(t.values.map { Triple(it, null, inData.second) }))
+                    binding?.productRecyclerView?.SetItems(ArrayList(t.map { Triple(it, null, inData.second) }))
                 }
 
                 override fun onError(e: Throwable) {

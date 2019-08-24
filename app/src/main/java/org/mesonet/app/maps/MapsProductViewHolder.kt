@@ -36,7 +36,8 @@ class MapsProductViewHolder(inBinding: MapsProductViewHolderBinding, private val
             else
                 binding?.productSection?.visibility = View.VISIBLE
 
-            Picasso.get().load(inData.first.value.GetUrl()).into(binding?.productPreview)
+
+            Picasso.get().load(inData.first.value.GetThumbnail()).into(binding?.productPreview)
 
             binding?.layout?.setOnClickListener {
                 mMapsDataProvider.GetSections(inData.third.GetSections()).map {sections -> sections.flatMap { section -> section.value.GetProducts() } }.map {productIds -> mMapsDataProvider.GetProducts(productIds) }.flatMap { observable -> observable }.observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<LinkedHashMap<String, MapsList.Product>>{

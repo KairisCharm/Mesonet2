@@ -77,6 +77,9 @@ class MapsModel: MapsList
         @SerializedName("title")
         private var mTitle: String? = null
 
+        @SerializedName("thumbnail")
+        private var mThumbnail: String? = null
+
 
         override fun GetUrl(): String?
         {
@@ -87,6 +90,12 @@ class MapsModel: MapsList
         override fun GetTitle(): String?
         {
             return mTitle
+        }
+
+
+        override fun GetThumbnail(): String?
+        {
+            return mThumbnail
         }
     }
 }
