@@ -25,7 +25,7 @@ android {
         multiDexEnabled true
 
         vectorDrawables.useSupportLibrary = true
-    }Fma
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -90,7 +90,7 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
     implementation 'io.reactivex.rxjava2:rxkotlin:2.2.0'
     implementation 'com.android.support:cardview-v7:28.0.0'
-    implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.0.1'
+    implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.3.0'
     implementation project(':core')
     implementation project(':models')
     implementation project(':cache')
