@@ -19,7 +19,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 28
         versionCode 70
-        versionName "2.0.1-alpha"
+        versionName "2.0.1-alpha2"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
         multiDexEnabled true
