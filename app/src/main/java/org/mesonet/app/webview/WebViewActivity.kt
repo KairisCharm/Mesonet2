@@ -94,7 +94,9 @@ class WebViewActivity : AppCompatActivity() {
         mBinding?.viewPager?.adapter = mAdapter
 
         val pageChangeListener = object: ViewPager.OnPageChangeListener {
-            override fun onPageScrollStateChanged(p0: Int) {}
+            override fun onPageScrollStateChanged(inScrollState: Int) {
+                (mBinding?.viewPager?.adapter as WebViewPagerAdapter).setZoomControls(inScrollState == 0)
+            }
             override fun onPageScrolled(p0: Int, p1: Float, p2: Int) {}
 
             override fun onPageSelected(inPage: Int) {
@@ -169,6 +171,12 @@ class WebViewActivity : AppCompatActivity() {
             mData = pagerData
             mWebViews = arrayListOf()
             notifyDataSetChanged()
+        }
+
+        fun setZoomControls(inZoomControlsOn: Boolean) {
+            mWebViews?.forEach { webView ->
+                webView.settings.builtInZoomControls = inZoomControlsOn
+            }
         }
 
         override fun instantiateItem(collection: ViewGroup, position: Int): Any {
