@@ -1,151 +1,155 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <LinearLayout
-        android:orientation="vertical"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#DBDBDB">
-
-        <android.support.v7.widget.Toolbar
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/listBackgroundColor"
-            android:titleTextColor="@color/lightTextColor"
-            app:titleTextColor="@color/lightTextColor"
-            android:title="User Settings"
-            app:title="User Settings"/>
+            android:background="#DBDBDB">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAllCaps="true"
-            android:layout_margin="8dp"
-            android:text="Units"/>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/dividerColor"/>
-
-        <RadioGroup
-            android:id="@+id/unitsRadioGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/white">
-
-            <RadioButton
-                android:id="@+id/imperialButton"
+            <android.support.v7.widget.Toolbar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@color/listBackgroundColor"
+                android:titleTextColor="@color/lightTextColor"
+                app:titleTextColor="@color/lightTextColor"
+                android:title="User Settings"
+                app:title="User Settings"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAllCaps="true"
                 android:layout_margin="8dp"
-                android:text="Imperial"/>
+                android:text="Units"/>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/dividerColor"/>
 
-            <RadioButton
-                android:id="@+id/metricButton"
+            <RadioGroup
+                android:id="@+id/unitsRadioGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@android:color/white">
+
+                <RadioButton
+                    android:id="@+id/imperialButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Imperial"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/dividerColor"/>
+
+                <RadioButton
+                    android:id="@+id/metricButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Metric"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/dividerColor"/>
+
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAllCaps="true"
                 android:layout_margin="8dp"
-                android:text="Metric"/>
+                android:text="Maps Display Mode"/>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/dividerColor"/>
 
-        </RadioGroup>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAllCaps="true"
-            android:layout_margin="8dp"
-            android:text="Maps Display Mode"/>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/dividerColor"/>
-
-        <RadioGroup
-            android:id="@+id/mapsDisplayModeRadioGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/white">
-
-            <RadioButton
-                android:id="@+id/traditionalMapsButton"
+            <RadioGroup
+                android:id="@+id/mapsDisplayModeRadioGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:background="@android:color/white">
+
+                <RadioButton
+                    android:id="@+id/traditionalMapsButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Traditional"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/dividerColor"/>
+
+                <RadioButton
+                    android:id="@+id/thumbnailMapsButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Thumbnail"/>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/dividerColor"/>
+
+            </RadioGroup>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAllCaps="true"
                 android:layout_margin="8dp"
-                android:text="Traditional"/>
+                android:text="Radar Color Theme"/>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/dividerColor"/>
 
-            <RadioButton
-                android:id="@+id/thumbnailMapsButton"
+            <RadioGroup
+                android:id="@+id/radarColorThemeRadioGroup"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:text="Thumbnail"/>
+                android:background="@android:color/white">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/dividerColor"/>
+                <RadioButton
+                    android:id="@+id/lightThemeButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Light"/>
 
-        </RadioGroup>
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/dividerColor"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAllCaps="true"
-            android:layout_margin="8dp"
-            android:text="Radar Color Theme"/>
+                <RadioButton
+                    android:id="@+id/darkThemeButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:text="Dark"/>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/dividerColor"/>
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/dividerColor"/>
 
-        <RadioGroup
-            android:id="@+id/radarColorThemeRadioGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@android:color/white">
-
-            <RadioButton
-                android:id="@+id/lightThemeButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:text="Light"/>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/dividerColor"/>
-
-            <RadioButton
-                android:id="@+id/darkThemeButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:text="Dark"/>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="@color/dividerColor"/>
-
-        </RadioGroup>
-    </LinearLayout>
+            </RadioGroup>
+        </LinearLayout>
+    </ScrollView>
 </layout>
