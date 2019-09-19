@@ -94,8 +94,18 @@ class WebViewActivity : AppCompatActivity() {
         mBinding?.viewPager?.adapter = mAdapter
 
         val pageChangeListener = object: ViewPager.OnPageChangeListener {
+            private var mScrollState: Int? = null
             override fun onPageScrollStateChanged(inScrollState: Int) {
-                (mBinding?.viewPager?.adapter as WebViewPagerAdapter).setZoomControls(inScrollState == 0)
+                if(mScrollState == inScrollState)
+                    return
+
+                if(mScrollState == 0)
+                    Handler().postDelayed({
+                        if(mScrollState == 0)
+                            (mBinding?.viewPager?.adapter as WebViewPagerAdapter).setZoomControls(true)
+                    }, 1000)
+                else
+                    (mBinding?.viewPager?.adapter as WebViewPagerAdapter).setZoomControls(false)
             }
             override fun onPageScrolled(p0: Int, p1: Float, p2: Int) {}
 
@@ -175,6 +185,7 @@ class WebViewActivity : AppCompatActivity() {
 
         fun setZoomControls(inZoomControlsOn: Boolean) {
             mWebViews?.forEach { webView ->
+                webView.settings.setSupportZoom(inZoomControlsOn)
                 webView.settings.builtInZoomControls = inZoomControlsOn
             }
         }
@@ -189,8 +200,7 @@ class WebViewActivity : AppCompatActivity() {
             webView.webViewClient = WebViewClient()
 
             if (intent.getBooleanExtra(kAllowUserZoom, false)) {
-                webView.settings?.setSupportZoom(true)
-                webView.settings?.builtInZoomControls = true
+                setZoomControls(true)
             }
 
             val initialScale = intent.getIntExtra(kInitialZoom, -1)
