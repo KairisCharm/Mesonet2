@@ -39,6 +39,7 @@ import org.mesonet.dataprocessing.userdata.Preferences
 import org.mesonet.models.radar.RadarDetails
 
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 
 class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
@@ -110,89 +111,90 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
     override fun onCreateView(inInflater: LayoutInflater, inContainer: ViewGroup?, inSavedInstanceState: Bundle?): View {
         mBinding = DataBindingUtil.inflate(inInflater, R.layout.radar_map_fragment, inContainer, false)
 
-        val options = MapboxMapOptions()
-        options.textureMode(true)
-        options.logoGravity(Gravity.TOP or Gravity.START)
-        options.attributionGravity(Gravity.TOP or Gravity.START)
+        context?.let { fragmentContext ->
+            val options = MapboxMapOptions.createFromAttributes(fragmentContext)
+            options.textureMode(true)
+            options.logoGravity(Gravity.TOP or Gravity.START)
+            options.attributionGravity(Gravity.TOP or Gravity.START)
 
-        mMapFragment = SupportMapFragment.newInstance(options)
+            mMapFragment = SupportMapFragment.newInstance(options)
 
-        mRadarImageSource = ImageSource(kRasterImageName, LatLngQuad(LatLng(0.0, 0.0),
-                                                                     LatLng(0.0, 0.0),
-                                                                     LatLng(0.0, 0.0),
-                                                                     LatLng(0.0, 0.0)), R.drawable.blank_drawable)
+            mRadarImageSource = ImageSource(kRasterImageName, LatLngQuad(LatLng(0.0, 0.0),
+                    LatLng(0.0, 0.0),
+                    LatLng(0.0, 0.0),
+                    LatLng(0.0, 0.0)), R.drawable.blank_drawable)
 
 
-        mRadarLayer = RasterLayer(kRasterImageName, mRadarImageSource?.id)
+            mRadarLayer = RasterLayer(kRasterImageName, mRadarImageSource?.id)
 
-        mMapFragment?.let {
-            val mapTransaction = childFragmentManager.beginTransaction()
-            mapTransaction.add(R.id.mapContainer, it)
-            mapTransaction.commit()
+            mMapFragment?.let {
+                val mapTransaction = childFragmentManager.beginTransaction()
+                mapTransaction.add(R.id.mapContainer, it)
+                mapTransaction.commit()
+            }
+
+            mBinding?.playPauseButton?.SetPlayPauseState(mMapController.GetPlayPauseStateObservable())
+
+            mBinding?.playPauseButton?.setOnClickListener {
+                mMapController.TogglePlay()
+            }
+
+            mBinding?.readingInfoLayout?.setOnClickListener {
+                val filterTransaction = childFragmentManager.beginTransaction()
+                filterTransaction.replace(R.id.childFragmentContainer, FilterListFragment())
+                filterTransaction.commit()
+                RevealView(mBinding?.readingInfoLayout, mBinding?.childFragmentContainer)
+                (mBinding?.playPauseButton as View?)?.visibility = View.GONE
+            }
+
+            mBinding?.opacityDrawerButtonLayout?.setOnClickListener {
+                RevealView(mBinding?.opacityDrawerButtonLayout, mBinding?.opacityLayout)
+            }
+
+            mBinding?.opacityCloseButton?.setOnClickListener {
+                RevealView(mBinding?.opacityDrawerButtonLayout, mBinding?.opacityLayout)
+            }
+
+            mBinding?.transparencySeekBar?.max = 255
+
+            mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object : Observer<Float> {
+                var disposable: Disposable? = null
+                override fun onComplete() {}
+
+                override fun onSubscribe(d: Disposable) {
+                    disposable = d
+                }
+
+                override fun onNext(t: Float) {
+                    mBinding?.transparencySeekBar?.progress = (t * 255.0f).roundToInt()
+                    disposable?.dispose()
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                }
+
+            })
+
+            mBinding?.transparencySeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(inSeekBar: SeekBar, inProgress: Int, inFromUser: Boolean) {
+                    val result = inProgress / 255.0f
+
+                    val subject = mMapController.GetTransparencySubject()
+
+                    if (!subject.hasValue() || subject.value != result)
+                        mMapController.GetTransparencySubject().onNext(result)
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar) {
+
+                }
+
+                override fun onStopTrackingTouch(seekBar: SeekBar) {
+
+                }
+            })
         }
-
-        mBinding?.playPauseButton?.SetPlayPauseState(mMapController.GetPlayPauseStateObservable())
-
-        mBinding?.playPauseButton?.setOnClickListener {
-            mMapController.TogglePlay()
-        }
-
-        mBinding?.readingInfoLayout?.setOnClickListener {
-            val filterTransaction = childFragmentManager.beginTransaction()
-            filterTransaction.replace(R.id.childFragmentContainer, FilterListFragment())
-            filterTransaction.commit()
-            RevealView(mBinding?.readingInfoLayout, mBinding?.childFragmentContainer)
-            (mBinding?.playPauseButton as View?)?.visibility = View.GONE
-        }
-
-        mBinding?.opacityDrawerButtonLayout?.setOnClickListener {
-            RevealView(mBinding?.opacityDrawerButtonLayout, mBinding?.opacityLayout)
-        }
-
-        mBinding?.opacityCloseButton?.setOnClickListener {
-            RevealView(mBinding?.opacityDrawerButtonLayout, mBinding?.opacityLayout)
-        }
-
-        mBinding?.transparencySeekBar?.max = 255
-
-        mMapController.GetTransparencySubject().observeOn(AndroidSchedulers.mainThread()).subscribe(object: Observer<Float>{
-            var disposable: Disposable? = null
-            override fun onComplete() {}
-
-            override fun onSubscribe(d: Disposable) {
-                disposable = d
-            }
-
-            override fun onNext(t: Float) {
-                mBinding?.transparencySeekBar?.progress = Math.round(t * 255.0f)
-                disposable?.dispose()
-            }
-
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-            }
-
-        })
-
-        mBinding?.transparencySeekBar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(inSeekBar: SeekBar, inProgress: Int, inFromUser: Boolean) {
-                val result = inProgress / 255.0f
-
-                val subject = mMapController.GetTransparencySubject()
-
-                if(!subject.hasValue() || subject.value != result)
-                    mMapController.GetTransparencySubject().onNext(result)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar) {
-
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar) {
-
-            }
-        })
-
 
         return mBinding?.root?: View(context)
     }
@@ -283,16 +285,21 @@ class RadarFragment : BaseFragment(), FilterListFragment.FilterListCloser {
                                         }
 
                                         mMapFragment?.getMapAsync { map ->
-                                            map.uiSettings.attributionDialogManager
-                                            map.uiSettings.isRotateGesturesEnabled = false
-                                            map.uiSettings.isTiltGesturesEnabled = false
 
-                                            var styleUrl = kLightThemeUrl
+                                            if(map.style == null) {
+                                                map.uiSettings.attributionDialogManager
+                                                map.uiSettings.isRotateGesturesEnabled = false
+                                                map.uiSettings.isTiltGesturesEnabled = false
 
-                                            if(radarInfo.second == Preferences.RadarColorThemePreference.kDark)
-                                                styleUrl = kDarkThemeUrl
+                                                var styleUrl = kLightThemeUrl
 
-                                            map.setStyle(Style.Builder().fromUrl(styleUrl)) { style ->
+                                                if (radarInfo.second == Preferences.RadarColorThemePreference.kDark)
+                                                    styleUrl = kDarkThemeUrl
+
+                                                map.setStyle(Style.Builder().fromUri(styleUrl))
+                                            }
+
+                                            map.getStyle() { style ->
                                                 val sourceId = mRadarImageSource?.id ?: ""
                                                 val layerId = mRadarLayer?.id ?: ""
 
