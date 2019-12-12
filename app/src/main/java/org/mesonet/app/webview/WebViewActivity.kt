@@ -52,7 +52,7 @@ class WebViewActivity : AppCompatActivity() {
         for(i in 0 until (urls?.size?: 0)) {
             var url = urls?.get(i)
             if (intent.getBooleanExtra(kUseGoogleDocs, false))
-                url = "http://docs.google.com/gview?embedded=true&url=$url"// + URLEncoder.encode(url, "UTF-8")
+                url = "http://docs.google.com/gview?embedded=true&url=$url"
 
             pagerList.add(PagerData(titles?.get(i)?: "", url))
         }
@@ -94,18 +94,7 @@ class WebViewActivity : AppCompatActivity() {
         mBinding?.viewPager?.adapter = mAdapter
 
         val pageChangeListener = object: ViewPager.OnPageChangeListener {
-            private var mScrollState: Int? = null
             override fun onPageScrollStateChanged(inScrollState: Int) {
-                if(mScrollState == inScrollState)
-                    return
-
-                if(mScrollState == 0)
-                    Handler().postDelayed({
-                        if(mScrollState == 0)
-                            (mBinding?.viewPager?.adapter as WebViewPagerAdapter).setZoomControls(true)
-                    }, 1000)
-                else
-                    (mBinding?.viewPager?.adapter as WebViewPagerAdapter).setZoomControls(false)
             }
             override fun onPageScrolled(p0: Int, p1: Float, p2: Int) {}
 
@@ -183,25 +172,19 @@ class WebViewActivity : AppCompatActivity() {
             notifyDataSetChanged()
         }
 
-        fun setZoomControls(inZoomControlsOn: Boolean) {
-            mWebViews?.forEach { webView ->
-                webView.settings.setSupportZoom(inZoomControlsOn)
-                webView.settings.builtInZoomControls = inZoomControlsOn
-            }
-        }
-
         override fun instantiateItem(collection: ViewGroup, position: Int): Any {
             val layout = layoutInflater.inflate(R.layout.web_view, collection, false)
 
             val webView = layout.findViewById<WebView>(R.id.webView)
 
+            val allowUserZoom = intent.getBooleanExtra(kAllowUserZoom, false)
+
             val webSettings = webView.settings
             webSettings?.javaScriptEnabled = true
+            webSettings.setSupportZoom(allowUserZoom)
+            webSettings.builtInZoomControls = allowUserZoom
+            webSettings.displayZoomControls = false
             webView.webViewClient = WebViewClient()
-
-            if (intent.getBooleanExtra(kAllowUserZoom, false)) {
-                setZoomControls(true)
-            }
 
             val initialScale = intent.getIntExtra(kInitialZoom, -1)
 

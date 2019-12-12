@@ -89,7 +89,7 @@ class MapsModel: MapsList
 
         override fun GetTitle(): String?
         {
-            return mTitle
+            return mTitle?.replace("&deg;", "°")
         }
 
 
